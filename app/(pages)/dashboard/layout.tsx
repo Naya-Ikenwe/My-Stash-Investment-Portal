@@ -9,7 +9,7 @@ export default function DashboardLayout({
   return (
     <main className="flex">
       <Navbar />
-      <aside className="bg-white rounded-tl-xl p-4 w-full">
+      <aside className="bg-white rounded-tl-xl px-6 py-4 w-full">
         <DashboardTopLevel />
         {children}
       </aside>

@@ -28,7 +28,7 @@ const chartConfig = {
 
 export default function PortfolioGrowth() {
   return (
-    <Card>
+    <Card className="bg-[#f7f7f7] shadow-none border-none">
       <CardHeader>
         <CardTitle>Portfolio Growth</CardTitle>
       </CardHeader>
@@ -36,7 +36,7 @@ export default function PortfolioGrowth() {
       <CardContent>
         <ChartContainer
           config={chartConfig}
-          className="h-64 w-full" // ⭐ REQUIRED
+          className="h-64 w-full " // ⭐ REQUIRED
         >
           <LineChart data={chartData}>
             <CartesianGrid vertical={false} />
