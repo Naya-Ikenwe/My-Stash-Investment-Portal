@@ -43,13 +43,15 @@ export default function Navbar() {
 
   return (
     <main className="px-3 py-8 flex flex-col gap-6 h-screen min-w-[250px]">
-      <Image
-        src="/images/mystash-logo.svg"
-        alt="mystash-logo"
-        width={100}
-        height={100}
-        className="w-40 h-auto"
-      />
+      <Link href={"/dashboard"}>
+        <Image
+          src="/images/mystash-logo.svg"
+          alt="mystash-logo"
+          width={100}
+          height={100}
+          className="w-40 h-auto"
+        />
+      </Link>
 
       <nav className="bg-white flex flex-col gap-4 px-2.5 py-4 rounded-t-xl border border-[#37474F21] h-full">
         {navlinks.map((link) => {
@@ -65,9 +67,7 @@ export default function Navbar() {
               <span className={`${isActive ? "text-[#CB30E0]" : ""}`}>
                 {link.icon}
               </span>
-              <p className={`${isActive ? "font-medium" : ""}`}>
-                {link.name}
-              </p>
+              <p className={`${isActive ? "font-medium" : ""}`}>{link.name}</p>
             </Link>
           );
         })}
