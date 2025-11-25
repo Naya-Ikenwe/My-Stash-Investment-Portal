@@ -5,8 +5,8 @@ type AuthWrapperProps = {
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   return (
-    <main>
-      <div className="mt-10 ml-20 mb-24">
+    <main className="max-w-7xl mx-auto pb-6">
+      <div className="mt-10 mb-24">
         <Image
           src="/images/mystash-logo.svg"
           alt="mystash-logo"
