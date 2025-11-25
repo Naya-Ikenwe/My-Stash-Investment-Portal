@@ -1,5 +1,9 @@
+"use client";
+
 export default function EmbassyPage() {
   return (
-    <main>heyy embassy</main>
-  )
+    <main>
+      <p>heyy embassy</p>
+    </main>
+  );
 }
