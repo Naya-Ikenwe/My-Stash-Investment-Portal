@@ -68,7 +68,10 @@ export default function LiquidatePopup({
               >
                 Cancel
               </button>
-              <button className="flex-1 px-4 py-2 bg-[#A243DC] hover:bg-[#8e3ac0] text-white rounded-lg transition-colors">
+              <button
+                onClick={() => setShowContinueLiquidate(true)}
+                className="flex-1 px-4 py-2 bg-[#A243DC] hover:bg-[#8e3ac0] text-white rounded-lg transition-colors"
+              >
                 Liquidate
               </button>
             </div>

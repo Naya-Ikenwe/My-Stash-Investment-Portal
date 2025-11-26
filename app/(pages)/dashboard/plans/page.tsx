@@ -1,4 +1,6 @@
 import { RiArrowDropDownLine } from "react-icons/ri";
+import { IoIosSearch } from "react-icons/io";
+import { LiaDownloadSolid } from "react-icons/lia";
 import { savings } from "@/data/PlansData";
 import Link from "next/link";
 
@@ -9,22 +11,47 @@ export default function PlansPage() {
       <hr className="border border-[#455A6433] rounded-md mt-5" />
 
       {/* Filters */}
-      <div className="">
+      <div className="flex justify-between items-center mt-3">
         <div className="w-[326px] flex h-8 mt-5 gap-4">
-          <div className="h-8 flex mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center">
-            Status <RiArrowDropDownLine />
+          <button>
+            <div className="h-8 cursor-pointer flex items-center justify-between mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center">
+              <p> Status</p> <RiArrowDropDownLine />
+            </div>
+          </button>
+          <button>
+            <div className="h-8 cursor-pointer flex items-center justify-between w-[85px] py-1 px-2 bg-[#F7F7F7] text-center">
+              <p> Tenor</p> <RiArrowDropDownLine />
+            </div>
+          </button>
+          <button>
+            <div className="h-8 cursor-pointer flex items-center justify-between w-[118px] py-1 px-2 bg-[#F7F7F7] text-center">
+              <p>Date Range</p> <RiArrowDropDownLine />
+            </div>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="relative w-[180px]">
+            <IoIosSearch className="absolute text-[16px] left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+
+            <input
+              type="search"
+              name="search"
+              placeholder="Search plans..."
+              className="w-[180px] h-[42px] pl-9 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
+            />
           </div>
-          <div className="h-8 w-[85px] py-1 px-2 bg-[#F7F7F7] text-center">
-            Tenor
-          </div>
-          <div className="h-8 w-[118px] py-1 px-2 bg-[#F7F7F7] text-center">
-            Date Range
+          <div className="">
+            <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 cursor-pointer justify-center h-[42px]">
+              <p>Download</p>
+              <LiaDownloadSolid size={20} />
+            </button>
           </div>
         </div>
       </div>
 
       {/* 🔵 Savings List goes here */}
-      <div className="w-full h-full bg-[#F7F7F7] mt-5 p-5">
+      <div className="mt-5 p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {savings.map((item) => (
             <Link href={`/dashboard/plans/${item.id}`} key={item.id}>
