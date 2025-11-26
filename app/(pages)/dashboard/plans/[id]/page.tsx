@@ -31,7 +31,7 @@ export default function PlanDetails({
     <main className="p-6 gap-6">
       <Link
         href="/dashboard/plans"
-        className="flex items-center gap-1 text-sm text-[#37474F] hover:underline mb-4"
+        className="flex items-center w-[90px] h-[42px] gap-1 text-sm text-[#37474F] mb-4"
       >
         <MdOutlineKeyboardArrowLeft />
         <p>Back</p>

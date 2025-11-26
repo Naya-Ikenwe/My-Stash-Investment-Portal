@@ -11,7 +11,7 @@ export default function PlansPage() {
       <hr className="border border-[#455A6433] rounded-md mt-5" />
 
       {/* Filters */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mt-3">
         <div className="w-[326px] flex h-8 mt-5 gap-4">
           <button>
             <div className="h-8 cursor-pointer flex items-center justify-between mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center">
@@ -44,14 +44,14 @@ export default function PlansPage() {
           <div className="">
             <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 cursor-pointer justify-center h-[42px]">
               <p>Download</p>
-              <LiaDownloadSolid size={20}/>
+              <LiaDownloadSolid size={20} />
             </button>
           </div>
         </div>
       </div>
 
       {/* 🔵 Savings List goes here */}
-      <div className="w-full h-full bg-[#F7F7F7] mt-5 p-5">
+      <div className="mt-5 p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {savings.map((item) => (
             <Link href={`/dashboard/plans/${item.id}`} key={item.id}>
