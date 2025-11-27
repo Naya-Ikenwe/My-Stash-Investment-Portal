@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoIosSearch } from "react-icons/io";
 import { LiaDownloadSolid } from "react-icons/lia";
@@ -5,6 +8,28 @@ import { savings } from "@/data/PlansData";
 import Link from "next/link";
 
 export default function PlansPage() {
+  const [statusFilter, setStatusFilter] = useState<
+    "All" | "Active" | "Matured"
+  >("All");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+  const filteredSavings =
+    statusFilter === "All"
+      ? savings
+      : savings.filter((item) => item.status === statusFilter);
+
+  const sortedSavings = [...filteredSavings].sort((a, b) => {
+    // Active plans come first, then Matured
+    if (a.status === "Active" && b.status === "Matured") return -1;
+    if (a.status === "Matured" && b.status === "Active") return 1;
+    return 0;
+  });
+
+  const handleStatusChange = (status: "All" | "Active" | "Matured") => {
+    setStatusFilter(status);
+    setIsStatusDropdownOpen(false);
+  };
+
   return (
     <main className="w-full h-full rounded-[14px]">
       <h1 className="text-[32px] font-medium text-[#A243DC]">My Plans</h1>
@@ -12,20 +37,42 @@ export default function PlansPage() {
 
       {/* Filters */}
       <div className="flex justify-between items-center mt-3">
-        <div className="w-[326px] flex h-8 mt-5 gap-4">
-          <button>
-            <div className="h-8 cursor-pointer flex items-center justify-between mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center">
-              <p> Status</p> <RiArrowDropDownLine />
+        <div className="w-[326px] flex h-8 mt-5 gap-4 relative">
+          <button
+            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+          >
+            <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center justify-between">
+              <p>Status</p>
+              <RiArrowDropDownLine
+                size={16}
+                className={`transition-transform ${
+                  isStatusDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </div>
           </button>
-          <button>
-            <div className="h-8 cursor-pointer flex items-center justify-between w-[85px] py-1 px-2 bg-[#F7F7F7] text-center">
-              <p> Tenor</p> <RiArrowDropDownLine />
+
+          {/* Status Dropdown Menu */}
+          {isStatusDropdownOpen && (
+            <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              {["All", "Active", "Matured"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() =>
+                    handleStatusChange(status as "All" | "Active" | "Matured")
+                  }
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
+                    statusFilter === status ? "bg-[#A243DC] text-white" : ""
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
             </div>
-          </button>
+          )}
           <button>
-            <div className="h-8 cursor-pointer flex items-center justify-between w-[118px] py-1 px-2 bg-[#F7F7F7] text-center">
-              <p>Date Range</p> <RiArrowDropDownLine />
+            <div className="h-8 cursor-pointer w-[118px] py-1 px-2 bg-[#F7F7F7] text-center">
+              <p>Date Range</p>
             </div>
           </button>
         </div>
@@ -53,7 +100,7 @@ export default function PlansPage() {
       {/* 🔵 Savings List goes here */}
       <div className="mt-5 p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {savings.map((item) => (
+          {sortedSavings.map((item) => (
             <Link href={`/dashboard/plans/${item.id}`} key={item.id}>
               <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-white relative cursor-pointer hover:shadow-md transition">
                 <span
