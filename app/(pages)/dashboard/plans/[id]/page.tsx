@@ -37,7 +37,7 @@ export default function PlanDetails({
         <p>Back</p>
       </Link>
       {/* LEFT CARD */}
-      <div className="flex justify-between">
+      <div className="flex gap-20">
         <div className="bg-[#F7F7F7] w-[557px] h-[265px] p-6 rounded-xl shadow-sm">
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             {plan.title}
