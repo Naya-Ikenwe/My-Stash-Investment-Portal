@@ -1,9 +1,10 @@
 import Image from "next/image";
 type AuthWrapperProps = {
   children: React.ReactNode;
+  className?: string;
 };
 
-export default function AuthWrapper({ children }: AuthWrapperProps) {
+export default function AuthWrapper({ children, className }: AuthWrapperProps) {
   return (
     <main className="max-w-7xl mx-auto pb-6">
       <div className="mt-10 mb-24">
@@ -15,7 +16,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
         />
       </div>
 
-      {children}
+      <div className={`${className} `}>{children}</div>
     </main>
   );
 }

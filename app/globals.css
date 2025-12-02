@@ -34,8 +34,8 @@
   --color-text: #1f2937;
   --color-border: #e5e7eb;
 
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "Fira Code", monospace;
+  /* --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace; */
 
   --radius: 0.625rem;
 
@@ -80,6 +80,7 @@ body {
   font-size: 14px;
   background: #F7F7F7;
   color: var(--foreground);
+  font-family: var(--font-montserrat);
 }
 
 /* Custom utilities */

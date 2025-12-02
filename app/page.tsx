@@ -73,14 +73,14 @@ export default function Home() {
                 )}
               </div>
 
-              <Link href={"#"} className="text-primary">
+              <Link href={"forget-password"} className="text-primary">
                 Forgot Password
               </Link>
 
               <div className="flex items-center mt-5 justify-between">
                 <p>
                   New User?{" "}
-                  <Link href={"#"} className="text-primary">
+                  <Link href={"/sign-up"} className="text-primary">
                     Create Account
                   </Link>
                 </p>
