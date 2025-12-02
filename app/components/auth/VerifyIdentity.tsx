@@ -176,11 +176,18 @@ export default function VerifyIdentity() {
           )}
         />
 
-        <Input
+        <Link
+          href={"/dashboard"}
+          className="bg-primary text-white w-1/4 mt-4 rounded-xl text-center py-3 "
+        >
+          Proceed
+        </Link>
+
+        {/* <Input
           type="submit"
           value={"Proceed"}
           className="bg-primary text-white w-1/4 mt-4 cursor-pointer"
-        />
+        /> */}
       </form>
 
       <article className="flex flex-col text-center gap-2 items-center mt-3">
