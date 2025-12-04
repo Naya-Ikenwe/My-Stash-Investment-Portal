@@ -38,6 +38,24 @@ export default function PlansPage() {
     setIsDateRangeDropdownOpen(false);
   };
 
+  const toggleStatusDropdown = () => {
+    setIsStatusDropdownOpen(!isStatusDropdownOpen);
+    setIsTenorDropdownOpen(false);
+    setIsDateRangeDropdownOpen(false);
+  };
+
+  const toggleTenorDropdown = () => {
+    setIsTenorDropdownOpen(!isTenorDropdownOpen);
+    setIsStatusDropdownOpen(false);
+    setIsDateRangeDropdownOpen(false);
+  };
+
+  const toggleDateRangeDropdown = () => {
+    setIsDateRangeDropdownOpen(!isDateRangeDropdownOpen);
+    setIsStatusDropdownOpen(false);
+    setIsTenorDropdownOpen(false);
+  };
+
   // Helper function to calculate days until maturity
   const getDaysUntilMaturity = (maturityDate: string): number => {
     const today = new Date();
@@ -128,9 +146,7 @@ export default function PlansPage() {
       {/* Filters */}
       <div className="flex justify-between items-center mt-3">
         <div className="w-[326px] flex h-8 mt-5 gap-4 relative">
-          <button
-            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-          >
+          <button onClick={toggleStatusDropdown}>
             <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3">
               <p>Status</p>
               <RiArrowDropDownLine
@@ -161,7 +177,7 @@ export default function PlansPage() {
             </div>
           )}
 
-          <button onClick={() => setIsTenorDropdownOpen(!isTenorDropdownOpen)}>
+          <button onClick={toggleTenorDropdown}>
             <div className="h-8 cursor-pointer w-[85px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
               <p>Tenor</p>
               <RiArrowDropDownLine
@@ -192,9 +208,7 @@ export default function PlansPage() {
             </div>
           )}
 
-          <button
-            onClick={() => setIsDateRangeDropdownOpen(!isDateRangeDropdownOpen)}
-          >
+          <button onClick={toggleDateRangeDropdown}>
             <div className="h-8 cursor-pointer w-[118px] py-1 px-1.5 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
               <p>Date Range</p>
               <RiArrowDropDownLine
