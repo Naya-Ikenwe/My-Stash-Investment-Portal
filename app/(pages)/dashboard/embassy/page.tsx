@@ -21,7 +21,7 @@ export default function EmbassyPage() {
             className="w-full h-[60px] border rounded-xl border-[#CDCFD0] placeholder:text-[#303437] px-5 pr-12"
           />
 
-          <RiArrowDropDownLine className="absolute right-4 top-1/2 -translate-y-1/2 text-[#303437] text-3xl" />
+          <RiArrowDropDownLine className="absolute right-4 top-1/2 cursor-pointer -translate-y-1/2 text-[#303437] text-3xl" />
         </div>
 
         <div className="flex justify-between w-[496px] mt-5">
@@ -32,7 +32,7 @@ export default function EmbassyPage() {
               placeholder="Start Date"
               className="w-[229px] h-[60px] border border-[#CDCFD0] placeholder:text-[#303437] font-medium text-[14px] px-5 rounded-xl"
             />
-            <RiArrowDropDownLine className="absolute right-4 top-1/2 -translate-y-1/2 text-[#303437] text-3xl" />
+            <RiArrowDropDownLine className="absolute right-4 top-1/2 cursor-pointer -translate-y-1/2 text-[#303437] text-3xl" />
           </div>
 
           <div className="relative">
@@ -42,7 +42,7 @@ export default function EmbassyPage() {
               placeholder="End Date"
               className="w-[229px] h-[60px] border border-[#CDCFD0] placeholder:text-[#303437] font-medium text-[14px] px-5 rounded-xl"
             />
-            <RiArrowDropDownLine className="absolute right-4 top-1/2 -translate-y-1/2 text-[#303437] text-3xl" />
+            <RiArrowDropDownLine className="absolute right-4 top-1/2 cursor-pointer -translate-y-1/2 text-[#303437] text-3xl" />
           </div>
         </div>
 
@@ -51,7 +51,7 @@ export default function EmbassyPage() {
             Agree to embassy request terms & conditions
           </p>
 
-          <input type="checkbox" name="checkbox" className="w-5 h-5" />
+          <input type="checkbox" name="checkbox" className="w-5 cursor-pointer h-5" />
         </div>
 
         <div className="bg-[#F4F6F7] w-[496px] h-[253px] mt-5 rounded-xl p-4">
@@ -61,7 +61,7 @@ export default function EmbassyPage() {
           ></textarea>
         </div>
         <div className="w-[496px] flex justify-end">
-          <button className="bg-[#A243DC] w-[184px] h-[38px] rounded-xl text-white font-medium text-[16px] mt-5">
+          <button className="bg-[#A243DC] cursor-pointer w-[184px] h-[38px] rounded-xl text-white font-medium text-[16px] mt-5">
             Submit
           </button>
         </div>

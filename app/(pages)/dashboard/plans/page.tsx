@@ -12,23 +12,113 @@ export default function PlansPage() {
     "All" | "Active" | "Matured"
   >("All");
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-
-  const filteredSavings =
-    statusFilter === "All"
-      ? savings
-      : savings.filter((item) => item.status === statusFilter);
-
-  const sortedSavings = [...filteredSavings].sort((a, b) => {
-    // Active plans come first, then Matured
-    if (a.status === "Active" && b.status === "Matured") return -1;
-    if (a.status === "Matured" && b.status === "Active") return 1;
-    return 0;
-  });
+  const [tenorFilter, setTenorFilter] = useState<
+    "All" | "6 months" | "12 months"
+  >("All");
+  const [isTenorDropdownOpen, setIsTenorDropdownOpen] = useState(false);
+  const [dateRangeFilter, setDateRangeFilter] = useState<
+    "All" | "Maturing Soon" | "3-6 Months" | "6-12 Months" | "Later"
+  >("All");
+  const [isDateRangeDropdownOpen, setIsDateRangeDropdownOpen] = useState(false);
 
   const handleStatusChange = (status: "All" | "Active" | "Matured") => {
     setStatusFilter(status);
     setIsStatusDropdownOpen(false);
   };
+
+  const handleTenorChange = (tenor: "All" | "6 months" | "12 months") => {
+    setTenorFilter(tenor);
+    setIsTenorDropdownOpen(false);
+  };
+
+  const handleDateRangeChange = (
+    range: "All" | "Maturing Soon" | "3-6 Months" | "6-12 Months" | "Later"
+  ) => {
+    setDateRangeFilter(range);
+    setIsDateRangeDropdownOpen(false);
+  };
+
+  // Helper function to calculate days until maturity
+  const getDaysUntilMaturity = (maturityDate: string): number => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day
+
+    // Parse the date string "MM/DD/YY" format
+    const parts = maturityDate.split("/");
+    const month = parseInt(parts[0], 10) - 1; // Month is 0-indexed
+    const day = parseInt(parts[1], 10);
+    let year = parseInt(parts[2], 10);
+
+    // Handle 2-digit year (assume 2000+ if <= 50, else 1900+)
+    if (year <= 50) {
+      year += 2000;
+    } else {
+      year += 1900;
+    }
+
+    const maturity = new Date(year, month, day);
+    maturity.setHours(0, 0, 0, 0); // Set to start of day
+
+    const timeDiff = maturity.getTime() - today.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+  };
+
+  // Filter by date range (maturity date)
+  const filterByDateRange = (plans: typeof savings) => {
+    if (dateRangeFilter === "All") return plans;
+
+    return plans.filter((plan) => {
+      const daysUntilMaturity = getDaysUntilMaturity(plan.maturityDate);
+
+      switch (dateRangeFilter) {
+        case "Maturing Soon":
+          return daysUntilMaturity <= 90;
+        case "3-6 Months":
+          return daysUntilMaturity > 90 && daysUntilMaturity <= 180;
+        case "6-12 Months":
+          return daysUntilMaturity > 180 && daysUntilMaturity <= 365;
+        case "Later":
+          return daysUntilMaturity > 365;
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Filter by tenor (plan duration)
+  const filterByTenor = (plans: typeof savings) => {
+    if (tenorFilter === "All") return plans;
+
+    return plans.filter((plan) => {
+      // Extract tenor from plan field (e.g., "Plan A" -> we check based on maturity duration)
+      const daysUntilMaturity = getDaysUntilMaturity(plan.maturityDate);
+
+      // Estimate tenor based on maturity date
+      // 6 months = ~180 days, 12 months = ~365 days
+      if (tenorFilter === "6 months") {
+        return daysUntilMaturity > 90 && daysUntilMaturity <= 180;
+      } else if (tenorFilter === "12 months") {
+        return daysUntilMaturity > 180 && daysUntilMaturity <= 365;
+      }
+      return true;
+    });
+  };
+
+  const statusFilteredSavings =
+    statusFilter === "All"
+      ? savings
+      : savings.filter((item) => item.status === statusFilter);
+
+  const dateFilteredSavings = filterByDateRange(statusFilteredSavings);
+
+  const tenorFilteredSavings = filterByTenor(dateFilteredSavings);
+
+  const sortedSavings = [...tenorFilteredSavings].sort((a, b) => {
+    // Active plans come first, then Matured
+    if (a.status === "Active" && b.status === "Matured") return -1;
+    if (a.status === "Matured" && b.status === "Active") return 1;
+    return 0;
+  });
 
   return (
     <main className="w-full h-full rounded-[14px]">
@@ -41,7 +131,7 @@ export default function PlansPage() {
           <button
             onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
           >
-            <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center justify-between">
+            <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3">
               <p>Status</p>
               <RiArrowDropDownLine
                 size={16}
@@ -70,11 +160,83 @@ export default function PlansPage() {
               ))}
             </div>
           )}
-          <button>
-            <div className="h-8 cursor-pointer w-[118px] py-1 px-2 bg-[#F7F7F7] text-center">
-              <p>Date Range</p>
+
+          <button onClick={() => setIsTenorDropdownOpen(!isTenorDropdownOpen)}>
+            <div className="h-8 cursor-pointer w-[85px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
+              <p>Tenor</p>
+              <RiArrowDropDownLine
+                size={16}
+                className={`transition-transform ${
+                  isTenorDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </div>
           </button>
+
+          {/* Tenor Dropdown Menu */}
+          {isTenorDropdownOpen && (
+            <div className="absolute top-10 left-20 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              {["All", "6 months", "12 months"].map((tenor) => (
+                <button
+                  key={tenor}
+                  onClick={() =>
+                    handleTenorChange(tenor as "All" | "6 months" | "12 months")
+                  }
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
+                    tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""
+                  }`}
+                >
+                  {tenor}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsDateRangeDropdownOpen(!isDateRangeDropdownOpen)}
+          >
+            <div className="h-8 cursor-pointer w-[118px] py-1 px-1.5 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
+              <p>Date Range</p>
+              <RiArrowDropDownLine
+                size={16}
+                className={`transition-transform ${
+                  isDateRangeDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+          </button>
+
+          {/* Date Range Dropdown Menu */}
+          {isDateRangeDropdownOpen && (
+            <div className="absolute top-10 left-40 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              {[
+                "All",
+                "Maturing Soon",
+                "3-6 Months",
+                "6-12 Months",
+                "Later",
+              ].map((range) => (
+                <button
+                  key={range}
+                  onClick={() =>
+                    handleDateRangeChange(
+                      range as
+                        | "All"
+                        | "Maturing Soon"
+                        | "3-6 Months"
+                        | "6-12 Months"
+                        | "Later"
+                    )
+                  }
+                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
+                    dateRangeFilter === range ? "bg-[#A243DC] text-white" : ""
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
