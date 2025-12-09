@@ -34,15 +34,15 @@ export default function PlanDetails({
         className="flex items-center w-[90px] h-[42px] gap-1 text-sm text-[#37474F] mb-4"
       >
         <MdOutlineKeyboardArrowLeft />
-        <p>Back</p>
+        <p className="font-euclid">Back</p>
       </Link>
       {/* LEFT CARD */}
       <div className="flex gap-20">
         <div className="bg-[#F7F7F7] w-[557px] h-[265px] p-6 rounded-xl shadow-sm">
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
+          <h1 className="text-2xl font-semibold font-freizeit flex items-center gap-10">
             {plan.title}
             <span
-              className={`text-xs px-3 py-1 rounded-full ${
+              className={`text-xs px-3 font-manrope py-1 rounded-full ${
                 plan.status === "Active"
                   ? "bg-blue-100 text-blue-600"
                   : "bg-green-100 text-green-800"
@@ -63,7 +63,9 @@ export default function PlanDetails({
               className="bg-[#A243DC] flex gap-2 items-center text-white px-6 py-2 rounded-lg cursor-pointer"
             >
               <FiArrowDownLeft size={20} />
-              <p>{plan.status === "Matured" ? "Rollover" : "Top-up"}</p>
+              <p className="font-manrope">
+                {plan.status === "Matured" ? "Rollover" : "Top-up"}
+              </p>
             </button>
 
             <Link
@@ -75,13 +77,15 @@ export default function PlanDetails({
               className="border flex items-center gap-2 text-center border-[#A243DC] text-[#A243DC] px-6 py-2 rounded-lg cursor-pointer"
             >
               <FiArrowUpRight size={20} />
-              <p>Liquidate</p>
+              <p className="font-manrope">Liquidate</p>
             </Link>
           </div>
 
           {/* Toggle */}
           <div className="flex justify-between mt-6 items-center">
-            <span className="text-gray-700">Reinvest after maturity</span>
+            <span className="text-gray-700 font-euclid">
+              Reinvest after maturity
+            </span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#A243DC] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#A243DC]"></div>
@@ -91,30 +95,30 @@ export default function PlanDetails({
 
         {/* RIGHT CARD */}
         <div className="bg-[#F7F7F7] w-[350px] p-6 rounded-xl shadow-sm">
-          <h3 className="font-semibold text-[#0053A6] mb-4">
+          <h3 className="font-semibold font-freizeit text-[#A243DC] mb-4">
             Performance Summary
           </h3>
 
           <div className="space-y-4 text-sm">
             <div className="flex justify-between">
-              <span>Plan Created on</span>
+              <span className="font-euclid">Plan Created on</span>
               <span className="font-medium">25th July 2025</span>
             </div>
 
             <div className="flex justify-between">
-              <span>Plan Maturity Date</span>
+              <span className="font-euclid">Plan Maturity Date</span>
               <span className="font-medium">28th July 2026</span>
             </div>
 
             <div className="flex justify-between">
-              <span>Amount Invested</span>
+              <span className="font-euclid">Amount Invested</span>
               <span className="font-medium">
                 ₦{plan.amount.toLocaleString()}
               </span>
             </div>
 
             <div className="flex justify-between">
-              <span>Returns & Earnings</span>
+              <span className="font-euclid">Returns & Earnings</span>
               <span className="font-medium">----</span>
             </div>
 
@@ -130,13 +134,13 @@ export default function PlanDetails({
                       className="w-12 h-12"
                     />
 
-                    <span className="z-10 font-semibold text-gray-800">
+                    <span className="z-10 font-euclid font-semibold text-gray-800">
                       Access Bank
                     </span>
                   </div>
 
                   <div className="font-normal text-[16px] tracking-wide">
-                    <span className="font-medium">
+                    <span className="font-medium font-euclid">
                       {plan.accountHolderName}
                     </span>
                   </div>
@@ -156,12 +160,12 @@ export default function PlanDetails({
         }`}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-[#303437]">Transaction History</h3>
+          <h3 className="font-semibold font-freizeit text-[#303437]">Transaction History</h3>
           <Link
             href="#"
             className="text-sm flex items-center gap-2 text-[#303437] hover:underline"
           >
-            <p>View all</p>
+            <p className="font-manrope">View all</p>
             <IoIosArrowForward />
           </Link>
         </div>
@@ -187,7 +191,7 @@ export default function PlanDetails({
 
                 {/* Text */}
                 <div>
-                  <p className="font-medium capitalize">
+                  <p className="font-medium font-euclid capitalize">
                     {tx.type === "deposit"
                       ? "Manual Deposit"
                       : tx.type === "interest"

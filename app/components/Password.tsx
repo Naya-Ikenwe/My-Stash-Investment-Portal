@@ -35,7 +35,7 @@ export default function Password({
 
         {/* Header Section */}
         <div className="pt-8 pb-4 text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-20">
+          <h2 className="text-xl font-bold font-euclid text-gray-900 mb-20">
             Password Required
           </h2>
         </div>
@@ -48,7 +48,7 @@ export default function Password({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your Password"
-              className="w-full px-4 py-3 border border-gray-300 mb-15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A243DC] focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 mb-15 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A243DC] focus:border-transparent placeholder:font-euclid"
               onKeyPress={(e) => {
                 if (e.key === "Enter") {
                   handleContinue();
@@ -62,7 +62,7 @@ export default function Password({
             <button
               onClick={handleContinue}
               disabled={!password.trim()}
-              className="w-full px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors shadow-md shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors shadow-md font-manrope shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
             </button>

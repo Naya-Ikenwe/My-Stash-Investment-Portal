@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Euclid";
+  src: url("/fonts/Euclid-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Freizeit";
+  src: url("/fonts/Freizeit-Medium.otf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+
 /* Map CSS variables into Tailwind tokens */
 @theme {
   --color-background: var(--background);
@@ -22,6 +37,10 @@
   --color-ring: var(--ring);
 
   --radius-default: var(--radius);
+
+  --font-euclid: "Euclid", sans-serif; 
+  --font-manrope: "Manrope", sans-serif;
+  --font-freizeit: "Freizeit", sans-serif;
 }
 
 /* Root variables */
@@ -136,3 +155,4 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
