@@ -1,12 +1,39 @@
+"use client";
+
+import { userProfile } from "@/app/api/Users";
 import PortfolioCards from "@/app/components/PortfolioCards";
 import PortfolioGrowth from "@/app/components/PortfolioGrowth";
 import RecentActivities from "@/app/components/RecentActivities";
 import TransactionHistory from "@/app/components/TransactionHistory";
+import { useEffect, useState } from "react";
 
+type User = {
+  data: {
+    username: string;
+  };
+};
 export default function Dashboard() {
+  const [user, setUser] = useState<User | null>();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await userProfile();
+        setUser(data);
+        console.log("Profile data:", data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   return (
     <main>
-      <h2 className="text-3xl font-medium">Hello <span className="text-primary">Shalom,</span> </h2>
+      <h2 className="text-3xl font-medium">
+        Hello <span className="text-primary">{user?.data?.username},</span>
+      </h2>
 
       <hr className="my-4 border border-[#455A6433]" />
 
