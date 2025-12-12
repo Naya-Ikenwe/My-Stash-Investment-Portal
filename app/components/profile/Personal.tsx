@@ -13,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 
-export default function Personal() {
+export default function Personal({user}: {user: any}) {
   const { control } = useForm();
 
   return (
@@ -159,6 +159,7 @@ export default function Personal() {
                 <Input
                   {...field}
                   type="email"
+                  defaultValue={user?.email}
                   placeholder="Email Address"
                   className="bg-white h-12 mt-2"
                 />

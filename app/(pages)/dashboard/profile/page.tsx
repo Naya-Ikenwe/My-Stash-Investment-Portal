@@ -1,6 +1,10 @@
+"use client";
+
+import Authorization from "@/app/components/profile/Authorization";
 import Kyc from "@/app/components/profile/Kyc";
 import NextofKin from "@/app/components/profile/NextOfKin";
 import Personal from "@/app/components/profile/Personal";
+import { useAuthStore } from "@/app/store/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ProfilePage() {
@@ -22,6 +26,9 @@ export default function ProfilePage() {
       label: "Authorization",
     },
   ];
+
+  const { user } = useAuthStore();
+  console.log("user from store: ", user);
   return (
     <main className="flex flex-col gap-6">
       <h2 className="text-primary text-2xl font-medium">Profile Management</h2>
@@ -40,7 +47,7 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="personal">
-          <Personal />
+          <Personal user={user} />
         </TabsContent>
 
         <TabsContent value="next-of-kin">
@@ -50,8 +57,10 @@ export default function ProfilePage() {
         <TabsContent value="kyc">
           <Kyc />
         </TabsContent>
-        
-        <TabsContent value="authorization">soft liviing life</TabsContent>
+
+        <TabsContent value="authorization">
+          <Authorization />
+        </TabsContent>
       </Tabs>
     </main>
   );
