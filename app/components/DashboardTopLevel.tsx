@@ -6,15 +6,16 @@ import { useState, useRef } from "react";
 import { FaUserAlt } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import { IoMdArrowDropdown } from "react-icons/io";
+import { IoClose } from "react-icons/io5";
 import { MdOutlineNotifications } from "react-icons/md";
+import { useAuthStore } from "../store/authStore";
 
 export default function DashboardTopLevel() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  // Close dropdown on outside click
+  const { logout } = useAuthStore();
 
   return (
     <>
@@ -83,28 +84,35 @@ export default function DashboardTopLevel() {
       {/* LOGOUT CONFIRM MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-80">
+          <div className="bg-white rounded-xl shadow-lg w-[483px] h-[390px] flex flex-col items-center justify-center gap-6 relative">
             <p className="text-lg font-semibold mb-4">
               Do you want to log out?
             </p>
-            <div className="flex justify-end gap-3">
+
+            <div className="flex gap-3">
               <button
-                onClick={() => setShowLogoutModal(false)}
-                className="px-4 py-2 rounded-md bg-primary"
+                onClick={() => {
+                  logout();
+                  setShowLogoutModal(false);
+                }}
+                className="px-6 py-2 rounded-md bg-primary text-white"
               >
                 Yes
               </button>
-              
+
               <button
-                onClick={() => {
-                  setShowLogoutModal(false);
-                  // ADD YOUR LOGOUT LOGIC HERE
-                }}
-                className="px-4 py-2 rounded-md bordeer border-primary text-primary"
+                onClick={() => setShowLogoutModal(false)}
+                className="px-6 py-2 rounded-md border border-primary text-primary"
               >
                 No
               </button>
             </div>
+
+            <IoClose
+              className="absolute right-4 top-4"
+              size={24}
+              onClick={() => setShowLogoutModal(false)}
+            />
           </div>
         </div>
       )}

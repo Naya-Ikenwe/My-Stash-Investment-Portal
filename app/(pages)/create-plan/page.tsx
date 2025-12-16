@@ -13,14 +13,13 @@ export default function CreatePlanPage() {
   const form = useForm<PlanFormData>({
     defaultValues: {
       name: "",
-      principal: 0,
+      // principal: ,
       duration: 0,
       startDate: Date.now(),
       endDate: 0,
-      roiRate: 0.15,
-      roiType: "FIXED",
       payoutFrequency: "MONTHLY",
       payoutAccountId: "acc-123-456",
+      rolloverType: "PRINCIPAL_ONLY",
     },
   });
 
