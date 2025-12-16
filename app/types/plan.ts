@@ -6,10 +6,9 @@ export interface PlanFormData {
   duration: number;
   startDate: number;
   endDate: number;
-  roiRate: number;
-  roiType: "FIXED";
   payoutFrequency: "MONTHLY";
-  payoutAccountId: "acc-123-456";
+  payoutAccountId: string;
+  rolloverType: "PRINCIPAL_ONLY";
 }
 
 export interface CreateFormPlanProps {

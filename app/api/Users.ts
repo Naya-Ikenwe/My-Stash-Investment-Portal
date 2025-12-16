@@ -25,3 +25,8 @@ export const verifyEmail = async () => {
   const res = await API.post("/user/verify-email");
   return res.data;
 };
+
+export const verifyIdentity = async () => {
+  const res = await API.post("/bank");
+  return res.data;
+};

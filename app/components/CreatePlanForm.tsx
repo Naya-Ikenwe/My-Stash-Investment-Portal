@@ -74,6 +74,7 @@ export default function CreatePlanForm({
                 <Input
                   {...field}
                   type="number"
+                  onChange={(e) => field.onChange(Number(e.target.value))}
                   required
                   className="bg-white h-12 mt-2"
                 />
@@ -88,7 +89,9 @@ export default function CreatePlanForm({
               control={control}
               render={({ field }) => (
                 <Select
-                  onValueChange={field.onChange}
+                  // onValueChange={field.onChange}
+                  onValueChange={(value) => field.onChange(Number(value))}
+                  value={field.value?.toString()}
                   // defaultValue={}
                   // value={field.value}
                   // type="number"

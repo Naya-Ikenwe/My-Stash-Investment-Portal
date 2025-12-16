@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PiEmptyBold } from "react-icons/pi";
 
 export default function TransactionHistory() {
@@ -5,7 +6,7 @@ export default function TransactionHistory() {
     <div className="bg-[#F7F7F7] p-4 rounded-2xl w-full h-full flex flex-col gap-4">
       <div className="flex justify-between">
         <h3 className="">Transaction History</h3>
-        <p>Expand</p>
+        <Link href={'/dashboard/transaction-history'}>Expand</Link>
       </div>
 
       <div className="w-full h-full flex items-center justify-center">
