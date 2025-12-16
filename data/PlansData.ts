@@ -24,7 +24,7 @@ export const savings: Saving[] = [
     amount: 1000000,
     status: "Active",
     plan: "Plan A",
-    maturityDate: "01/04/26", // ~31 days - Maturing Soon
+    maturityDate: "10/01/26", // ~25 days - Maturing Soon
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -82,7 +82,7 @@ export const savings: Saving[] = [
     amount: 1000000,
     status: "Active",
     plan: "Plan B",
-    maturityDate: "02/04/26", // ~61 days - Maturing Soon
+    maturityDate: "20/01/26", // ~35 days - Maturing Soon
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -129,6 +129,124 @@ export const savings: Saving[] = [
     status: "Active",
     plan: "Plan C",
     maturityDate: "06/04/27", // ~549+ days - Later (1+ year)
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 9,
+    title: "Rent",
+    amount: 1000000,
+    status: "Active",
+    plan: "Plan A",
+    maturityDate: "10/06/26",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 10,
+    title: "Investment Savings",
+    amount: 100000,
+    status: "Matured",
+    plan: "Plan C",
+    maturityDate: "10/06/26",
+    accountHolderName: "Olatipe Osatuyi",
+    accountNumber: "1234567890",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 11,
+    title: "New Car",
+    amount: 5000000,
+    status: "Active",
+    plan: "Plan B",
+    maturityDate: "10/06/26",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 12,
+    title: "New House",
+    amount: 3000000,
+    status: "Active",
+    plan: "Plan A",
+    maturityDate: "10/06/26",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 13,
+    title: "MacBook Pro",
+    amount: 1000000,
+    status: "Active",
+    plan: "Plan B",
+    maturityDate: "10/06/26",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 14,
+    title: "iPhone 16",
+    amount: 1000000,
+    status: "Matured",
+    plan: "Plan C",
+    maturityDate: "10/06/26",
+    accountHolderName: "Olatipe Osatuyi",
+    accountNumber: "1234567890",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 15,
+    title: "Convocation",
+    amount: 50000,
+    status: "Matured",
+    plan: "Plan B",
+    maturityDate: "10/06/26",
+    accountHolderName: "Olatipe Osatuyi",
+    accountNumber: "1234567890",
+
+    transactions: [
+      { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
+      { id: 2, type: "interest", amount: 15000, date: "2024-02-01" },
+      { id: 3, type: "withdrawal", amount: 100000, date: "2024-03-12" },
+    ],
+  },
+  {
+    id: 16,
+    title: "Japa to UK",
+    amount: 30000000,
+    status: "Active",
+    plan: "Plan C",
+    maturityDate: "10/06/26",
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },

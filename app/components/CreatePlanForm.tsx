@@ -1,7 +1,8 @@
-import Link from "next/link";
+"use client";
+
 import CardWrapper from "./CardWrapper";
 import { IoIosArrowBack } from "react-icons/io";
-import { Controller, useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -13,9 +14,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
+import { CreateFormPlanProps, PlanFormData } from "../types/plan";
 
-export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
-  const { control } = useForm();
+export default function CreatePlanForm({
+  onBack,
+  onContinue,
+  form,
+}: CreateFormPlanProps) {
+  const { control, handleSubmit } = form;
+
+  const onSubmit = (data: PlanFormData) => {
+    const { duration, startDate } = form.getValues();
+
+    const endDate =
+      duration === 6
+        ? new Date(startDate).setMonth(new Date(startDate).getMonth() + 6)
+        : new Date(startDate).setMonth(new Date(startDate).getMonth() + 12);
+
+    form.setValue("endDate", endDate);
+
+    console.log("form data: ", data);
+    onContinue();
+  };
 
   return (
     <main className="flex items-center -my-10">
@@ -29,15 +49,16 @@ export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
 
         <p className="text-2xl font-medium">Hi, create your portfolio</p>
 
-        <form action="" className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <div>
-            <label htmlFor="planName">Give your plan a name</label>
+            <label htmlFor="name">Give your plan a name</label>
             <Controller
-              name="planName"
+              name="name"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
+                  required
                   className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
                 />
               )}
@@ -45,12 +66,18 @@ export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
           </div>
 
           <div>
-            <label htmlFor="amount">How much do you want to fund?</label>
+            <label htmlFor="principal">How much do you want to fund?</label>
             <Controller
-              name="amount"
+              name="principal"
               control={control}
               render={({ field }) => (
-                <Input {...field} className="bg-white h-12 mt-2" />
+                <Input
+                  {...field}
+                  type="number"
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  required
+                  className="bg-white h-12 mt-2"
+                />
               )}
             />
           </div>
@@ -62,9 +89,13 @@ export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
               control={control}
               render={({ field }) => (
                 <Select
-                  onValueChange={field.onChange}
+                  // onValueChange={field.onChange}
+                  onValueChange={(value) => field.onChange(Number(value))}
+                  value={field.value?.toString()}
                   // defaultValue={}
-                  value={field.value}
+                  // value={field.value}
+                  // type="number"
+                  required
                 >
                   <SelectTrigger className="w-full bg-white min-h-12 mt-2 py-0">
                     <SelectValue
@@ -75,8 +106,8 @@ export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
                   <SelectContent className="bg-white">
                     <SelectGroup>
                       <SelectLabel>Select duration</SelectLabel>
-                      <SelectItem value="6-months">6 Months</SelectItem>
-                      <SelectItem value="12-months">12 Months</SelectItem>
+                      <SelectItem value="6">6 Months</SelectItem>
+                      <SelectItem value="12">12 Months</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -84,13 +115,11 @@ export default function CreatePlanForm({ onBack }: { onBack: () => void }) {
             />
           </div>
 
-          <Link href={"/create-plan/plan-breakdown"}>
-            <Input
-              type="submit"
-              value={"Continue"}
-              className="bg-[#A243DC] text-white mt-5"
-            />
-          </Link>
+          <Input
+            type="submit"
+            value={"Continue"}
+            className="bg-[#A243DC] text-white mt-5 cursor-pointer hover:bg-[#8a38c2] transition-colors"
+          />
         </form>
       </CardWrapper>
 

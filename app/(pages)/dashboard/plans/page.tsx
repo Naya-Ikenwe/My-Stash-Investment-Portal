@@ -5,252 +5,179 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoIosSearch } from "react-icons/io";
 import { LiaDownloadSolid } from "react-icons/lia";
 import { savings } from "@/data/PlansData";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import Link from "next/link";
+
+// Utility function to calculate days until maturity
+const getDaysUntilMaturity = (maturityDateString: string): number => {
+  const [day, month, year] = maturityDateString.split("/").map(Number);
+  // Convert 2-digit year to 4-digit year (e.g., 26 -> 2026)
+  const fullYear = year < 100 ? 2000 + year : year;
+  const maturityDate = new Date(fullYear, month - 1, day);
+  const today = new Date();
+  const diffTime = maturityDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
 
 export default function PlansPage() {
   const [statusFilter, setStatusFilter] = useState<
     "All" | "Active" | "Matured"
   >("All");
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [tenorFilter, setTenorFilter] = useState<
     "All" | "6 months" | "12 months"
   >("All");
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isTenorDropdownOpen, setIsTenorDropdownOpen] = useState(false);
-  const [dateRangeFilter, setDateRangeFilter] = useState<
-    "All" | "Maturing Soon" | "3-6 Months" | "6-12 Months" | "Later"
-  >("All");
-  const [isDateRangeDropdownOpen, setIsDateRangeDropdownOpen] = useState(false);
+  const cardPerPage = 8;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleStatusChange = (status: "All" | "Active" | "Matured") => {
-    setStatusFilter(status);
-    setIsStatusDropdownOpen(false);
-  };
+  const filteredSavings = savings.filter((item) => {
+    const matchesStatus =
+      statusFilter === "All" || item.status === statusFilter;
 
-  const handleTenorChange = (tenor: "All" | "6 months" | "12 months") => {
-    setTenorFilter(tenor);
-    setIsTenorDropdownOpen(false);
-  };
+    const matchesSearch = item.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
 
-  const handleDateRangeChange = (
-    range: "All" | "Maturing Soon" | "3-6 Months" | "6-12 Months" | "Later"
-  ) => {
-    setDateRangeFilter(range);
-    setIsDateRangeDropdownOpen(false);
-  };
+    // Filter by tenor (plan duration in months)
+    let matchesTenor = true;
+    if (tenorFilter !== "All") {
+      const daysUntilMaturity = getDaysUntilMaturity(item.maturityDate);
 
-  const toggleStatusDropdown = () => {
-    setIsStatusDropdownOpen(!isStatusDropdownOpen);
-    setIsTenorDropdownOpen(false);
-    setIsDateRangeDropdownOpen(false);
-  };
-
-  const toggleTenorDropdown = () => {
-    setIsTenorDropdownOpen(!isTenorDropdownOpen);
-    setIsStatusDropdownOpen(false);
-    setIsDateRangeDropdownOpen(false);
-  };
-
-  const toggleDateRangeDropdown = () => {
-    setIsDateRangeDropdownOpen(!isDateRangeDropdownOpen);
-    setIsStatusDropdownOpen(false);
-    setIsTenorDropdownOpen(false);
-  };
-
-  // Helper function to calculate days until maturity
-  const getDaysUntilMaturity = (maturityDate: string): number => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-
-  
-    const parts = maturityDate.split("/");
-    const month = parseInt(parts[0], 10) - 1; 
-    const day = parseInt(parts[1], 10);
-    let year = parseInt(parts[2], 10);
-
-    // Handle 2-digit year (assume 2000+ if <= 50, else 1900+)
-    if (year <= 50) {
-      year += 2000;
-    } else {
-      year += 1900;
+      if (tenorFilter === "6 months") {
+        // 6 months = approximately 140-210 days
+        matchesTenor = daysUntilMaturity >= 140 && daysUntilMaturity <= 210;
+      } else if (tenorFilter === "12 months") {
+        // 12 months = approximately 300+ days
+        matchesTenor = daysUntilMaturity > 210;
+      }
     }
 
-    const maturity = new Date(year, month, day);
-    maturity.setHours(0, 0, 0, 0); // Set to start of day
+    return matchesStatus && matchesSearch && matchesTenor;
+  });
 
-    const timeDiff = maturity.getTime() - today.getTime();
-    return Math.ceil(timeDiff / (1000 * 3600 * 24));
-  };
-
-  // Filter by date range (maturity date)
-  const filterByDateRange = (plans: typeof savings) => {
-    if (dateRangeFilter === "All") return plans;
-
-    return plans.filter((plan) => {
-      const daysUntilMaturity = getDaysUntilMaturity(plan.maturityDate);
-
-      switch (dateRangeFilter) {
-        case "Maturing Soon":
-          return daysUntilMaturity <= 90;
-        case "3-6 Months":
-          return daysUntilMaturity > 90 && daysUntilMaturity <= 180;
-        case "6-12 Months":
-          return daysUntilMaturity > 180 && daysUntilMaturity <= 365;
-        case "Later":
-          return daysUntilMaturity > 365;
-        default:
-          return true;
-      }
-    });
-  };
-
-  // Filter by tenor (plan duration)
-  const filterByTenor = (plans: typeof savings) => {
-    if (tenorFilter === "All") return plans;
-
-    return plans.filter((plan) => {
-      // Extract tenor from plan field (e.g., "Plan A" -> we check based on maturity duration)
-      const daysUntilMaturity = getDaysUntilMaturity(plan.maturityDate);
-
-      // Estimate tenor based on maturity date
-      // 6 months = ~180 days, 12 months = ~365 days
-      if (tenorFilter === "6 months") {
-        return daysUntilMaturity > 90 && daysUntilMaturity <= 180;
-      } else if (tenorFilter === "12 months") {
-        return daysUntilMaturity > 180 && daysUntilMaturity <= 365;
-      }
-      return true;
-    });
-  };
-
-  const statusFilteredSavings =
-    statusFilter === "All"
-      ? savings
-      : savings.filter((item) => item.status === statusFilter);
-
-  const dateFilteredSavings = filterByDateRange(statusFilteredSavings);
-
-  const tenorFilteredSavings = filterByTenor(dateFilteredSavings);
-
-  const sortedSavings = [...tenorFilteredSavings].sort((a, b) => {
+  const sortedSavings = [...filteredSavings].sort((a, b) => {
     // Active plans come first, then Matured
     if (a.status === "Active" && b.status === "Matured") return -1;
     if (a.status === "Matured" && b.status === "Active") return 1;
     return 0;
   });
 
+  const totalPages = Math.ceil(sortedSavings.length / cardPerPage);
+
+  const paginatedSavings = sortedSavings.slice(
+    (currentPage - 1) * cardPerPage,
+    currentPage * cardPerPage
+  );
+
+  const handleStatusChange = (status: "All" | "Active" | "Matured") => {
+    setStatusFilter(status);
+    setIsStatusDropdownOpen(false);
+    setCurrentPage(1);
+  };
+
+  const handleTenorChange = (tenor: "All" | "6 months" | "12 months") => {
+    setTenorFilter(tenor);
+    setIsTenorDropdownOpen(false);
+    setCurrentPage(1);
+  };
+
   return (
     <main className="w-full h-full rounded-[14px]">
-      <h1 className="text-[32px] font-medium font-euclid text-[#A243DC]">My Plans</h1>
+      <h1 className="text-[32px] font-medium text-[#A243DC]">My Plans</h1>
       <hr className="border border-[#455A6433] rounded-md mt-5" />
 
       {/* Filters */}
       <div className="flex justify-between items-center mt-3">
-        <div className="w-[326px] flex h-8 mt-5 gap-4 relative">
-          <button onClick={toggleStatusDropdown}>
-            <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3">
-              <p className="font-manrope">Status</p>
-              <RiArrowDropDownLine
-                size={16}
-                className={`transition-transform ${
-                  isStatusDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* Status Dropdown Menu */}
-          {isStatusDropdownOpen && (
-            <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-              {["All", "Active", "Matured"].map((status) => (
-                <button
-                  key={status}
-                  onClick={() =>
-                    handleStatusChange(status as "All" | "Active" | "Matured")
-                  }
-                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                    statusFilter === status ? "bg-[#A243DC] text-white" : ""
+        <div className="flex h-8 mt-5 gap-4">
+          {/* Status Filter */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsStatusDropdownOpen(!isStatusDropdownOpen);
+                setIsTenorDropdownOpen(false);
+              }}
+            >
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+                <p>Status</p>
+                <RiArrowDropDownLine
+                  size={16}
+                  className={`transition-transform ${
+                    isStatusDropdownOpen ? "rotate-180" : ""
                   }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          )}
+                />
+              </div>
+            </button>
 
-          <button onClick={toggleTenorDropdown}>
-            <div className="h-8 cursor-pointer w-[85px] py-1 px-2 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
-              <p className="font-manrope">Tenor</p>
-              <RiArrowDropDownLine
-                size={16}
-                className={`transition-transform ${
-                  isTenorDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </button>
+            {/* Status Dropdown Menu */}
+            {isStatusDropdownOpen && (
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
+                {["All", "Active", "Matured"].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() =>
+                      handleStatusChange(status as "All" | "Active" | "Matured")
+                    }
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
+                      statusFilter === status ? "bg-[#A243DC] text-white" : ""
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* Tenor Dropdown Menu */}
-          {isTenorDropdownOpen && (
-            <div className="absolute top-10 left-20 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-              {["All", "6 months", "12 months"].map((tenor) => (
-                <button
-                  key={tenor}
-                  onClick={() =>
-                    handleTenorChange(tenor as "All" | "6 months" | "12 months")
-                  }
-                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
-                    tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""
+          {/* Tenor Filter */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsTenorDropdownOpen(!isTenorDropdownOpen);
+                setIsStatusDropdownOpen(false);
+              }}
+            >
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+                <p>Tenor</p>
+                <RiArrowDropDownLine
+                  size={16}
+                  className={`transition-transform ${
+                    isTenorDropdownOpen ? "rotate-180" : ""
                   }`}
-                >
-                  {tenor}
-                </button>
-              ))}
-            </div>
-          )}
+                />
+              </div>
+            </button>
 
-          <button onClick={toggleDateRangeDropdown}>
-            <div className="h-8 cursor-pointer w-[118px] py-1 px-1.5 bg-[#F7F7F7] text-center flex items-center gap-3 relative">
-              <p className="font-manrope">Date Range</p>
-              <RiArrowDropDownLine
-                size={16}
-                className={`transition-transform ${
-                  isDateRangeDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* Date Range Dropdown Menu */}
-          {isDateRangeDropdownOpen && (
-            <div className="absolute top-10 left-40 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-              {[
-                "All",
-                "Maturing Soon",
-                "3-6 Months",
-                "6-12 Months",
-                "Later",
-              ].map((range) => (
-                <button
-                  key={range}
-                  onClick={() =>
-                    handleDateRangeChange(
-                      range as
-                        | "All"
-                        | "Maturing Soon"
-                        | "3-6 Months"
-                        | "6-12 Months"
-                        | "Later"
-                    )
-                  }
-                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
-                    dateRangeFilter === range ? "bg-[#A243DC] text-white" : ""
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          )}
+            {/* Tenor Dropdown Menu */}
+            {isTenorDropdownOpen && (
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
+                {["All", "6 months", "12 months"].map((tenor) => (
+                  <button
+                    key={tenor}
+                    onClick={() =>
+                      handleTenorChange(
+                        tenor as "All" | "6 months" | "12 months"
+                      )
+                    }
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
+                      tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""
+                    }`}
+                  >
+                    {tenor}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -261,12 +188,18 @@ export default function PlansPage() {
               type="search"
               name="search"
               placeholder="Search plans..."
-              className="w-[180px] h-[42px] pl-9 pr-3 font-manrope rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // reset pagination on search
+              }}
+              className="w-[180px] h-[42px] pl-9 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
             />
           </div>
+
           <div className="">
             <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 cursor-pointer justify-center h-[42px]">
-              <p className="font-manrope">Download</p>
+              <p>Download</p>
               <LiaDownloadSolid size={20} />
             </button>
           </div>
@@ -274,13 +207,13 @@ export default function PlansPage() {
       </div>
 
       {/* 🔵 Savings List goes here */}
-      <div className="mt-5 p-5">
+      <div className="mt-5 py-2">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {sortedSavings.map((item) => (
+          {paginatedSavings.map((item) => (
             <Link href={`/dashboard/plans/${item.id}`} key={item.id}>
-              <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-white relative cursor-pointer hover:shadow-md transition">
+              <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-[#F7F7F7] relative cursor-pointer hover:shadow-md transition">
                 <span
-                  className={`absolute top-3 font-manrope right-3 text-xs px-3 py-1 rounded-full ${
+                  className={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full ${
                     item.status === "Active"
                       ? "bg-blue-100 text-blue-600"
                       : "bg-green-100 text-green-800"
@@ -289,22 +222,22 @@ export default function PlansPage() {
                   {item.status}
                 </span>
 
-                <h2 className="text-lg font-freizeit font-semibold">{item.title}</h2>
+                <h2 className="text-lg font-semibold">{item.title}</h2>
 
                 <p className="text-xl text-[#455A64] font-bold mt-2">
                   ₦{item.amount.toLocaleString()}
                 </p>
 
                 <div className="flex justify-between mt-9">
-                  <p className="text-[#263238] font-euclid font-semibold text-[12px] leading-[125%] mt-1">
+                  <p className="text-[#263238] font-semibold text-[12px] leading-[125%] mt-1">
                     {item.plan}
                   </p>
 
                   <div className="">
-                    <p className="text-[#37474F] font-euclid flex flex-col text-sm">
+                    <p className="text-[#37474F] flex flex-col text-sm">
                       Mtr.Date
                     </p>
-                    <p className="text-[#37474F] font-euclid flex flex-col text-sm">
+                    <p className="text-[#37474F] flex flex-col text-sm">
                       {item.maturityDate}
                     </p>
                   </div>
@@ -313,6 +246,57 @@ export default function PlansPage() {
             </Link>
           ))}
         </div>
+
+        {paginatedSavings.length === 0 && (
+          <div className="h-20 w-full">
+            <p className="text-center text-gray-500 mt-10">No plans found.</p>
+          </div>
+        )}
+
+        <Pagination className="mt-10 flex items-end w-full justify-end">
+          <PaginationContent>
+            {/* Previous */}
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.max(p - 1, 1));
+                }}
+                className="hover:bg-transparent hover:underline"
+              />
+            </PaginationItem>
+
+            {/* Page Numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  href="#"
+                  isActive={currentPage === page}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(page);
+                  }}
+                  className="hover:bg-primary/40"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            {/* Next */}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.min(p + 1, totalPages));
+                }}
+                className="hover:bg-transparent hover:underline"
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </main>
   );
