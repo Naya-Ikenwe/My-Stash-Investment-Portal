@@ -14,10 +14,12 @@ import {
 import Link from "next/link";
 import { RxDividerVertical } from "react-icons/rx";
 import { useState } from "react";
-import { signupService, verifyEmail } from "@/app/api/Users";
+import { signupService } from "@/app/api/Users";
 import { GoEye, GoEyeClosed } from "react-icons/go";
 import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/app/store/authStore";
 
 type SignupFormInputs = {
   email: string;
@@ -34,9 +36,10 @@ export default function SignUpPage() {
   const { control, handleSubmit, watch } = useForm();
   const password = watch("password");
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const router = useRouter();
+  const { setUser, setAccessToken, setRefreshToken } = useAuthStore();
 
   const onSubmit = async (data: any) => {
     try {
@@ -46,8 +49,13 @@ export default function SignUpPage() {
       console.log("submitting form: ", data);
 
       const res = await signupService(data);
-      // const vEmail = await verifyEmail()
       console.log("signup success:", res);
+
+      setUser(res.data);
+      setAccessToken(res.access_token);
+      setRefreshToken(res.refresh_token);
+
+      router.push("/sign-up/verify-email");
     } catch (err: any) {
       console.error(err);
       setApiError(err.response.data.message || "signup failed");

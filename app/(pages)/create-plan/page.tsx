@@ -18,7 +18,7 @@ export default function CreatePlanPage() {
       startDate: Date.now(),
       endDate: 0,
       payoutFrequency: "MONTHLY",
-      payoutAccountId: "acc-123-456",
+      payoutAccountId: "40195",
       rolloverType: "PRINCIPAL_ONLY",
     },
   });

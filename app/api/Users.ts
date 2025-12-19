@@ -21,8 +21,11 @@ export const userProfile = async () => {
   return res.data;
 };
 
-export const verifyEmail = async () => {
-  const res = await API.post("/user/verify-email");
+export const verifyEmailService = async (payload: {
+  email: string;
+  token: string;
+}) => {
+  const res = await API.post("/user/verify-email", payload);
   return res.data;
 };
 

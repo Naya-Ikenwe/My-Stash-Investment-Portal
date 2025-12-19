@@ -40,12 +40,8 @@ export default function LoginPage() {
       setRefreshToken(res.refresh_token);
 
       router.push("/dashboard");
-
-      // if (res.success) {
-      //   router.push("/dashboard");
-      // }
     } catch (err: any) {
-      setApiError(err.message || "login failed");
+      setApiError(err.response.data.message || "login failed");
     } finally {
       setLoading(false);
     }

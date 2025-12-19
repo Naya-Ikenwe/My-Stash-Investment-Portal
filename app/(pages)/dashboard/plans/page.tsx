@@ -186,7 +186,7 @@ export default function PlansPage() {
                   e.preventDefault();
                   setCurrentPage((p) => Math.max(p - 1, 1));
                 }}
-                className="hover:bg-transparent hover:underline"
+                className="hover:bg-white hover:underline"
               />
             </PaginationItem>
 
@@ -215,7 +215,7 @@ export default function PlansPage() {
                   e.preventDefault();
                   setCurrentPage((p) => Math.min(p + 1, totalPages));
                 }}
-                className="hover:bg-transparent hover:underline"
+                className="hover:bg-white hover:underline"
               />
             </PaginationItem>
           </PaginationContent>
