@@ -40,8 +40,8 @@ export default function TopUpModal({
 
         {/* Header Section */}
         <div className="pt-8 pb-4 text-center">
-          <h2 className="text-xl font-bold text-gray-900">Fund Rent</h2>
-          <p className="text-xs font-medium text-gray-500 uppercase mt-1">
+          <h2 className="text-xl font-bold font-euclid text-gray-900">Fund Rent</h2>
+          <p className="text-xs font-medium font-manrope text-gray-500 uppercase mt-1">
             Savings • NGN
           </p>
         </div>
@@ -50,7 +50,7 @@ export default function TopUpModal({
         <div className="px-8 pb-8">
           {/* Amount Input Section */}
           <div className="flex flex-col items-center mb-8">
-            <label className="text-sm text-gray-500 mb-3">Amount</label>
+            <label className="text-sm text-gray-500 font-manrope mb-3">Amount</label>
 
             {/* Currency Pill */}
             <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-1.5 rounded-full mb-2">
@@ -79,7 +79,7 @@ export default function TopUpModal({
 
           {/* Funding Source Section */}
           <div className="mb-8">
-            <p className="text-center text-sm text-gray-500 mb-3">
+            <p className="text-center font-euclid text-sm text-gray-500 mb-3">
               Funding Source
             </p>
 
@@ -119,7 +119,7 @@ export default function TopUpModal({
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-800">
+                      <span className="text-sm font-euclid font-semibold text-gray-800">
                         Instant Transfer
                       </span>
                     </div>
@@ -142,7 +142,7 @@ export default function TopUpModal({
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-800">
+                      <span className="text-sm font-euclid font-semibold text-gray-800">
                         Bank Transfer
                       </span>
                     </div>
@@ -161,7 +161,7 @@ export default function TopUpModal({
           <div className="flex justify-end">
             <button
               onClick={handleContinue}
-              className="w-auto px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors shadow-md shadow-purple-200"
+              className="w-auto px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-euclid font-medium rounded-xl transition-colors shadow-md shadow-purple-200"
             >
               Continue
             </button>

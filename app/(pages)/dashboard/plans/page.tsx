@@ -15,11 +15,27 @@ import {
 } from "@/components/ui/pagination";
 import Link from "next/link";
 
+// Utility function to calculate days until maturity
+const getDaysUntilMaturity = (maturityDateString: string): number => {
+  const [day, month, year] = maturityDateString.split("/").map(Number);
+  // Convert 2-digit year to 4-digit year (e.g., 26 -> 2026)
+  const fullYear = year < 100 ? 2000 + year : year;
+  const maturityDate = new Date(fullYear, month - 1, day);
+  const today = new Date();
+  const diffTime = maturityDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
 export default function PlansPage() {
   const [statusFilter, setStatusFilter] = useState<
     "All" | "Active" | "Matured"
   >("All");
+  const [tenorFilter, setTenorFilter] = useState<
+    "All" | "6 months" | "12 months"
+  >("All");
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isTenorDropdownOpen, setIsTenorDropdownOpen] = useState(false);
   const cardPerPage = 8;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,7 +48,21 @@ export default function PlansPage() {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
 
-    return matchesStatus && matchesSearch;
+    // Filter by tenor (plan duration in months)
+    let matchesTenor = true;
+    if (tenorFilter !== "All") {
+      const daysUntilMaturity = getDaysUntilMaturity(item.maturityDate);
+
+      if (tenorFilter === "6 months") {
+        // 6 months = approximately 140-210 days
+        matchesTenor = daysUntilMaturity >= 140 && daysUntilMaturity <= 210;
+      } else if (tenorFilter === "12 months") {
+        // 12 months = approximately 300+ days
+        matchesTenor = daysUntilMaturity > 210;
+      }
+    }
+
+    return matchesStatus && matchesSearch && matchesTenor;
   });
 
   const sortedSavings = [...filteredSavings].sort((a, b) => {
@@ -55,6 +85,12 @@ export default function PlansPage() {
     setCurrentPage(1);
   };
 
+  const handleTenorChange = (tenor: "All" | "6 months" | "12 months") => {
+    setTenorFilter(tenor);
+    setIsTenorDropdownOpen(false);
+    setCurrentPage(1);
+  };
+
   return (
     <main className="w-full h-full rounded-[14px]">
       <h1 className="text-[32px] font-medium text-[#A243DC]">My Plans</h1>
@@ -62,45 +98,86 @@ export default function PlansPage() {
 
       {/* Filters */}
       <div className="flex justify-between items-center mt-3">
-        <div className="w-[326px] flex h-8 mt-5 gap-4 relative">
-          <button
-            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-          >
-            <div className="h-8 cursor-pointer mx-auto w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
-              <p>Status</p>
-              <RiArrowDropDownLine
-                size={16}
-                className={`transition-transform ${
-                  isStatusDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* Status Dropdown Menu */}
-          {isStatusDropdownOpen && (
-            <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
-              {["All", "Active", "Matured"].map((status) => (
-                <button
-                  key={status}
-                  onClick={() =>
-                    handleStatusChange(status as "All" | "Active" | "Matured")
-                  }
-                  className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                    statusFilter === status ? "bg-[#A243DC] text-white" : ""
+        <div className="flex h-8 mt-5 gap-4">
+          {/* Status Filter */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsStatusDropdownOpen(!isStatusDropdownOpen);
+                setIsTenorDropdownOpen(false);
+              }}
+            >
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+                <p>Status</p>
+                <RiArrowDropDownLine
+                  size={16}
+                  className={`transition-transform ${
+                    isStatusDropdownOpen ? "rotate-180" : ""
                   }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          )}
+                />
+              </div>
+            </button>
 
-          {/* <button>
-            <div className="h-8 cursor-pointer w-[118px] rounded-lg py-1 px-2 bg-[#F7F7F7] text-center">
-              <p>Date Range</p>
-            </div>
-          </button> */}
+            {/* Status Dropdown Menu */}
+            {isStatusDropdownOpen && (
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
+                {["All", "Active", "Matured"].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() =>
+                      handleStatusChange(status as "All" | "Active" | "Matured")
+                    }
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
+                      statusFilter === status ? "bg-[#A243DC] text-white" : ""
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Tenor Filter */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsTenorDropdownOpen(!isTenorDropdownOpen);
+                setIsStatusDropdownOpen(false);
+              }}
+            >
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+                <p>Tenor</p>
+                <RiArrowDropDownLine
+                  size={16}
+                  className={`transition-transform ${
+                    isTenorDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+            </button>
+
+            {/* Tenor Dropdown Menu */}
+            {isTenorDropdownOpen && (
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
+                {["All", "6 months", "12 months"].map((tenor) => (
+                  <button
+                    key={tenor}
+                    onClick={() =>
+                      handleTenorChange(
+                        tenor as "All" | "6 months" | "12 months"
+                      )
+                    }
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
+                      tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""
+                    }`}
+                  >
+                    {tenor}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

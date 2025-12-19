@@ -58,7 +58,7 @@ export default function InstantTopup({
 
         {/* Header: Timer */}
         <div className="text-center mt-2 mb-8">
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm font-euclid text-gray-600 mb-2">
             Account number expires in
           </p>
           <h2 className="text-4xl font-bold text-gray-900 tracking-wider">
@@ -70,7 +70,7 @@ export default function InstantTopup({
         <div className="space-y-6">
           {/* Amount */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-medium">Amount</span>
+            <span className="text-sm font-euclid text-gray-500 font-medium">Amount</span>
             <div className="flex items-center gap-2">
               <span className="text-[#A243DC] font-bold">₦{amount}</span>
               <button
@@ -84,21 +84,21 @@ export default function InstantTopup({
 
           {/* Bank */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-medium">Bank</span>
-            <span className="text-gray-900 font-medium">Source MFB</span>
+            <span className="text-sm text-gray-500 font-euclid font-medium">Bank</span>
+            <span className="text-gray-900 font-euclid font-medium">Source MFB</span>
           </div>
 
           {/* Bank Name */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-medium">Bank Name</span>
-            <span className="text-gray-900 font-medium">
+            <span className="text-sm text-gray-500 font-euclid font-medium">Bank Name</span>
+            <span className="text-gray-900 font-euclid font-medium">
               myStash Investment
             </span>
           </div>
 
           {/* Account Number */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-medium">
+            <span className="text-sm font-euclid text-gray-500 font-medium">
               Account Number
             </span>
             <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export default function InstantTopup({
           {/* Warning Info */}
           <div className="flex gap-3 mt-6 items-start">
             <AlertCircle size={18} className="text-gray-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-600 leading-relaxed">
+            <p className="text-xs text-gray-600 font-euclid leading-relaxed">
               Transfer only <span className="font-bold">₦{amount}</span> within
               the given timeframe
             </p>
@@ -128,7 +128,7 @@ export default function InstantTopup({
         <div className="mt-10 flex justify-end">
           <button
             onClick={onConfirm}
-            className="px-6 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-bold text-xs tracking-widest rounded-lg transition-colors uppercase shadow-lg shadow-purple-100"
+            className="px-6 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-bold text-xs tracking-widest rounded-lg transition-colors font-euclid uppercase shadow-lg shadow-purple-100"
           >
             I have paid
           </button>
