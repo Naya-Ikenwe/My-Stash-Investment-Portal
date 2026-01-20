@@ -23,17 +23,66 @@ import Link from "next/link";
 import { RxDividerVertical } from "react-icons/rx";
 import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
+import { verifyIdentity } from "@/app/api/Users";
+import { useRouter } from "next/navigation";
+
+type VerifyIdentityForm = {
+  dob: Date | null;
+  gender: string;
+  bank: string;
+  accountNumber: string;
+  accountName: string;
+  bvn: string;
+  bvnName: string;
+};
 
 export default function VerifyIdentityPage() {
-  const { control } = useForm();
   const [openDate, setOpenDate] = useState(false);
+  const formatDate = (date?: Date | null) => {
+    if (!date) return "";
+    return new Intl.DateTimeFormat("en-GB").format(date);
+  };
+  const router = useRouter();
+
+  const { control, handleSubmit } = useForm<VerifyIdentityForm>({
+    defaultValues: {
+      dob: null,
+      gender: "",
+      bank: "",
+      accountNumber: "",
+      accountName: "",
+      bvn: "",
+      bvnName: "",
+    },
+  });
+
+  const onSubmit = (data: VerifyIdentityForm) => {
+    const payload = {
+      dateOfBirth: data.dob?.toISOString().split("T")[0], // "YYYY-MM-DD"
+      gender: data.gender.toLocaleUpperCase(),
+      bank: data.bank,
+      accountNumber: data.accountNumber,
+      accountName: data.accountName,
+      bvn: data.bvn,
+      bvnName: data.bvnName,
+    };
+
+    console.log("Payload:", payload);
+
+    // call API here
+    // await api.post("/verify-identity", payload)
+    const res = verifyIdentity(payload);
+    console.log("Response:", res);
+
+    router.push("/dashboard");
+  };
 
   return (
     <AuthWrapper className="flex gap-10 -mt-10">
       <main className="flex gap-20">
         <CardWrapper className="px-8 py-5 flex flex-col gap-4 w-[628px]">
           <div>
-            <h3 className="text-primary text-[30px] font-medium">
+            <h3 className="text-primary text-[30px] font-heading">
               Personal Information
             </h3>
             <p>
@@ -42,7 +91,10 @@ export default function VerifyIdentityPage() {
             </p>
           </div>
 
-          <form action="" className="flex flex-col gap-3">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-3"
+          >
             <div className="flex gap-4">
               <Controller
                 name="dob"
@@ -50,41 +102,31 @@ export default function VerifyIdentityPage() {
                 render={({ field }) => (
                   <div className="relative flex gap-2 w-full">
                     <Input
-                      id="dob"
-                      // value={field.value}
                       placeholder="D.O.B"
-                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 min-w-full"
-                      {...field}
+                      value={formatDate(field.value)}
+                      readOnly
+                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
                     />
+
                     <Popover open={openDate} onOpenChange={setOpenDate}>
                       <PopoverTrigger asChild>
                         <Button
-                          id="date-picker"
                           variant="ghost"
                           className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
                         >
                           <CalendarIcon className="size-3.5" />
-                          {/* <span className="sr-only">Select date</span> */}
                         </Button>
                       </PopoverTrigger>
 
-                      <PopoverContent
-                        className="w-auto overflow-hidden p-0 bg-white"
-                        align="end"
-                        alignOffset={-8}
-                        sideOffset={10}
-                      >
+                      <PopoverContent className="w-auto p-0 bg-white">
                         <Calendar
                           mode="single"
-                          // selected={}
+                          selected={field.value ?? undefined}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setOpenDate(false);
+                          }}
                           captionLayout="dropdown"
-                          // month={month}
-                          // onMonthChange={setMonth}
-                          // onSelect={(date) => {
-                          //   setDate(date);
-                          //   setValue(formatDate(date));
-                          //   setOpen(false);
-                          // }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -184,13 +226,9 @@ export default function VerifyIdentityPage() {
                 />
               )}
             />
-
-            <Link
-              href={"/dashboard"}
-              className="bg-primary text-white w-1/4 mt-4 rounded-xl text-center py-2 "
-            >
+            <Button type="submit" className="bg-primary text-white w-1/4 mt-4">
               Proceed
-            </Link>
+            </Button>
 
             {/* <Input
           type="submit"
@@ -212,7 +250,7 @@ export default function VerifyIdentityPage() {
 
         <aside className="flex flex-col gap-9 w-[453px]">
           <div>
-            <h2 className="text-primary text-[34px] font-medium">
+            <h2 className="text-primary text-[34px] font-heading">
               Lets get you set up in just 2 steps{" "}
             </h2>
             <p>

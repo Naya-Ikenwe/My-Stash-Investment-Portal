@@ -33,7 +33,7 @@ type SignupFormInputs = {
 };
 
 export default function SignUpPage() {
-  const { control, handleSubmit, watch } = useForm();
+  const { control, handleSubmit, watch } = useForm<SignupFormInputs>();
   const password = watch("password");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const { setUser, setAccessToken, setRefreshToken } = useAuthStore();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SignupFormInputs) => {
     try {
       setLoading(true);
       setApiError(" ");
@@ -51,9 +51,11 @@ export default function SignUpPage() {
       const res = await signupService(data);
       console.log("signup success:", res);
 
-      setUser(res.data);
-      setAccessToken(res.access_token);
-      setRefreshToken(res.refresh_token);
+      const { user, access_token, refresh_token } = res.data;
+
+      setUser(user);
+      setAccessToken(access_token);
+      setRefreshToken(refresh_token);
 
       router.push("/sign-up/verify-email");
     } catch (err: any) {
@@ -69,7 +71,7 @@ export default function SignUpPage() {
       <main className="flex gap-20">
         <CardWrapper className="px-8 py-8 flex flex-col gap-4 w-[628px]">
           <div>
-            <h3 className="text-primary text-[30px] font-medium">
+            <h3 className="text-primary font-heading text-[30px] font-medium">
               Create your profile
             </h3>
             <p>
@@ -263,7 +265,7 @@ export default function SignUpPage() {
 
         <aside className="flex flex-col gap-9 w-[453px]">
           <div>
-            <h2 className="text-primary text-[34px] font-medium">
+            <h2 className="text-primary text-[34px] font-medium font-heading">
               Lets get you set up in just 2 steps{" "}
             </h2>
             <p>

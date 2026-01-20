@@ -16,24 +16,26 @@ export default function VerifyEmailPage() {
   const router = useRouter();
 
   const verify = async () => {
+    // console.log("user data: ", user?.?.email);
     if (!user?.email) {
       console.error("User email is missing");
       return;
     }
 
-    if (!otp || otp.length !== 6) {
+    if (!otp) {
       console.error("Invalid OTP");
       return;
     }
 
     const payload = {
-      email: user.email,
+      email: user?.email,
       token: otp,
     };
 
     const res = await verifyEmailService(payload);
     console.log(res);
     router.push("/sign-up/verify-identity");
+    // router.push("/dashboard");
   };
 
   return (
@@ -41,7 +43,7 @@ export default function VerifyEmailPage() {
       <main className="w-full flex items-center justify-center ">
         <CardWrapper className="px-20 py-10">
           <div className="flex flex-col gap-2">
-            <h2 className="text-primary">
+            <h2 className="text-primary font-heading text-[20px]">
               Enter the 6-digit code that we sent to
             </h2>
 

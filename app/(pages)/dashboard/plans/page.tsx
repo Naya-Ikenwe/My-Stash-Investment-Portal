@@ -222,9 +222,9 @@ export default function PlansPage() {
                   {item.status}
                 </span>
 
-                <h2 className="text-lg font-semibold">{item.title}</h2>
+                <h2 className="text-lg font-medium">{item.title}</h2>
 
-                <p className="text-xl text-[#455A64] font-bold mt-2">
+                <p className="text-xl text-[#455A64] font-semibold mt-2">
                   ₦{item.amount.toLocaleString()}
                 </p>
 

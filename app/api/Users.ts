@@ -29,7 +29,8 @@ export const verifyEmailService = async (payload: {
   return res.data;
 };
 
-export const verifyIdentity = async () => {
-  const res = await API.post("/bank");
-  return res.data;
+export const verifyIdentity = async (payload: any) => {
+  const res = await API.patch("/user/profile", payload);
+  const kyc = await API.patch("/user/kyc", payload);
+  return (res.data, kyc.data);
 };

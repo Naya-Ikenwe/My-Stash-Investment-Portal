@@ -35,9 +35,13 @@ export default function LoginPage() {
       const res = await loginService(data);
       console.log("login success:", res);
 
-      setUser(res.data);
-      setAccessToken(res.access_token);
-      setRefreshToken(res.refresh_token);
+      const { user, access_token, refresh_token } = res.data;
+
+      setUser(user);
+      setAccessToken(access_token);
+      setRefreshToken(refresh_token);
+
+      console.log("AUTH STATE AFTER LOGIN:", useAuthStore.getState());
 
       router.push("/dashboard");
     } catch (err: any) {
@@ -52,8 +56,8 @@ export default function LoginPage() {
       <main className="flex items-center justify-center">
         <div className="flex flex-col gap-5 items-center ">
           <span className="text-center">
-            <h2 className="header-one">Back to business</h2>
-            <p>Lets get you signed in</p>
+            <h2 className="header-one font-heading">Back to business</h2>
+            <p className="text-[20px] mt-2">Lets get you signed in</p>
           </span>
 
           <CardWrapper className="px-28 py-10">
@@ -110,7 +114,7 @@ export default function LoginPage() {
                 )}
               </div>
 
-              <Link href={"forget-password"} className="text-primary">
+              <Link href={"forget-password"} className="text-primary font-medium">
                 Forgot Password
               </Link>
 
@@ -124,7 +128,7 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="bg-primary text-white px-4 py-2 rounded"
+                  className="bg-primary font-medium text-white px-4 py-2 rounded"
                   disabled={loading}
                 >
                   {loading ? "Signing in..." : "Sign In"}
