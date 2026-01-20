@@ -21,12 +21,16 @@ export const userProfile = async () => {
   return res.data;
 };
 
-export const verifyEmail = async () => {
-  const res = await API.post("/user/verify-email");
+export const verifyEmailService = async (payload: {
+  email: string;
+  token: string;
+}) => {
+  const res = await API.post("/user/verify-email", payload);
   return res.data;
 };
 
-export const verifyIdentity = async () => {
-  const res = await API.post("/bank");
-  return res.data;
+export const verifyIdentity = async (payload: any) => {
+  const res = await API.patch("/user/profile", payload);
+  const kyc = await API.patch("/user/kyc", payload);
+  return (res.data, kyc.data);
 };

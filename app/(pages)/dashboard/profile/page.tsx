@@ -34,7 +34,7 @@ export default function ProfilePage() {
       <h2 className="text-primary text-2xl font-medium">Profile Management</h2>
 
       <Tabs defaultValue="personal">
-        <TabsList className="bg-[#F7F7F7] px-12 py-10 rounded-full lex gap-4 mb-8">
+        <TabsList className="bg-[#F7F7F7] px-6 py-10 rounded-full lex gap-4 mb-8">
           {triggers.map((trigger) => (
             <TabsTrigger
               key={trigger.value}

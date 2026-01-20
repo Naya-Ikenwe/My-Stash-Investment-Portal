@@ -24,7 +24,7 @@ export const savings: Saving[] = [
     amount: 1000000,
     status: "Active",
     plan: "Plan A",
-    maturityDate: "10/06/26",
+    maturityDate: "10/01/26", // ~25 days - Maturing Soon
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -38,7 +38,7 @@ export const savings: Saving[] = [
     amount: 100000,
     status: "Matured",
     plan: "Plan C",
-    maturityDate: "10/06/26",
+    maturityDate: "04/04/26", // ~122 days - 3-6 Months
     accountHolderName: "Olatipe Osatuyi",
     accountNumber: "1234567890",
 
@@ -54,7 +54,7 @@ export const savings: Saving[] = [
     amount: 5000000,
     status: "Active",
     plan: "Plan B",
-    maturityDate: "10/06/26",
+    maturityDate: "06/04/26", // ~183 days - 6-12 Months
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -68,7 +68,7 @@ export const savings: Saving[] = [
     amount: 3000000,
     status: "Active",
     plan: "Plan A",
-    maturityDate: "10/06/26",
+    maturityDate: "12/04/27", // ~730+ days - Later (1+ year)
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -82,7 +82,7 @@ export const savings: Saving[] = [
     amount: 1000000,
     status: "Active",
     plan: "Plan B",
-    maturityDate: "10/06/26",
+    maturityDate: "20/01/26", // ~35 days - Maturing Soon
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },
@@ -96,7 +96,7 @@ export const savings: Saving[] = [
     amount: 1000000,
     status: "Matured",
     plan: "Plan C",
-    maturityDate: "10/06/26",
+    maturityDate: "05/04/26", // ~152 days - 3-6 Months
     accountHolderName: "Olatipe Osatuyi",
     accountNumber: "1234567890",
 
@@ -112,7 +112,7 @@ export const savings: Saving[] = [
     amount: 50000,
     status: "Matured",
     plan: "Plan B",
-    maturityDate: "10/06/26",
+    maturityDate: "09/04/26", // ~247 days - 6-12 Months
     accountHolderName: "Olatipe Osatuyi",
     accountNumber: "1234567890",
 
@@ -128,7 +128,7 @@ export const savings: Saving[] = [
     amount: 30000000,
     status: "Active",
     plan: "Plan C",
-    maturityDate: "10/06/26",
+    maturityDate: "06/04/27", // ~549+ days - Later (1+ year)
 
     transactions: [
       { id: 1, type: "deposit", amount: 200000, date: "2024-01-02" },

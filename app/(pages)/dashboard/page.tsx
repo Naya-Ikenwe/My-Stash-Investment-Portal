@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 
 type User = {
   data: {
-    username: string;
+    firstName: string;
   };
 };
 export default function Dashboard() {
@@ -34,8 +34,8 @@ export default function Dashboard() {
 
   return (
     <main>
-      <h2 className="text-3xl font-medium">
-        Hello <span className="text-primary">{user?.data?.username},</span>
+      <h2 className="text-3xl font-heading">
+        Hello <span className="text-primary">{user?.data?.firstName},</span>
       </h2>
 
       <hr className="my-4 border border-[#455A6433]" />

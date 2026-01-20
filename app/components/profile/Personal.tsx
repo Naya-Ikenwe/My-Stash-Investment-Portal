@@ -11,19 +11,73 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 
-export default function Personal({user}: {user: any}) {
-  const { control } = useForm();
+type PersonalForm = {
+  gender: string;
+  title: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  motherMaidenName: string;
+  email: string;
+  residentialAddress: string;
+  country: string;
+};
+
+type PersonalProps = {
+  user: PersonalForm | null;
+};
+
+export default function Personal({ user }: PersonalProps) {
+  const { control, handleSubmit, reset } = useForm<PersonalForm>({
+    defaultValues: {
+      gender: "",
+      title: "",
+      firstName: "",
+      lastName: "",
+      middleName: "",
+      motherMaidenName: "",
+      email: "",
+      residentialAddress: "",
+      country: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    console.log("USER GENDER:", user?.gender);
+    console.log("RAW:", JSON.stringify(user.gender));
+
+    reset({
+      gender: user?.gender?.trim().toLowerCase() || undefined,
+      title: user.title ?? "",
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? "",
+      middleName: user.middleName ?? "",
+      motherMaidenName: user.motherMaidenName ?? "",
+      email: user.email ?? "",
+      residentialAddress: user.residentialAddress ?? "",
+      country: user.country ?? "",
+    });
+  }, [user, reset]);
+
+  const onSubmit = (data: PersonalForm) => {
+    console.log("UPDATE PAYLOAD:", data);
+    // call update API here
+  };
 
   return (
     <main className="flex flex-col gap-10">
       <div>
-        <p className="text-[#455A64] font-medium text-[16px] mb-2">Personal Information</p>
-        <hr className="border-[#455A6433]"/>
+        <p className="text-[#455A64] font-medium text-[16px] mb-2">
+          Personal Information
+        </p>
+        <hr className="border-[#455A6433]" />
       </div>
 
-      <form className="flex gap-12 w-[80%]">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex gap-12 w-[80%]">
         <div className="w-2/5 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <Image
@@ -32,7 +86,9 @@ export default function Personal({user}: {user: any}) {
               width={150}
               height={150}
             />
-            <p>Shalom Ajoge</p>
+            <p>
+              {user?.firstName} {user?.lastName}
+            </p>
           </div>
 
           {/* caution to complete profile to be displayed here */}
@@ -52,18 +108,13 @@ export default function Personal({user}: {user: any}) {
               name="gender"
               control={control}
               render={({ field }) => (
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <SelectTrigger className="w-full bg-white text-white min-h-12 mt-2 py-0">
-                    <SelectValue placeholder="Gender" className="text-black " />
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full bg-white text-black min-h-12 mt-2">
+                    <SelectValue placeholder="Gender" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectGroup>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                    </SelectGroup>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -73,10 +124,7 @@ export default function Personal({user}: {user: any}) {
               name="title"
               control={control}
               render={({ field }) => (
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger className="w-full bg-white text-white min-h-12 mt-2 py-0">
                     <SelectValue placeholder="Title" className="text-black " />
                   </SelectTrigger>
@@ -91,22 +139,20 @@ export default function Personal({user}: {user: any}) {
             />
           </div>
           <div>
-            {/* <label htmlFor="planName">Give your plan a name</label> */}
             <Controller
-              name="planName"
+              name="firstName"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
                   placeholder="First Name"
-                  className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
+                  className="bg-white h-12 mt-2"
                 />
               )}
             />
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="lastName"
               control={control}
@@ -121,7 +167,6 @@ export default function Personal({user}: {user: any}) {
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="middleName"
               control={control}
@@ -136,7 +181,6 @@ export default function Personal({user}: {user: any}) {
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="motherMaidenName"
               control={control}
@@ -151,7 +195,6 @@ export default function Personal({user}: {user: any}) {
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="email"
               control={control}
@@ -159,7 +202,6 @@ export default function Personal({user}: {user: any}) {
                 <Input
                   {...field}
                   type="email"
-                  defaultValue={user?.email}
                   placeholder="Email Address"
                   className="bg-white h-12 mt-2"
                 />
@@ -168,7 +210,6 @@ export default function Personal({user}: {user: any}) {
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="residentialAddress"
               control={control}
@@ -183,7 +224,6 @@ export default function Personal({user}: {user: any}) {
           </div>
 
           <div>
-            {/* <label htmlFor="amount">How much do you want to fund?</label> */}
             <Controller
               name="country"
               control={control}

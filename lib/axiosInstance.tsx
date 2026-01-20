@@ -21,13 +21,12 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-
 // // 1. Request Interceptor: Attach Token
 // apiClient.interceptors.request.use(
 //   (config) => {
 //     // Read token directly from Zustand store (even outside React components)
 //     const token = useAuthStore.getState().token;
-    
+
 //     if (token) {
 //       config.headers.Authorization = `Bearer ${token}`;
 //     }
@@ -36,23 +35,21 @@ API.interceptors.request.use((config) => {
 //   (error) => Promise.reject(error)
 // );
 
-// // 2. Response Interceptor: Handle Global Errors
-// apiClient.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       // If 401 (Unauthorized), clear store and redirect to login
-//       useAuthStore.getState().logout();
-      
-//       // Optional: Force redirect if not handled by router
-//       if (typeof window !== 'undefined') {
-//         window.location.href = '/login';
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+// 2. Response Interceptor: Handle Global Errors
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // If 401 (Unauthorized), clear store and redirect to login
+      useAuthStore.getState().logout();
+
+      // Optional: Force redirect if not handled by router
+      // if (typeof window !== 'undefined') {
+      //   window.location.href = '/login';
+      // }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default API;
-
-

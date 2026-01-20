@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@layer base {
+  body {
+    font-family: var(--font-body);
+  }
+}
+
+@layer utilities {
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+}
+
 /* Map CSS variables into Tailwind tokens */
 @theme {
   --color-background: var(--background);
@@ -22,6 +38,10 @@
   --color-ring: var(--ring);
 
   --radius-default: var(--radius);
+
+  --font-euclid: "Euclid", sans-serif; 
+  --font-manrope: "Manrope", sans-serif;
+  --font-freizeit: "Freizeit", sans-serif;
 }
 
 /* Root variables */
@@ -80,7 +100,7 @@ body {
   font-size: 14px;
   background: #F7F7F7;
   color: var(--foreground);
-  font-family: var(--font-montserrat);
+  /* font-family: var(--font-montserrat); */
 }
 
 /* Custom utilities */
@@ -137,3 +157,4 @@ body {
     @apply bg-background text-foreground;
   }
 }
+

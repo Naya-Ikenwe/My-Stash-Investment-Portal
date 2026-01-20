@@ -41,19 +41,19 @@ export default function SummaryLiquidate({
         </button>
 
         {/* Title */}
-        <h2 className="text-center text-2xl font-bold text-gray-900">
+        <h2 className="text-center text-2xl font-euclid font-bold text-gray-900">
           Summary
         </h2>
 
         {/* Amount */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">Amount</p>
-          <p className="text-4xl font-bold text-gray-900">₦{amount}</p>
+          <p className="text-sm font-euclid text-gray-500">Amount</p>
+          <p className="text-4xl font-bold font-freizeit text-gray-900">₦{amount}</p>
         </div>
 
         {/* Destination Account */}
         <div className="mt-10">
-          <p className="text-sm text-center text-gray-500 mb-4">
+          <p className="text-sm text-center font-euclid text-gray-500 mb-4">
             Destination Account
           </p>
 
@@ -78,7 +78,7 @@ export default function SummaryLiquidate({
 
         {/* Checkbox */}
         <div className="flex justify-between items-center gap-2 mt-6">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm font-euclid text-gray-700">
             Agree to early liquidation terms <br />& conditions
           </p>
           <input type="checkbox" className="w-4 h-4" />
@@ -88,13 +88,13 @@ export default function SummaryLiquidate({
         <div className="flex gap-4 mt-10">
           <button
             onClick={onClose}
-            className="w-1/2 border border-[#A243DC] text-[#A243DC] py-3 rounded-xl"
+            className="w-1/2 border border-[#A243DC] text-[#A243DC] py-3 font-manrope rounded-xl"
           >
             Back
           </button>
           <button
             onClick={() => setShowPassword(true)}
-            className="w-1/2 bg-[#A243DC] text-white py-3 rounded-xl hover:bg-[#8e3ac0] transition-colors"
+            className="w-1/2 bg-[#A243DC] text-white py-3 font-manrope rounded-xl hover:bg-[#8e3ac0] transition-colors"
           >
             Confirm
           </button>

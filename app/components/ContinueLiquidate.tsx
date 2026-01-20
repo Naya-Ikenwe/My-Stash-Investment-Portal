@@ -52,10 +52,10 @@ export default function ContinueLiquidate({
 
         {/* Header Section */}
         <div className="pt-8 pb-4 text-center">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold font-euclid text-gray-900">
             Liquidate from Rent Plan
           </h2>
-          <p className="text-xs font-medium text-gray-500 uppercase mt-1">
+          <p className="text-xs font-medium font-euclid text-gray-500 uppercase mt-1">
             Savings • NGN
           </p>
         </div>
@@ -63,7 +63,7 @@ export default function ContinueLiquidate({
         <div className="px-8 pb-8">
           {/* Amount Input Section */}
           <div className="flex flex-col items-center mb-10">
-            <label className="text-sm text-gray-500 mb-3">Amount</label>
+            <label className="text-sm font-euclid text-gray-500 mb-3">Amount</label>
 
             {/* NGN Currency Selector */}
             <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-1.5 rounded-full mb-2">
@@ -77,7 +77,7 @@ export default function ContinueLiquidate({
                   className="object-cover w-5 h-5"
                 />
               </div>
-              <span className="text-sm font-semibold text-gray-700">NGN</span>
+              <span className="text-sm font-semibold font-manrope text-gray-700">NGN</span>
             </button>
 
             {/* Actual Amount Input Field */}
@@ -93,7 +93,7 @@ export default function ContinueLiquidate({
 
           {/* Withdraw To Section */}
           <div className="mb-12">
-            <p className="text-sm text-gray-500 mb-3">Withdraw to</p>
+            <p className="text-sm text-gray-500 font-euclid mb-3">Withdraw to</p>
 
             {/* Custom Dropdown/Selector */}
             <div
@@ -153,7 +153,7 @@ export default function ContinueLiquidate({
           <div className="flex justify-center">
             <button
               onClick={() => setShowSummary(true)}
-              className="w-full px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors shadow-md shadow-purple-200"
+              className="w-full px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors font-manrope shadow-md shadow-purple-200"
             >
               Continue
             </button>

@@ -8,27 +8,27 @@ import { useEffect } from "react";
 export default function Home() {
   const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
-  // Optional: check if store has finished hydrating from localStorage
-  // const hasHydrated = useAuthStore((state) => state._hasHydrated);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
 
   useEffect(() => {
-    // If a token exists, skip the landing page and go to dashboard
+    if (!hasHydrated) return;
+
     if (accessToken) {
       router.replace("/dashboard");
     } else {
       router.replace("/login");
     }
-  }, [accessToken, router]);
+    console.log("HYDRATION:", hasHydrated);
+    console.log("ACCESS TOKEN:", accessToken);
+  }, [accessToken, hasHydrated, router]);
 
   // While checking, you might want to show nothing or a spinner to prevent flashing
   // if you want strict redirection.
   // Otherwise, render the Landing Page below:
 
   return (
-    <AuthWrapper className="">
-      <main className="flex items-center justify-center">
-        <p>Loading....</p>
-      </main>
+    <AuthWrapper className="flex items-center justify-center">
+      <p>Loading....</p>
     </AuthWrapper>
   );
 }
