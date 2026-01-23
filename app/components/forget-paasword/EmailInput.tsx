@@ -1,8 +1,39 @@
+"use client";
+
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import CardWrapper from "../CardWrapper";
 import { Button } from "@/components/ui/button";
+import { forgotPasswordService } from "@/app/api/Users";
+import toast from "react-hot-toast";
 
-export default function EmailInput() {
+type EmailInputProps = {
+  onNext: (email: string) => void;
+};
+
+export default function EmailInput({ onNext }: EmailInputProps) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit() {
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await forgotPasswordService({ email });
+      toast.success(data.message || "Password reset email sent");
+      onNext(email);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="flex flex-col gap-7 text-center items-center justify-center">
       <div>
@@ -15,8 +46,17 @@ export default function EmailInput() {
           type="email"
           className="bg-white min-h-12"
           placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
         />
-        <Button className="bg-primary text-white">Send Reset Password</Button>
+        <Button
+          className="bg-primary text-white"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Send Reset Password"}
+        </Button>
       </CardWrapper>
     </main>
   );
