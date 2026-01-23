@@ -26,6 +26,15 @@ import CardWrapper from "@/app/components/CardWrapper";
 import { verifyIdentity } from "@/app/api/Users";
 import { useRouter } from "next/navigation";
 
+/* ✅ BANK LIST */
+const banks = [
+  { label: "Access Bank", value: "access" },
+  { label: "Source Bank", value: "source" },
+  { label: "GTBank", value: "gtbank" },
+  { label: "First Bank", value: "firstbank" },
+  { label: "UBA", value: "uba" },
+];
+
 type VerifyIdentityForm = {
   dob: Date | null;
   gender: string;
@@ -38,11 +47,12 @@ type VerifyIdentityForm = {
 
 export default function VerifyIdentityPage() {
   const [openDate, setOpenDate] = useState(false);
+  const router = useRouter();
+
   const formatDate = (date?: Date | null) => {
     if (!date) return "";
     return new Intl.DateTimeFormat("en-GB").format(date);
   };
-  const router = useRouter();
 
   const { control, handleSubmit } = useForm<VerifyIdentityForm>({
     defaultValues: {
@@ -58,8 +68,8 @@ export default function VerifyIdentityPage() {
 
   const onSubmit = (data: VerifyIdentityForm) => {
     const payload = {
-      dateOfBirth: data.dob?.toISOString().split("T")[0], // "YYYY-MM-DD"
-      gender: data.gender.toLocaleUpperCase(),
+      dateOfBirth: data.dob?.toISOString().split("T")[0],
+      gender: data.gender.toUpperCase(),
       bank: data.bank,
       accountNumber: data.accountNumber,
       accountName: data.accountName,
@@ -69,8 +79,6 @@ export default function VerifyIdentityPage() {
 
     console.log("Payload:", payload);
 
-    // call API here
-    // await api.post("/verify-identity", payload)
     const res = verifyIdentity(payload);
     console.log("Response:", res);
 
@@ -140,10 +148,7 @@ export default function VerifyIdentityPage() {
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full bg-white min-h-12 mt-2 py-0">
-                      <SelectValue
-                        placeholder="Gender"
-                        className="text-black "
-                      />
+                      <SelectValue placeholder="Gender" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       <SelectGroup>
@@ -157,21 +162,25 @@ export default function VerifyIdentityPage() {
             </div>
 
             <div className="flex gap-4 w-full">
+              {/* ✅ UPDATED BANK SELECT */}
               <Controller
                 name="bank"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="bg-white min-h-12 mt-2 py-0 w-full">
-                      <SelectValue
-                        placeholder="Select Bank"
-                        className="text-black "
-                      />
+                      <SelectValue placeholder="Select Bank" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       <SelectGroup>
-                        <SelectItem value="access">Access Bank</SelectItem>
-                        <SelectItem value="source">Source Bank</SelectItem>
+                        {banks.map((bank) => (
+                          <SelectItem
+                            key={bank.value}
+                            value={bank.value}
+                          >
+                            {bank.label}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -226,22 +235,16 @@ export default function VerifyIdentityPage() {
                 />
               )}
             />
+
             <Button type="submit" className="bg-primary text-white w-1/4 mt-4">
               Proceed
             </Button>
-
-            {/* <Input
-          type="submit"
-          value={"Proceed"}
-          className="bg-primary text-white w-1/4 mt-4 cursor-pointer"
-        /> */}
           </form>
 
           <article className="flex flex-col text-center gap-2 items-center mt-3">
             <p>
               Already have an account?{" "}
-              <Link href={"/"} className="text-primary font-medium">
-                {" "}
+              <Link href="/" className="text-primary font-medium">
                 Sign in
               </Link>
             </p>
@@ -251,7 +254,7 @@ export default function VerifyIdentityPage() {
         <aside className="flex flex-col gap-9 w-[453px]">
           <div>
             <h2 className="text-primary text-[34px] font-heading">
-              Lets get you set up in just 2 steps{" "}
+              Lets get you set up in just 2 steps
             </h2>
             <p>
               We&apos;ll keep it short and simple, just what we need to
@@ -261,9 +264,7 @@ export default function VerifyIdentityPage() {
 
           <div className="flex flex-col">
             <div className="flex gap-1 items-center">
-              <p
-                className={`w-8 h-8 flex items-center justify-center rounded-full border text-[#455A64A3] `}
-              >
+              <p className="w-8 h-8 flex items-center justify-center rounded-full border text-[#455A64A3]">
                 1
               </p>
               <p>Create Your Account</p>
