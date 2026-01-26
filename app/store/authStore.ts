@@ -20,6 +20,7 @@ type User = {
   country: string;
   gender: string;
   title: string;
+  isEmailVerified?: boolean;
 };
 
 type AuthState = {

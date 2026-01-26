@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { RxDividerVertical } from "react-icons/rx";
@@ -25,8 +25,8 @@ import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
 import { verifyIdentity } from "@/app/api/Users";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/app/store/authStore";
 
-/* ✅ BANK LIST */
 const banks = [
   { label: "Access Bank", value: "access" },
   { label: "Source Bank", value: "source" },
@@ -47,12 +47,15 @@ type VerifyIdentityForm = {
 
 export default function VerifyIdentityPage() {
   const [openDate, setOpenDate] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuthStore();
 
-  const formatDate = (date?: Date | null) => {
-    if (!date) return "";
-    return new Intl.DateTimeFormat("en-GB").format(date);
-  };
+  useEffect(() => {
+    if (!user?.isEmailVerified) {
+      router.push("/sign-up/verify-email");
+    }
+  }, [user, router]);
 
   const { control, handleSubmit } = useForm<VerifyIdentityForm>({
     defaultValues: {
@@ -66,7 +69,10 @@ export default function VerifyIdentityPage() {
     },
   });
 
-  const onSubmit = (data: VerifyIdentityForm) => {
+  const formatDate = (date?: Date | null) =>
+    date ? new Intl.DateTimeFormat("en-GB").format(date) : "";
+
+  const onSubmit = async (data: VerifyIdentityForm) => {
     const payload = {
       dateOfBirth: data.dob?.toISOString().split("T")[0],
       gender: data.gender.toUpperCase(),
@@ -77,12 +83,16 @@ export default function VerifyIdentityPage() {
       bvnName: data.bvnName,
     };
 
-    console.log("Payload:", payload);
+    setLoading(true);
 
-    const res = verifyIdentity(payload);
-    console.log("Response:", res);
-
-    router.push("/dashboard");
+    try {
+      await verifyIdentity(payload);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Identity verification failed", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,10 +109,7 @@ export default function VerifyIdentityPage() {
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col gap-3"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
             <div className="flex gap-4">
               <Controller
                 name="dob"
@@ -113,7 +120,7 @@ export default function VerifyIdentityPage() {
                       placeholder="D.O.B"
                       value={formatDate(field.value)}
                       readOnly
-                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
+                      className="bg-white h-12 mt-2"
                     />
 
                     <Popover open={openDate} onOpenChange={setOpenDate}>
@@ -147,7 +154,7 @@ export default function VerifyIdentityPage() {
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full bg-white min-h-12 mt-2 py-0">
+                    <SelectTrigger className="w-full bg-white min-h-12 mt-2">
                       <SelectValue placeholder="Gender" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
@@ -161,23 +168,19 @@ export default function VerifyIdentityPage() {
               />
             </div>
 
-            <div className="flex gap-4 w-full">
-              {/* ✅ UPDATED BANK SELECT */}
+            <div className="flex gap-4">
               <Controller
                 name="bank"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="bg-white min-h-12 mt-2 py-0 w-full">
+                    <SelectTrigger className="bg-white min-h-12 mt-2 w-full">
                       <SelectValue placeholder="Select Bank" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       <SelectGroup>
                         {banks.map((bank) => (
-                          <SelectItem
-                            key={bank.value}
-                            value={bank.value}
-                          >
+                          <SelectItem key={bank.value} value={bank.value}>
                             {bank.label}
                           </SelectItem>
                         ))}
@@ -191,11 +194,7 @@ export default function VerifyIdentityPage() {
                 name="accountNumber"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Account Number"
-                    className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 w-full"
-                  />
+                  <Input {...field} placeholder="Account Number" className="bg-white h-12 mt-2" />
                 )}
               />
             </div>
@@ -204,11 +203,7 @@ export default function VerifyIdentityPage() {
               name="accountName"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="Account Name"
-                  className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                />
+                <Input {...field} placeholder="Account Name" className="bg-white h-12 mt-2" />
               )}
             />
 
@@ -216,11 +211,7 @@ export default function VerifyIdentityPage() {
               name="bvn"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="Enter BVN"
-                  className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                />
+                <Input {...field} placeholder="Enter BVN" className="bg-white h-12 mt-2" />
               )}
             />
 
@@ -228,20 +219,16 @@ export default function VerifyIdentityPage() {
               name="bvnName"
               control={control}
               render={({ field }) => (
-                <Input
-                  {...field}
-                  placeholder="BVN Name"
-                  className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                />
+                <Input {...field} placeholder="BVN Name" className="bg-white h-12 mt-2" />
               )}
             />
 
-            <Button type="submit" className="bg-primary text-white w-1/4 mt-4">
-              Proceed
+            <Button type="submit" className="bg-primary text-white w-1/4 mt-4" disabled={loading}>
+              {loading ? "Processing..." : "Proceed"}
             </Button>
           </form>
 
-          <article className="flex flex-col text-center gap-2 items-center mt-3">
+          <article className="text-center mt-3">
             <p>
               Already have an account?{" "}
               <Link href="/" className="text-primary font-medium">
@@ -252,30 +239,20 @@ export default function VerifyIdentityPage() {
         </CardWrapper>
 
         <aside className="flex flex-col gap-9 w-[453px]">
-          <div>
-            <h2 className="text-primary text-[34px] font-heading">
-              Lets get you set up in just 2 steps
-            </h2>
-            <p>
-              We&apos;ll keep it short and simple, just what we need to
-              personalize your experience
-            </p>
-          </div>
+          <h2 className="text-primary text-[34px] font-heading">
+            Lets get you set up in just 2 steps
+          </h2>
 
-          <div className="flex flex-col">
+          <div>
             <div className="flex gap-1 items-center">
-              <p className="w-8 h-8 flex items-center justify-center rounded-full border text-[#455A64A3]">
-                1
-              </p>
+              <p className="w-8 h-8 flex items-center justify-center rounded-full border">1</p>
               <p>Create Your Account</p>
             </div>
 
-            <div className="w-8 h-8 flex items-center justify-center">
-              <RxDividerVertical size={24} className="text-[#455A64A3]" />
-            </div>
+            <RxDividerVertical size={24} className="mx-1 text-gray-400" />
 
             <div className="flex gap-1 items-center">
-              <p className="w-8 h-8 flex items-center justify-center rounded-full text-white bg-primary">
+              <p className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white">
                 2
               </p>
               <p>Enter Your Information</p>
