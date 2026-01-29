@@ -2,20 +2,9 @@
 
 import { Controller, useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { CalendarIcon } from "lucide-react";
@@ -23,17 +12,17 @@ import Link from "next/link";
 import { RxDividerVertical } from "react-icons/rx";
 import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
-import { verifyIdentity } from "@/app/api/Users";
+import { verifyIdentity, getBanksService } from "@/app/api/Users";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/app/store/authStore";
+import { v4 as uuidv4 } from "uuid";
 
-const banks = [
-  { label: "Access Bank", value: "access" },
-  { label: "Source Bank", value: "source" },
-  { label: "GTBank", value: "gtbank" },
-  { label: "First Bank", value: "firstbank" },
-  { label: "UBA", value: "uba" },
-];
+type Bank = {
+  name: string;
+  slug: string;
+  code: string;
+  longcode: string;
+};
 
 type VerifyIdentityForm = {
   dob: Date | null;
@@ -48,14 +37,40 @@ type VerifyIdentityForm = {
 export default function VerifyIdentityPage() {
   const [openDate, setOpenDate] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   useEffect(() => {
     if (!user?.isEmailVerified) {
       router.push("/sign-up/verify-email");
     }
   }, [user, router]);
+
+  // Fetch banks from backend API
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        setBanksLoading(true);
+        const banksData = await getBanksService();
+        
+        if (Array.isArray(banksData)) {
+          setBanks(banksData);
+        } else if (banksData.data && Array.isArray(banksData.data)) {
+          setBanks(banksData.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch banks", error);
+        setBanks([]);
+      } finally {
+        setBanksLoading(false);
+      }
+    };
+
+    fetchBanks();
+  }, []);
 
   const { control, handleSubmit } = useForm<VerifyIdentityForm>({
     defaultValues: {
@@ -73,8 +88,37 @@ export default function VerifyIdentityPage() {
     date ? new Intl.DateTimeFormat("en-GB").format(date) : "";
 
   const onSubmit = async (data: VerifyIdentityForm) => {
+    // Add validation before submitting
+    if (!data.dob) {
+      setApiError("Date of birth is required");
+      return;
+    }
+    if (!data.gender) {
+      setApiError("Gender is required");
+      return;
+    }
+    if (!data.bank) {
+      setApiError("Bank is required");
+      return;
+    }
+    if (!data.accountNumber || data.accountNumber.length < 10) {
+      setApiError("Account number must be at least 10 digits");
+      return;
+    }
+    if (!data.bvn || data.bvn.length !== 11) {
+      setApiError("BVN must be 11 digits");
+      return;
+    }
+
+    setLoading(true);
+    setApiError("");
+
+    // Fix: Check if dob exists before calling toISOString
+    const dateOfBirth = data.dob ? data.dob.toISOString().split("T")[0] : "";
+
     const payload = {
-      dateOfBirth: data.dob?.toISOString().split("T")[0],
+      deviceId: uuidv4(),
+      dateOfBirth: dateOfBirth,
       gender: data.gender.toUpperCase(),
       bank: data.bank,
       accountNumber: data.accountNumber,
@@ -83,13 +127,22 @@ export default function VerifyIdentityPage() {
       bvnName: data.bvnName,
     };
 
-    setLoading(true);
-
     try {
-      await verifyIdentity(payload);
+      const res = await verifyIdentity(payload);
+
+      // Update user in store with verified identity
+      setUser({
+        ...user,
+        ...res.profile,
+        isIdentityVerified: true
+      });
+
+      // Auto-login by redirecting to dashboard
       router.push("/dashboard");
-    } catch (err) {
+      
+    } catch (err: any) {
       console.error("Identity verification failed", err);
+      setApiError(err.response?.data?.message || "Verification failed. Please check your information.");
     } finally {
       setLoading(false);
     }
@@ -110,6 +163,7 @@ export default function VerifyIdentityPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
+            {/* DOB & Gender */}
             <div className="flex gap-4">
               <Controller
                 name="dob"
@@ -122,7 +176,6 @@ export default function VerifyIdentityPage() {
                       readOnly
                       className="bg-white h-12 mt-2"
                     />
-
                     <Popover open={openDate} onOpenChange={setOpenDate}>
                       <PopoverTrigger asChild>
                         <Button
@@ -132,7 +185,6 @@ export default function VerifyIdentityPage() {
                           <CalendarIcon className="size-3.5" />
                         </Button>
                       </PopoverTrigger>
-
                       <PopoverContent className="w-auto p-0 bg-white">
                         <Calendar
                           mode="single"
@@ -168,20 +220,27 @@ export default function VerifyIdentityPage() {
               />
             </div>
 
+            {/* Bank & Account */}
             <div className="flex gap-4">
               <Controller
                 name="bank"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={banksLoading}
+                  >
                     <SelectTrigger className="bg-white min-h-12 mt-2 w-full">
-                      <SelectValue placeholder="Select Bank" />
+                      <SelectValue placeholder={
+                        banksLoading ? "Loading banks..." : "Select Bank"
+                      } />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
                       <SelectGroup>
                         {banks.map((bank) => (
-                          <SelectItem key={bank.value} value={bank.value}>
-                            {bank.label}
+                          <SelectItem key={bank.code} value={bank.code}>
+                            {bank.name}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -189,12 +248,16 @@ export default function VerifyIdentityPage() {
                   </Select>
                 )}
               />
-
               <Controller
                 name="accountNumber"
                 control={control}
                 render={({ field }) => (
-                  <Input {...field} placeholder="Account Number" className="bg-white h-12 mt-2" />
+                  <Input 
+                    {...field} 
+                    placeholder="Account Number" 
+                    className="bg-white h-12 mt-2"
+                    maxLength={10}
+                  />
                 )}
               />
             </div>
@@ -211,7 +274,12 @@ export default function VerifyIdentityPage() {
               name="bvn"
               control={control}
               render={({ field }) => (
-                <Input {...field} placeholder="Enter BVN" className="bg-white h-12 mt-2" />
+                <Input 
+                  {...field} 
+                  placeholder="Enter BVN" 
+                  className="bg-white h-12 mt-2"
+                  maxLength={11}
+                />
               )}
             />
 
@@ -223,21 +291,16 @@ export default function VerifyIdentityPage() {
               )}
             />
 
+            {/* API Error */}
+            {apiError && <p className="text-red-500 text-sm">{apiError}</p>}
+
             <Button type="submit" className="bg-primary text-white w-1/4 mt-4" disabled={loading}>
               {loading ? "Processing..." : "Proceed"}
             </Button>
           </form>
-
-          <article className="text-center mt-3">
-            <p>
-              Already have an account?{" "}
-              <Link href="/" className="text-primary font-medium">
-                Sign in
-              </Link>
-            </p>
-          </article>
         </CardWrapper>
 
+        {/* Side Steps */}
         <aside className="flex flex-col gap-9 w-[453px]">
           <h2 className="text-primary text-[34px] font-heading">
             Lets get you set up in just 2 steps

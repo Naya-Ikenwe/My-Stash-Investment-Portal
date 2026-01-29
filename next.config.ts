@@ -6,7 +6,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://13.51.158.23/:path*",
+        destination:
+          "https://jewellery-provision-heart-debate.trycloudflare.com/:path*",
       },
     ];
   },

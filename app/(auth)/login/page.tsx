@@ -9,10 +9,18 @@ import { useAuthStore } from "@/app/store/authStore";
 import { loginService } from "@/app/api/Users";
 import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
+import { v4 as uuidv4 } from "uuid";
 
 type LoginFormInputs = {
   email: string;
   password: string;
+};
+
+// Define the correct payload type for loginService
+type LoginPayload = {
+  email: string;
+  password: string;
+  deviceId: string;
 };
 
 export default function LoginPage() {
@@ -32,7 +40,18 @@ export default function LoginPage() {
       setLoading(true);
       setApiError("");
 
-      const res = await loginService(data);
+      // Generate deviceId for this login session
+      const deviceId = uuidv4();
+      
+      // Create payload with deviceId
+      const payload: LoginPayload = {
+        email: data.email,
+        password: data.password,
+        deviceId: deviceId
+      };
+      
+      const res = await loginService(payload);
+
       console.log("login success:", res);
 
       const { user, access_token, refresh_token } = res.data;
@@ -45,7 +64,12 @@ export default function LoginPage() {
 
       router.push("/dashboard");
     } catch (err: any) {
-      setApiError(err.response.data.message || "login failed");
+      // Better error handling
+      const errorMessage = err.response?.data?.message || 
+                          err.message || 
+                          "Login failed. Please check your credentials.";
+      setApiError(errorMessage);
+      console.error("Login error:", err);
     } finally {
       setLoading(false);
     }
@@ -95,6 +119,10 @@ export default function LoginPage() {
                     className="w-full inputs"
                     {...register("password", {
                       required: "Password is required",
+                      minLength: {
+                        value: 6,
+                        message: "Password must be at least 6 characters"
+                      }
                     })}
                   />
 
@@ -128,14 +156,18 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="bg-primary font-medium text-white px-4 py-2 rounded"
+                  className="bg-primary font-medium text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? "Signing in..." : "Sign In"}
                 </button>
               </div>
 
-              {apiError && <p className="text-red-500 text-sm">{apiError}</p>}
+              {apiError && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <p className="text-red-600 text-sm text-center">{apiError}</p>
+                </div>
+              )}
             </form>
           </CardWrapper>
         </div>
