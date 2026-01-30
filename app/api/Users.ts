@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import API from "@/lib/axiosInstance";
 
-// Signup
+// Signup - updated with deviceName
 export const signupService = async (payload: { 
   email: string; 
   password: string;
@@ -12,16 +12,18 @@ export const signupService = async (payload: {
   referralCode?: string;
   hearAboutUs?: string;
   deviceId: string;
+  deviceName?: string; // ADD THIS
 }) => {
   const res = await API.post("/user/signup", payload);
   return res.data;
 };
 
-// Login - UPDATED with deviceId
+// Login - updated with deviceName
 export const loginService = async (payload: { 
   email: string; 
   password: string;
   deviceId: string;
+  deviceName?: string; // ADD THIS
 }) => {
   const res = await API.post("/user/login", payload);
   return res.data;
@@ -75,7 +77,7 @@ export const verifyIdentity = async (payload: {
   };
 };
 
-// Get banks list - NEW function
+// Get banks list
 export const getBanksService = async () => {
   const res = await API.get("/payment/banks");
   return res.data;

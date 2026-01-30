@@ -27,12 +27,16 @@ type AuthState = {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
+  deviceId: string | null;
+  deviceName: string | null;
   logout: () => void;
-  hasHydrated: boolean
-  setHasHydrated: (state: boolean) => void
+  hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   setUser: (user: User) => void;
   setAccessToken: (accessToken: string) => void;
   setRefreshToken: (refreshToken: string) => void;
+  setDeviceId: (deviceId: string) => void;
+  setDeviceName: (deviceName: string) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -41,12 +45,16 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       refreshToken: null,
+      deviceId: null,
+      deviceName: null,
       hasHydrated: false,
+      
       logout: () =>
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
+          // Keep deviceId and deviceName for future logins
           hasHydrated: true,
         }),
       
@@ -54,6 +62,8 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user: User) => set({ user }),
       setAccessToken: (accessToken: string) => set({ accessToken }),
       setRefreshToken: (refreshToken: string) => set({ refreshToken }),
+      setDeviceId: (deviceId: string) => set({ deviceId }),
+      setDeviceName: (deviceName: string) => set({ deviceName }),
     }),
 
     {
@@ -63,10 +73,12 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
+        deviceId: state.deviceId,
+        deviceName: state.deviceName,
       }),
       
       onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true)
+        state?.setHasHydrated(true);
       },
     }
   )

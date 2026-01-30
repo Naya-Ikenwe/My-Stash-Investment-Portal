@@ -1,7 +1,7 @@
 "use client";
 
 import { Controller, useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GoEye, GoEyeClosed } from "react-icons/go";
 import Link from "next/link";
@@ -20,7 +20,7 @@ import {
 
 import { signupService } from "@/app/api/Users";
 import { useAuthStore } from "@/app/store/authStore";
-import { v4 as uuidv4 } from "uuid"; // Add this import
+import { detectDeviceInfo, getOrCreateDeviceId } from "@/lib/deviceUtils";
 
 type SignupFormInputs = {
   email: string;
@@ -51,20 +51,52 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const router = useRouter();
-  const { setUser, setAccessToken, setRefreshToken } = useAuthStore();
+  const { setUser, setAccessToken, setRefreshToken, deviceId, deviceName, setDeviceId, setDeviceName } = useAuthStore();
+
+  // Initialize device info on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Get or create persistent device ID
+      const existingDeviceId = getOrCreateDeviceId();
+      if (!deviceId && existingDeviceId) {
+        setDeviceId(existingDeviceId);
+      }
+      
+      // Detect device name if not already set
+      if (!deviceName) {
+        const { deviceName: detectedName } = detectDeviceInfo();
+        setDeviceName(detectedName);
+      }
+    }
+  }, [deviceId, deviceName, setDeviceId, setDeviceName]);
 
   const onSubmit = async (data: SignupFormInputs) => {
     try {
       setLoading(true);
       setApiError("");
 
-      // Generate deviceId for signup
-      const deviceId = uuidv4();
+      // Get device info from store or initialize
+      let currentDeviceId = deviceId;
+      let currentDeviceName = deviceName;
       
-      // Create payload with deviceId
+      // If deviceId not in store, get from localStorage
+      if (!currentDeviceId && typeof window !== 'undefined') {
+        currentDeviceId = getOrCreateDeviceId();
+        setDeviceId(currentDeviceId);
+      }
+      
+      // If deviceName not in store, detect it
+      if (!currentDeviceName && typeof window !== 'undefined') {
+        const { deviceName: detectedName } = detectDeviceInfo();
+        currentDeviceName = detectedName;
+        setDeviceName(currentDeviceName);
+      }
+
+      // Create payload with device info
       const payload = {
         ...data,
-        deviceId: deviceId
+        deviceId: currentDeviceId || 'unknown-device',
+        deviceName: currentDeviceName || 'Web Browser'
       };
 
       const res = await signupService(payload);

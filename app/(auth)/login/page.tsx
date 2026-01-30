@@ -2,25 +2,18 @@
 
 import { useForm, SubmitHandler } from "react-hook-form";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GoEye, GoEyeClosed } from "react-icons/go";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/app/store/authStore";
 import { loginService } from "@/app/api/Users";
 import AuthWrapper from "@/app/components/auth/AuthWrapper";
 import CardWrapper from "@/app/components/CardWrapper";
-import { v4 as uuidv4 } from "uuid";
+import { detectDeviceInfo, getOrCreateDeviceId } from "@/lib/deviceUtils";
 
 type LoginFormInputs = {
   email: string;
   password: string;
-};
-
-// Define the correct payload type for loginService
-type LoginPayload = {
-  email: string;
-  password: string;
-  deviceId: string;
 };
 
 export default function LoginPage() {
@@ -33,24 +26,51 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
-  const { setUser, setAccessToken, setRefreshToken } = useAuthStore();
+  const { setUser, setAccessToken, setRefreshToken, deviceId, deviceName, setDeviceId, setDeviceName } = useAuthStore();
+
+  // Initialize device info on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Get or create device ID
+      const existingDeviceId = getOrCreateDeviceId();
+      if (!deviceId && existingDeviceId) {
+        setDeviceId(existingDeviceId);
+      }
+      
+      // Detect device name if not already set
+      if (!deviceName) {
+        const { deviceName: detectedName } = detectDeviceInfo();
+        setDeviceName(detectedName);
+      }
+    }
+  }, [deviceId, deviceName, setDeviceId, setDeviceName]);
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     try {
       setLoading(true);
       setApiError("");
 
-      // Generate deviceId for this login session
-      const deviceId = uuidv4();
+      // Get device info from store or initialize
+      let currentDeviceId = deviceId;
+      let currentDeviceName = deviceName;
       
-      // Create payload with deviceId
-      const payload: LoginPayload = {
+      if (!currentDeviceId && typeof window !== 'undefined') {
+        currentDeviceId = getOrCreateDeviceId();
+        setDeviceId(currentDeviceId);
+      }
+      
+      if (!currentDeviceName && typeof window !== 'undefined') {
+        const { deviceName: detectedName } = detectDeviceInfo();
+        currentDeviceName = detectedName;
+        setDeviceName(currentDeviceName);
+      }
+      
+      const res = await loginService({
         email: data.email,
         password: data.password,
-        deviceId: deviceId
-      };
-      
-      const res = await loginService(payload);
+        deviceId: currentDeviceId || 'unknown-device',
+        deviceName: currentDeviceName || 'Web Browser',
+      });
 
       console.log("login success:", res);
 
@@ -60,16 +80,9 @@ export default function LoginPage() {
       setAccessToken(access_token);
       setRefreshToken(refresh_token);
 
-      console.log("AUTH STATE AFTER LOGIN:", useAuthStore.getState());
-
       router.push("/dashboard");
     } catch (err: any) {
-      // Better error handling
-      const errorMessage = err.response?.data?.message || 
-                          err.message || 
-                          "Login failed. Please check your credentials.";
-      setApiError(errorMessage);
-      console.error("Login error:", err);
+      setApiError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -119,10 +132,6 @@ export default function LoginPage() {
                     className="w-full inputs"
                     {...register("password", {
                       required: "Password is required",
-                      minLength: {
-                        value: 6,
-                        message: "Password must be at least 6 characters"
-                      }
                     })}
                   />
 
@@ -156,18 +165,14 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="bg-primary font-medium text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-primary font-medium text-white px-4 py-2 rounded disabled:opacity-50"
                   disabled={loading}
                 >
                   {loading ? "Signing in..." : "Sign In"}
                 </button>
               </div>
 
-              {apiError && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                  <p className="text-red-600 text-sm text-center">{apiError}</p>
-                </div>
-              )}
+              {apiError && <p className="text-red-500 text-sm">{apiError}</p>}
             </form>
           </CardWrapper>
         </div>
