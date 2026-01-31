@@ -1,57 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "../store/authStore";
-import AuthWrapper from "./auth/AuthWrapper";
+import { useAuthStore } from "@/app/store/authStore";
+import Cookies from "js-cookie";
 
-export default function ProtectedRoute({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+type ProtectedRouteProps = { children: ReactNode };
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const { user, accessToken } = useAuthStore();
+  const { user, setUser, setAccessToken, setRefreshToken } = useAuthStore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!accessToken) {
-      router.replace("/"); // redirect to login
+    const accessToken = Cookies.get("access_token");
+    const refreshToken = Cookies.get("refresh_token");
+    const storedUser = Cookies.get("user");
+
+    if (!user) {
+      if (accessToken && refreshToken) {
+        setAccessToken(accessToken);
+        setRefreshToken(refreshToken);
+
+        if (storedUser) setUser(JSON.parse(storedUser));
+        // else: optionally fetch user from backend
+      } else {
+        router.push("/login");
+      }
     }
-  }, [accessToken]);
 
-  // Avoid flashing content until we know the auth state
-  if (!accessToken || !user)
-    return (
-      <AuthWrapper className="">
-        <main className="flex items-center justify-center">
-          <p>Loading....</p>
-        </main>
-      </AuthWrapper>
-    );
+    setLoading(false);
+  }, [user, router, setAccessToken, setRefreshToken, setUser]);
 
+  if (loading) return <div>Loading...</div>;
   return <>{children}</>;
 }
-
-// import { useEffect, useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { useAuthStore } from "../store/authStore";
-
-// export default function AuthGuard({ children }: { children: React.ReactNode }) {
-//   const router = useRouter();
-//   const token = useAuthStore((state) => state.token);
-//   const [isMounted, setIsMounted] = useState(false);
-
-//   useEffect(() => {
-//     setIsMounted(true);
-//     if (!token) {
-//       router.push("/login");
-//     }
-//   }, [token, router]);
-
-//   // Prevent flash of unauthenticated content
-//   if (!isMounted || !token) {
-//     return <div className="p-10 text-center">Loading...</div>; // Or a Spinner
-//   }
-
-//   return <>{children}</>;
-// }

@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from "uuid";
 
 type Bank = {
   name: string;
-  slug: string;
+  slug: string;       // Using slug as unique identifier
   code: string;
   longcode: string;
 };
@@ -27,7 +27,7 @@ type Bank = {
 type VerifyIdentityForm = {
   dob: Date | null;
   gender: string;
-  bank: string;
+  bank: string;       // This will now store the bank slug
   accountNumber: string;
   accountName: string;
   bvn: string;
@@ -120,7 +120,7 @@ export default function VerifyIdentityPage() {
       deviceId: uuidv4(),
       dateOfBirth: dateOfBirth,
       gender: data.gender.toUpperCase(),
-      bank: data.bank,
+      bank: data.bank,  // Now sending the slug instead of code
       accountNumber: data.accountNumber,
       accountName: data.accountName,
       bvn: data.bvn,
@@ -239,7 +239,8 @@ export default function VerifyIdentityPage() {
                     <SelectContent className="bg-white">
                       <SelectGroup>
                         {banks.map((bank) => (
-                          <SelectItem key={bank.code} value={bank.code}>
+                          // CHANGE: Use bank.slug as the key AND value
+                          <SelectItem key={bank.slug} value={bank.slug}>
                             {bank.name}
                           </SelectItem>
                         ))}

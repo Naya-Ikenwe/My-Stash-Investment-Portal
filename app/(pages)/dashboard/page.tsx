@@ -1,6 +1,6 @@
 "use client";
 
-import { getPlans } from "@/app/api/Plan";
+import { getAllPlans } from "@/app/api/Plan";
 import { userProfile } from "@/app/api/Users";
 import PortfolioCards from "@/app/components/PortfolioCards";
 import PortfolioGrowth from "@/app/components/PortfolioGrowth";

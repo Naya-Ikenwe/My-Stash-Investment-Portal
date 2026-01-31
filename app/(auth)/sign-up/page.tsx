@@ -21,6 +21,7 @@ import {
 import { signupService } from "@/app/api/Users";
 import { useAuthStore } from "@/app/store/authStore";
 import { detectDeviceInfo, getOrCreateDeviceId } from "@/lib/deviceUtils";
+import { RxDividerVertical } from "react-icons/rx"; // ADD THIS IMPORT
 
 type SignupFormInputs = {
   email: string;
@@ -116,8 +117,8 @@ export default function SignUpPage() {
   };
 
   return (
-    <AuthWrapper>
-      <main className="flex gap-10 -mt-10">
+    <AuthWrapper className="flex gap-10 -mt-10"> {/* ADD className HERE */}
+      <main className="flex gap-20"> {/* CHANGE TO flex gap-20 */}
         <CardWrapper className="px-8 py-8 flex flex-col gap-4 w-[628px]">
           <div>
             <h3 className="text-primary font-heading text-[30px] font-medium">
@@ -130,6 +131,7 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
+            {/* ... KEEP ALL YOUR EXISTING FORM CODE EXACTLY AS IS ... */}
             <div className="flex gap-4">
               <Controller
                 name="email"
@@ -318,6 +320,31 @@ export default function SignUpPage() {
             </p>
           </article>
         </CardWrapper>
+
+        {/* ADD THE 2-STEP UI SIDEBAR HERE */}
+        <aside className="flex flex-col gap-9 w-[453px]">
+          <h2 className="text-primary text-[34px] font-heading">
+            Lets get you set up in just 2 steps
+          </h2>
+
+          <div>
+            <div className="flex gap-1 items-center">
+              <p className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white">
+                1
+              </p>
+              <p>Create Your Account</p>
+            </div>
+
+            <RxDividerVertical size={24} className="mx-1 text-gray-400" />
+
+            <div className="flex gap-1 items-center">
+              <p className="w-8 h-8 flex items-center justify-center rounded-full border">
+                2
+              </p>
+              <p>Enter Your Information</p>
+            </div>
+          </div>
+        </aside>
       </main>
     </AuthWrapper>
   );

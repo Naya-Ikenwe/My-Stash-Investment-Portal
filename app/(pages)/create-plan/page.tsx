@@ -10,16 +10,18 @@ import { useForm } from "react-hook-form";
 
 export default function CreatePlanPage() {
   const [activeTab, setActiveTab] = useState("welcome");
+  
+  // Updated with rollover default values
   const form = useForm<PlanFormData>({
     defaultValues: {
       name: "",
-      // principal: ,
+      principal: 0,
       duration: 0,
       startDate: Date.now(),
       endDate: 0,
-      payoutFrequency: "MONTHLY",
-      payoutAccountId: "40195",
-      rolloverType: "PRINCIPAL_ONLY",
+      rollover: true, // Default to true
+      rolloverType: "PRINCIPAL_ONLY", // Default rollover type
+       payoutAccountId: "",
     },
   });
 

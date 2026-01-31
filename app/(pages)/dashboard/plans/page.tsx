@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { IoIosSearch } from "react-icons/io";
 import { LiaDownloadSolid } from "react-icons/lia";
-import { savings } from "@/data/PlansData";
 import {
   Pagination,
   PaginationContent,
@@ -14,22 +13,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import Link from "next/link";
-
-// Utility function to calculate days until maturity
-const getDaysUntilMaturity = (maturityDateString: string): number => {
-  const [day, month, year] = maturityDateString.split("/").map(Number);
-  // Convert 2-digit year to 4-digit year (e.g., 26 -> 2026)
-  const fullYear = year < 100 ? 2000 + year : year;
-  const maturityDate = new Date(fullYear, month - 1, day);
-  const today = new Date();
-  const diffTime = maturityDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
-};
+import { getAllPlans, PlanResponse } from "@/app/api/Plan";
 
 export default function PlansPage() {
   const [statusFilter, setStatusFilter] = useState<
-    "All" | "Active" | "Matured"
+    "All" | "ACTIVE" | "MATURED" | "PENDING"
   >("All");
   const [tenorFilter, setTenorFilter] = useState<
     "All" | "6 months" | "12 months"
@@ -39,57 +27,63 @@ export default function PlansPage() {
   const cardPerPage = 8;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [plans, setPlans] = useState<PlanResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredSavings = savings.filter((item) => {
-    const matchesStatus =
-      statusFilter === "All" || item.status === statusFilter;
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setIsLoading(true);
+      try {
+        const results = await getAllPlans(); // results is already PlanResponse[]
+        setPlans(results); // ✅ correct
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+        setPlans([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    const matchesSearch = item.title
+    fetchPlans();
+  }, []);
+
+  // Days until maturity
+  const getDaysUntilMaturity = (dateStr: string) => {
+    if (!dateStr) return 0;
+    const maturityDate = new Date(dateStr);
+    const today = new Date();
+    return Math.ceil(
+      (maturityDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+  };
+
+  // Filter plans
+  const filteredPlans = plans.filter((plan) => {
+    const statusMatch = statusFilter === "All" || plan.status === statusFilter;
+    const searchMatch = plan.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-
-    // Filter by tenor (plan duration in months)
-    let matchesTenor = true;
+    let tenorMatch = true;
     if (tenorFilter !== "All") {
-      const daysUntilMaturity = getDaysUntilMaturity(item.maturityDate);
-
-      if (tenorFilter === "6 months") {
-        // 6 months = approximately 140-210 days
-        matchesTenor = daysUntilMaturity >= 140 && daysUntilMaturity <= 210;
-      } else if (tenorFilter === "12 months") {
-        // 12 months = approximately 300+ days
-        matchesTenor = daysUntilMaturity > 210;
-      }
+      const days = getDaysUntilMaturity(plan.maturityDate);
+      if (tenorFilter === "6 months") tenorMatch = days >= 140 && days <= 210;
+      if (tenorFilter === "12 months") tenorMatch = days > 210;
     }
-
-    return matchesStatus && matchesSearch && matchesTenor;
+    return statusMatch && searchMatch && tenorMatch;
   });
 
-  const sortedSavings = [...filteredSavings].sort((a, b) => {
-    // Active plans come first, then Matured
-    if (a.status === "Active" && b.status === "Matured") return -1;
-    if (a.status === "Matured" && b.status === "Active") return 1;
-    return 0;
+  // Sort: ACTIVE first, then PENDING, then MATURED
+  const sortedPlans = [...filteredPlans].sort((a, b) => {
+    const order = ["ACTIVE", "PENDING", "MATURED"];
+    return order.indexOf(a.status) - order.indexOf(b.status);
   });
 
-  const totalPages = Math.ceil(sortedSavings.length / cardPerPage);
-
-  const paginatedSavings = sortedSavings.slice(
+  // Pagination
+  const totalPages = Math.ceil(sortedPlans.length / cardPerPage);
+  const paginatedPlans = sortedPlans.slice(
     (currentPage - 1) * cardPerPage,
-    currentPage * cardPerPage
+    currentPage * cardPerPage,
   );
-
-  const handleStatusChange = (status: "All" | "Active" | "Matured") => {
-    setStatusFilter(status);
-    setIsStatusDropdownOpen(false);
-    setCurrentPage(1);
-  };
-
-  const handleTenorChange = (tenor: "All" | "6 months" | "12 months") => {
-    setTenorFilter(tenor);
-    setIsTenorDropdownOpen(false);
-    setCurrentPage(1);
-  };
 
   return (
     <main className="w-full h-full rounded-[14px]">
@@ -99,7 +93,7 @@ export default function PlansPage() {
       {/* Filters */}
       <div className="flex justify-between items-center mt-3">
         <div className="flex h-8 mt-5 gap-4">
-          {/* Status Filter */}
+          {/* Status */}
           <div className="relative">
             <button
               onClick={() => {
@@ -107,29 +101,25 @@ export default function PlansPage() {
                 setIsTenorDropdownOpen(false);
               }}
             >
-              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg flex items-center justify-between">
                 <p>Status</p>
                 <RiArrowDropDownLine
                   size={16}
-                  className={`transition-transform ${
-                    isStatusDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={isStatusDropdownOpen ? "rotate-180" : ""}
                 />
               </div>
             </button>
-
-            {/* Status Dropdown Menu */}
             {isStatusDropdownOpen && (
-              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
-                {["All", "Active", "Matured"].map((status) => (
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+                {["All", "ACTIVE", "MATURED", "PENDING"].map((status) => (
                   <button
                     key={status}
-                    onClick={() =>
-                      handleStatusChange(status as "All" | "Active" | "Matured")
-                    }
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                      statusFilter === status ? "bg-[#A243DC] text-white" : ""
-                    }`}
+                    onClick={() => {
+                      setStatusFilter(status as any);
+                      setIsStatusDropdownOpen(false);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${statusFilter === status ? "bg-[#A243DC] text-white" : ""}`}
                   >
                     {status}
                   </button>
@@ -138,7 +128,7 @@ export default function PlansPage() {
             )}
           </div>
 
-          {/* Tenor Filter */}
+          {/* Tenor */}
           <div className="relative">
             <button
               onClick={() => {
@@ -146,31 +136,25 @@ export default function PlansPage() {
                 setIsStatusDropdownOpen(false);
               }}
             >
-              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg text-center flex items-center justify-between">
+              <div className="h-8 cursor-pointer w-[91px] py-1 px-2 bg-[#F7F7F7] rounded-lg flex items-center justify-between">
                 <p>Tenor</p>
                 <RiArrowDropDownLine
                   size={16}
-                  className={`transition-transform ${
-                    isTenorDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={isTenorDropdownOpen ? "rotate-180" : ""}
                 />
               </div>
             </button>
-
-            {/* Tenor Dropdown Menu */}
             {isTenorDropdownOpen && (
-              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 overflow-clip">
+              <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10">
                 {["All", "6 months", "12 months"].map((tenor) => (
                   <button
                     key={tenor}
-                    onClick={() =>
-                      handleTenorChange(
-                        tenor as "All" | "6 months" | "12 months"
-                      )
-                    }
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 whitespace-nowrap ${
-                      tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""
-                    }`}
+                    onClick={() => {
+                      setTenorFilter(tenor as any);
+                      setIsTenorDropdownOpen(false);
+                      setCurrentPage(1);
+                    }}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${tenorFilter === tenor ? "bg-[#A243DC] text-white" : ""}`}
                   >
                     {tenor}
                   </button>
@@ -180,123 +164,147 @@ export default function PlansPage() {
           </div>
         </div>
 
+        {/* Search + Download */}
         <div className="flex items-center gap-4">
           <div className="relative w-[180px]">
-            <IoIosSearch className="absolute text-[16px] left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-
+            <IoIosSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="search"
-              name="search"
               placeholder="Search plans..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setCurrentPage(1); // reset pagination on search
+                setCurrentPage(1);
               }}
               className="w-[180px] h-[42px] pl-9 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
             />
           </div>
-
-          <div className="">
-            <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 cursor-pointer justify-center h-[42px]">
-              <p>Download</p>
-              <LiaDownloadSolid size={20} />
-            </button>
-          </div>
+          <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 justify-center h-[42px]">
+            <p>Download</p>
+            <LiaDownloadSolid size={20} />
+          </button>
         </div>
       </div>
 
-      {/* 🔵 Savings List goes here */}
+      {/* Plans */}
       <div className="mt-5 py-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {paginatedSavings.map((item) => (
-            <Link href={`/dashboard/plans/${item.id}`} key={item.id}>
-              <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-[#F7F7F7] relative cursor-pointer hover:shadow-md transition">
-                <span
-                  className={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full ${
-                    item.status === "Active"
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-green-100 text-green-800"
-                  }`}
-                >
-                  {item.status}
-                </span>
-
-                <h2 className="text-lg font-medium">{item.title}</h2>
-
-                <p className="text-xl text-[#455A64] font-semibold mt-2">
-                  ₦{item.amount.toLocaleString()}
-                </p>
-
-                <div className="flex justify-between mt-9">
-                  <p className="text-[#263238] font-semibold text-[12px] leading-[125%] mt-1">
-                    {item.plan}
-                  </p>
-
-                  <div className="">
-                    <p className="text-[#37474F] flex flex-col text-sm">
-                      Mtr.Date
-                    </p>
-                    <p className="text-[#37474F] flex flex-col text-sm">
-                      {item.maturityDate}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {paginatedSavings.length === 0 && (
-          <div className="h-20 w-full">
-            <p className="text-center text-gray-500 mt-10">No plans found.</p>
+        {isLoading ? (
+          <div className="h-40 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#A243DC]"></div>
+              <p className="text-gray-500">Loading plans...</p>
+            </div>
           </div>
+        ) : paginatedPlans.length === 0 ? (
+          <div className="h-20 w-full flex flex-col items-center justify-center mt-10">
+            <p className="text-center text-gray-500">
+              {searchQuery
+                ? "No plans match your search."
+                : "No investment plans found."}
+            </p>
+            <Link
+              href="/dashboard/create-plan"
+              className="mt-4 text-[#A243DC] hover:underline"
+            >
+              Create your first plan →
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {paginatedPlans.map((plan) => (
+                <Link href={`/dashboard/plans/${plan.id}`} key={plan.id}>
+                  <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-[#F7F7F7] relative cursor-pointer hover:shadow-md transition">
+                    <span
+                      className={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full ${
+                        plan.status === "ACTIVE"
+                          ? "bg-blue-100 text-blue-600"
+                          : plan.status === "MATURED"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-600"
+                      }`}
+                    >
+                      {plan.status}
+                    </span>
+                    <h2 className="text-lg font-medium">{plan.name}</h2>
+                    <p className="text-xl text-[#455A64] font-semibold mt-2">
+  ₦{plan.currentPrincipal?.toLocaleString() || 0} (principal: ₦{plan.principal?.toLocaleString()})
+</p>
+
+
+                    <div className="flex justify-between mt-9">
+                      <div>
+                        <p className="text-[#263238] font-semibold text-[12px] leading-[125%]">
+                          {plan.name}
+                        </p>
+                        {plan.rolloverType && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Rollover: {plan.rolloverType.replace("_", " ")}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[#37474F] text-sm">Mtr.Date</p>
+                        <p className="text-[#37474F] text-sm">
+                          {plan.maturityDate ? (
+                            new Date(plan.maturityDate).toLocaleDateString(
+                              "en-GB",
+                            )
+                          ) : (
+                            <span className="text-gray-400">Not set</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination className="mt-10 flex items-end w-full justify-end">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.max(p - 1, 1));
+                      }}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          isActive={currentPage === page}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.min(p + 1, totalPages));
+                      }}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
         )}
-
-        <Pagination className="mt-10 flex items-end w-full justify-end">
-          <PaginationContent>
-            {/* Previous */}
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentPage((p) => Math.max(p - 1, 1));
-                }}
-                className="hover:bg-white hover:underline"
-              />
-            </PaginationItem>
-
-            {/* Page Numbers */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  href="#"
-                  isActive={currentPage === page}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentPage(page);
-                  }}
-                  className="hover:bg-primary/40"
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-
-            {/* Next */}
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setCurrentPage((p) => Math.min(p + 1, totalPages));
-                }}
-                className="hover:bg-white hover:underline"
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
       </div>
     </main>
   );
