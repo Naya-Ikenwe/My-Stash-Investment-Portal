@@ -21,6 +21,7 @@ interface InstantTopupProps {
   onConfirm?: () => void;
   onBack: () => void;
   method?: string;
+  isTopUp?: boolean;
 }
 
 export default function InstantTopup({
@@ -30,6 +31,7 @@ export default function InstantTopup({
   onConfirm,
   onBack,
   method,
+  isTopUp = false,
 }: InstantTopupProps) {
   const router = useRouter();
   
@@ -46,10 +48,11 @@ export default function InstantTopup({
   useEffect(() => {
     if (!isOpen) return;
     
-    console.log("🔼 InstantTopup modal opened with:", {
+    console.log(`🔼 ${isTopUp ? 'Top-up' : 'Plan creation'} modal opened with:`, {
       planId: planId,
       paymentDetails: paymentDetails,
-      expiresIn: paymentDetails?.expiresIn
+      expiresIn: paymentDetails?.expiresIn,
+      isTopUp: isTopUp
     });
     
     setTimeLeft(parseExpiresIn(paymentDetails?.expiresIn || "1h"));
@@ -59,7 +62,7 @@ export default function InstantTopup({
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [isOpen, paymentDetails, planId]);
+  }, [isOpen, paymentDetails, planId, isTopUp]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -79,20 +82,7 @@ export default function InstantTopup({
   };
 
   const handleConfirmPayment = () => {
-    console.log("🔄 User clicked 'I have paid'");
-    console.log("📝 Plan ID to redirect to:", planId);
-    
-    // Store plan ID for polling in PlanDetails page
-    if (planId) {
-      localStorage.setItem('pendingPlanId', planId);
-      console.log(`💾 Stored plan ID in localStorage: ${planId}`);
-      
-      // Verify it was stored
-      const stored = localStorage.getItem('pendingPlanId');
-      console.log(`✅ Verified storage - localStorage now has: ${stored}`);
-    } else {
-      console.error("❌ No planId provided to InstantTopup!");
-    }
+    console.log(`🔄 User clicked 'I have paid' for ${isTopUp ? 'top-up' : 'plan creation'}`);
     
     // Call optional onConfirm callback if provided
     if (onConfirm) {

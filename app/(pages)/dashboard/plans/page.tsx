@@ -228,9 +228,8 @@ export default function PlansPage() {
                     </span>
                     <h2 className="text-lg font-medium">{plan.name}</h2>
                     <p className="text-xl text-[#455A64] font-semibold mt-2">
-  ₦{plan.currentPrincipal?.toLocaleString() || 0} (principal: ₦{plan.principal?.toLocaleString()})
-</p>
-
+                      ₦{plan.currentPrincipal?.toLocaleString() || 0}
+                    </p>
 
                     <div className="flex justify-between mt-9">
                       <div>

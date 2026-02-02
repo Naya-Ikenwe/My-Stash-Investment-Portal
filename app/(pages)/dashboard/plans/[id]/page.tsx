@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,14 +25,14 @@ interface Plan {
   payoutFrequency: string;
   roiRate: number;
   roiType: string;
-  rollover: boolean; // Local toggle until API endpoint exists
+  rollover: boolean;
   rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST";
   startDate: string;
   nextRoiDueAt: string | null;
   totalAccruedRoi: number;
 }
 
-// Mock transactions (replace with real API later)
+// Mock transactions
 const mockTransactions = [
   { id: 1, type: "deposit" as const, date: "2025-01-30", amount: 20000 },
   { id: 2, type: "interest" as const, date: "2025-02-28", amount: 200 },
@@ -52,6 +52,11 @@ export default function PlanDetails({
   const [rolloverEnabled, setRolloverEnabled] = useState(false);
   const [planId, setPlanId] = useState<string>("");
   const [pollingCount, setPollingCount] = useState(0);
+  const [isPolling, setIsPolling] = useState(false); // NEW: Track if we're actively polling
+  
+  // Track initial values for comparison
+  const initialStatusRef = useRef<string | null>(null);
+  const initialPrincipalRef = useRef<number | null>(null);
 
   // Resolve plan ID from params
   useEffect(() => {
@@ -63,7 +68,7 @@ export default function PlanDetails({
   }, [params]);
 
   // Fetch plan from API
-  const fetchPlanData = async (id: string) => {
+  const fetchPlanData = async (id: string, isInitialLoad = false) => {
     setIsLoading(true);
     setError(null);
 
@@ -99,6 +104,34 @@ export default function PlanDetails({
 
       setPlan(mappedPlan);
       setRolloverEnabled(mappedPlan.rollover);
+      
+      // Store initial values on first load
+      if (isInitialLoad) {
+        initialStatusRef.current = mappedPlan.status;
+        initialPrincipalRef.current = mappedPlan.currentPrincipal;
+        
+        // AUTO-START POLLING ONLY if plan is PENDING
+        if (mappedPlan.status === "PENDING") {
+          console.log("🚨 Plan is PENDING - starting auto-polling");
+          setIsPolling(true);
+        } else {
+          console.log("👁️ Plan is ACTIVE/MATURED - no auto-polling");
+          setIsPolling(false);
+        }
+        
+        console.log("📊 Initial plan data:", {
+          status: mappedPlan.status,
+          currentPrincipal: mappedPlan.currentPrincipal,
+          isPolling: mappedPlan.status === "PENDING"
+        });
+      }
+      
+      console.log(`🔄 Plan data fetched:`, {
+        status: mappedPlan.status,
+        currentPrincipal: mappedPlan.currentPrincipal,
+        isInitialLoad,
+        isPolling
+      });
     } catch (err: any) {
       setError(err.message || "Failed to load plan");
       setPlan(null);
@@ -107,47 +140,100 @@ export default function PlanDetails({
     }
   };
 
-  // Poll PENDING plans
-  useEffect(() => {
-    if (!planId || !plan || plan.status !== "PENDING") return;
+  // Manual function to start polling (for top-ups)
+  const startPollingForUpdates = () => {
+    console.log("🎯 Manually starting polling for updates");
+    setIsPolling(true);
+    setPollingCount(0);
+  };
 
+  // Polling for plan updates
+  useEffect(() => {
+    if (!planId || !plan || !isPolling) return;
+
+    console.log(`⏰ Polling active for plan ${planId}... (status: ${plan.status}, poll count: ${pollingCount})`);
+    
     const intervalId = setInterval(async () => {
       try {
+        console.log(`🔄 Polling plan ${planId}... (poll: ${pollingCount + 1})`);
         const response = await getPlanById(planId);
         const planData = response;
 
-        if (planData?.status === "ACTIVE") {
-          const hasRollover =
-            planData.rolloverType === "PRINCIPAL_ONLY" ||
-            planData.rolloverType === "PRINCIPAL_AND_INTEREST";
+        if (planData) {
+          const statusChanged = planData.status !== plan.status;
+          const currentPrincipalChanged = planData.currentPrincipal !== plan.currentPrincipal;
+          
+          if (statusChanged || currentPrincipalChanged) {
+            console.log(`📈 Plan update detected:`, {
+              statusChanged,
+              currentPrincipalChanged,
+              oldStatus: plan.status,
+              newStatus: planData.status,
+              oldPrincipal: plan.currentPrincipal,
+              newPrincipal: planData.currentPrincipal
+            });
+            
+            const hasRollover =
+              planData.rolloverType === "PRINCIPAL_ONLY" ||
+              planData.rolloverType === "PRINCIPAL_AND_INTEREST";
 
-          setPlan((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  status: "ACTIVE",
-                  rollover: hasRollover,
-                  rolloverType: planData.rolloverType || "PRINCIPAL_ONLY",
-                }
-              : null
-          );
-          setRolloverEnabled(hasRollover);
-          setPollingCount(0);
-        } else {
-          setPollingCount((prev) => prev + 1);
-          if (pollingCount >= 60) setPollingCount(0);
+            setPlan((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status: planData.status || prev.status,
+                    currentPrincipal: planData.currentPrincipal || prev.currentPrincipal,
+                    amount: planData.currentPrincipal || planData.principal || prev.amount,
+                    rollover: hasRollover,
+                    rolloverType: planData.rolloverType || prev.rolloverType,
+                  }
+                : null
+            );
+            setRolloverEnabled(hasRollover);
+            
+            // Stop polling conditions:
+            // 1. If PENDING plan became ACTIVE
+            // 2. If we detected a change (for top-ups)
+            if ((plan.status === "PENDING" && planData.status === "ACTIVE") || 
+                currentPrincipalChanged) {
+              console.log(`✅ Update detected. Stopping polling.`);
+              setIsPolling(false);
+              setPollingCount(0);
+            }
+          }
+          
+          setPollingCount((prev) => {
+            const newCount = prev + 1;
+            
+            // Stop polling after max attempts
+            const maxAttempts = plan.status === "PENDING" ? 60 : 12; // 5min for PENDING, 1min for top-ups
+            
+            if (newCount >= maxAttempts) {
+              console.log(`🛑 Stopping polling after ${maxAttempts} attempts`);
+              setIsPolling(false);
+              return 0;
+            }
+            
+            return newCount;
+          });
         }
       } catch (err) {
         console.error("Polling failed", err);
         setPollingCount((prev) => prev + 1);
       }
-    }, 5000);
+    }, 5000); // Poll every 5 seconds
 
-    return () => clearInterval(intervalId);
-  }, [planId, plan, pollingCount]);
+    return () => {
+      console.log(`🛑 Clearing polling interval`);
+      clearInterval(intervalId);
+    };
+  }, [planId, plan, pollingCount, isPolling]);
 
+  // Initial fetch
   useEffect(() => {
-    if (planId) fetchPlanData(planId);
+    if (planId) {
+      fetchPlanData(planId, true);
+    }
   }, [planId]);
 
   const formatDate = (dateString: string) => {
@@ -214,13 +300,14 @@ export default function PlanDetails({
         <p className="font-euclid">Back</p>
       </Link>
 
-      {plan.status === "PENDING" && (
+      {/* Polling status messages - Show ONLY when actively polling AND plan is PENDING */}
+      {isPolling && plan.status === "PENDING" && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
             <p className="text-sm">
-              ⏳ Waiting for payment confirmation. This page will update
-              automatically...
+              ⏳ Waiting for payment confirmation...
+              This page will update automatically...
             </p>
           </div>
         </div>
@@ -245,7 +332,12 @@ export default function PlanDetails({
             </span>
           </h1>
 
-          <p className="text-4xl font-bold mt-4">₦{plan.amount.toLocaleString()}</p>
+          <p className="text-4xl font-bold mt-4">₦{plan.currentPrincipal.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {plan.currentPrincipal !== plan.principal && (
+              <>Includes ₦{(plan.currentPrincipal - plan.principal).toLocaleString()} in top-ups</>
+            )}
+          </p>
 
           <div className="flex gap-4 mt-6">
             <button
@@ -280,26 +372,7 @@ export default function PlanDetails({
             </button>
           </div>
 
-          {/* Rollover toggle */}
-          <div className="flex justify-between mt-6 items-center">
-            <span className="text-gray-700 font-euclid">Reinvest after maturity</span>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={rolloverEnabled}
-                disabled={plan.status === "PENDING"}
-                onChange={(e) => setRolloverEnabled(e.target.checked)}
-              />
-              <div
-                className={`w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${
-                  plan.status === "PENDING"
-                    ? "bg-gray-200 peer-checked:bg-gray-400 after:border-gray-300"
-                    : "bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#A243DC] peer-checked:bg-[#A243DC] after:border-gray-300"
-                }`}
-              ></div>
-            </label>
-          </div>
+          {/* COMMENTED OUT: Reinvest after maturity toggle */}
         </div>
 
         {/* RIGHT CARD */}
@@ -385,7 +458,14 @@ export default function PlanDetails({
         </div>
       </div>
 
-      <TopUpModal isOpen={showTopUpModal} onClose={() => setShowTopUpModal(false)} />
+      {/* TopUp Modal - Pass the startPolling function */}
+      <TopUpModal 
+        isOpen={showTopUpModal} 
+        onClose={() => setShowTopUpModal(false)}
+        planId={planId}
+        onTopUpSuccess={startPollingForUpdates} // NEW: Callback for top-up success
+      />
+      
       <LiquidatePopup
         isOpen={showLiquidatePopup}
         onClose={() => setShowLiquidatePopup(false)}

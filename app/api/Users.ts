@@ -12,7 +12,7 @@ export const signupService = async (payload: {
   referralCode?: string;
   hearAboutUs?: string;
   deviceId: string;
-  deviceName?: string; // ADD THIS
+  deviceName?: string;
 }) => {
   const res = await API.post("/user/signup", payload);
   return res.data;
@@ -23,7 +23,7 @@ export const loginService = async (payload: {
   email: string; 
   password: string;
   deviceId: string;
-  deviceName?: string; // ADD THIS
+  deviceName?: string;
 }) => {
   const res = await API.post("/user/login", payload);
   return res.data;
@@ -52,31 +52,6 @@ export const resendVerificationOtpService = async (payload: {
   return res.data;
 };
 
-// Verify identity
-export const verifyIdentity = async (payload: {
-  deviceId: string;
-  dateOfBirth: string;
-  gender: string;
-  bank: string;
-  accountNumber: string;
-  accountName: string;
-  bvn: string;
-  bvnName: string;
-}) => {
-  // Ensure deviceId exists
-  if (!payload.deviceId) {
-    payload.deviceId = uuidv4();
-  }
-
-  const profileRes = await API.patch("/user/profile", payload);
-  const kycRes = await API.patch("/user/kyc", payload);
-
-  return {
-    profile: profileRes.data,
-    kyc: kycRes.data,
-  };
-};
-
 // Get banks list
 export const getBanksService = async () => {
   const res = await API.get("/payment/banks");
@@ -101,8 +76,8 @@ export const resetPasswordService = async (payload: {
   return res.data;
 };
 
-// Update user profile
-export const updateProfileService = async (payload: any) => {
+// Update user profile (general - for Personal.tsx component)
+export const updateUserProfileService = async (payload: any) => {
   const res = await API.patch("/user/profile", payload);
   return res.data;
 };
@@ -110,5 +85,173 @@ export const updateProfileService = async (payload: any) => {
 // Logout (optional - if your backend has a logout endpoint)
 export const logoutService = async () => {
   const res = await API.post("/user/logout");
+  return res.data;
+};
+
+// Refresh token
+export const refreshTokenService = async () => {
+  const res = await API.post("/user/refresh", {}, { withCredentials: true });
+  return res.data;
+};
+
+// Update DOB & Gender specifically (for VerifyIdentityPage)
+export const updateProfileDobGender = async (payload: {
+  dateOfBirth: string;
+  gender: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}) => {
+  const res = await API.patch("/user/profile", payload);
+  return res.data;
+};
+
+// Verify bank account
+export const verifyBankAccount = async (payload: { 
+  accountNumber: string; 
+  bankCode: string;
+}) => {
+  const res = await API.post("/bank", payload);
+  return res.data;
+};
+
+// ===== KYC SERVICES =====
+
+// NEW: Update KYC information for Authorization page (doesn't require bvn)
+export const updateKycInfoService = async (payload: {
+  nin?: string;
+  sourceOfIncome?: string;
+  motherMaidenName?: string;
+  bvn?: string;
+}) => {
+  const res = await API.patch("/user/kyc", payload);
+  return res.data;
+};
+
+// EXISTING: Update KYC information (JSON only - for VerifyIdentityPage)
+// KEEP THIS NAME - VerifyIdentityPage uses it
+export const updateKycService = async (payload: {
+  bvn: string;
+  nin?: string;
+  motherMaidenName?: string;
+  sourceOfIncome?: string;
+  meansOfIdentification?: string;
+  proofOfAddress?: string;
+  passportPhotograph?: string;
+  digitalSignature?: string;
+}) => {
+  const res = await API.patch("/user/kyc", payload);
+  return res.data;
+};
+
+// Upload KYC documents with files (FormData - for Kyc.tsx)
+export const uploadKycDocumentsService = async (formData: FormData) => {
+  const res = await API.patch("/user/kyc", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
+// Get KYC documents
+export const getKycDocumentsService = async () => {
+  const res = await API.get("/user/kyc");
+  return res.data;
+};
+
+// ===== END KYC SERVICES =====
+
+// Get user profile (for Personal.tsx component)
+export const getUserProfileService = async () => {
+  const res = await API.get("/user/profile");
+  return res.data;
+};
+
+// Change password
+export const changePasswordService = async (payload: {
+  oldPassword: string;
+  newPassword: string;
+}) => {
+  const res = await API.post("/user/change-password", payload);
+  return res.data;
+};
+
+/// Get user's saved security question
+export const getSecurityQuestionsService = async () => {
+  const res = await API.get("/security/security-question");
+  return res.data;
+};
+
+// Set security question & answer
+export const setSecurityAnswerService = async (payload: {
+  questionId: string;
+  answer: string;
+}) => {
+  const res = await API.post("/security/security-question", payload);
+  return res.data;
+};
+
+// Set PIN
+export const setUserPinService = async (payload: {
+  pin: string;
+}) => {
+  const res = await API.post("/security/pin/setup", payload);
+  return res.data;
+};
+
+// Get bank accounts
+export const getUserBankAccountsService = async () => {
+  const res = await API.get("/bank");
+  return res.data;
+};
+
+// Add this to your user.ts file:
+// Change PIN
+export const changePinService = async (payload: {
+  oldPin: string;
+  newPin: string;
+}) => {
+  const res = await API.post("/security/pin/change", payload);
+  return res.data;
+};
+
+// Add these to your existing user.ts file:
+
+// ===== TRANSACTION SERVICES =====
+
+// Get transactions with filters
+export const getTransactionsService = async (params?: {
+  page?: number;
+  limit?: number;
+  amount?: number;
+  type?: string;
+  intent?: string;
+  gatewayType?: string;
+  status?: string;
+  reference?: string;
+  planId?: string;
+  fromDate?: string;
+  toDate?: string;
+}) => {
+  const queryParams = new URLSearchParams();
+  
+  // Add all provided parameters
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+  }
+  
+  const url = `/transaction${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const res = await API.get(url);
+  return res.data;
+};
+
+// Get single transaction by ID
+export const getTransactionByIdService = async (id: string) => {
+  const res = await API.get(`/transaction/${id}`);
   return res.data;
 };

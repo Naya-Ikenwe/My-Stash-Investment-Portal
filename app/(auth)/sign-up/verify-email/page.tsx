@@ -10,7 +10,7 @@ import { useAuthStore } from "@/app/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function VerifyEmailPage() {
@@ -24,6 +24,17 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
   const [verifyError, setVerifyError] = useState("");
   const router = useRouter();
+  
+  // Get search params on the client side
+  const [phoneFromSignup, setPhoneFromSignup] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set client flag and get params after hydration
+  useEffect(() => {
+    setIsClient(true);
+    const searchParams = new URLSearchParams(window.location.search);
+    setPhoneFromSignup(searchParams.get('phone'));
+  }, []);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -61,7 +72,12 @@ export default function VerifyEmailPage() {
         isEmailVerified: true,
       });
 
-      router.push("/sign-up/verify-identity");
+      // Use phoneFromSignup from state
+      if (phoneFromSignup) {
+        router.push(`/sign-up/verify-identity?phone=${encodeURIComponent(phoneFromSignup)}`);
+      } else {
+        router.push("/sign-up/verify-identity");
+      }
     } catch (err: any) {
       console.error("Email verification failed", err);
       setVerifyError(err.response?.data?.message || "Invalid or expired OTP");
@@ -96,6 +112,26 @@ export default function VerifyEmailPage() {
       setResending(false);
     }
   };
+
+  // Prevent rendering until client-side
+  if (!isClient) {
+    return (
+      <AuthWrapper>
+        <main className="w-full flex items-center justify-center">
+          <CardWrapper className="px-20 py-10">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-primary font-heading text-[20px]">
+                Enter the 6-digit code that we sent to
+              </h2>
+              <span className="flex flex-col gap-0.5">
+                <p>Loading...</p>
+              </span>
+            </div>
+          </CardWrapper>
+        </main>
+      </AuthWrapper>
+    );
+  }
 
   return (
     <AuthWrapper>

@@ -21,7 +21,7 @@ import {
 import { signupService } from "@/app/api/Users";
 import { useAuthStore } from "@/app/store/authStore";
 import { detectDeviceInfo, getOrCreateDeviceId } from "@/lib/deviceUtils";
-import { RxDividerVertical } from "react-icons/rx"; // ADD THIS IMPORT
+import { RxDividerVertical } from "react-icons/rx";
 
 type SignupFormInputs = {
   email: string;
@@ -71,54 +71,60 @@ export default function SignUpPage() {
     }
   }, [deviceId, deviceName, setDeviceId, setDeviceName]);
 
-  const onSubmit = async (data: SignupFormInputs) => {
-    try {
-      setLoading(true);
-      setApiError("");
+  // Remove localStorage reference from onSubmit
 
-      // Get device info from store or initialize
-      let currentDeviceId = deviceId;
-      let currentDeviceName = deviceName;
-      
-      // If deviceId not in store, get from localStorage
-      if (!currentDeviceId && typeof window !== 'undefined') {
-        currentDeviceId = getOrCreateDeviceId();
-        setDeviceId(currentDeviceId);
-      }
-      
-      // If deviceName not in store, detect it
-      if (!currentDeviceName && typeof window !== 'undefined') {
-        const { deviceName: detectedName } = detectDeviceInfo();
-        currentDeviceName = detectedName;
-        setDeviceName(currentDeviceName);
-      }
+const onSubmit = async (data: SignupFormInputs) => {
+  try {
+    setLoading(true);
+    setApiError("");
 
-      // Create payload with device info
-      const payload = {
-        ...data,
-        deviceId: currentDeviceId || 'unknown-device',
-        deviceName: currentDeviceName || 'Web Browser'
-      };
-
-      const res = await signupService(payload);
-      const { user, access_token, refresh_token } = res.data;
-
-      setUser(user);
-      setAccessToken(access_token);
-      setRefreshToken(refresh_token);
-
-      router.push("/sign-up/verify-email");
-    } catch (err: any) {
-      console.error(err);
-      setApiError(err?.response?.data?.message || "Signup failed");
-    } finally {
-      setLoading(false);
+    // Get device info from store or initialize
+    let currentDeviceId = deviceId;
+    let currentDeviceName = deviceName;
+    
+    if (!currentDeviceId && typeof window !== 'undefined') {
+      currentDeviceId = getOrCreateDeviceId();
+      setDeviceId(currentDeviceId);
     }
-  };
+    
+    if (!currentDeviceName && typeof window !== 'undefined') {
+      const { deviceName: detectedName } = detectDeviceInfo();
+      currentDeviceName = detectedName;
+      setDeviceName(currentDeviceName);
+    }
+
+    // Create payload with device info
+    const payload = {
+      ...data,
+      deviceId: currentDeviceId || 'unknown-device',
+      deviceName: currentDeviceName || 'Web Browser'
+    };
+
+    const res = await signupService(payload);
+    const { user, access_token, refresh_token } = res.data;
+
+    // ✅ Auth store already gets updated by backend response
+    setUser(user);
+    setAccessToken(access_token);
+    setRefreshToken(refresh_token);
+
+    // Pass phone number to verify-email page via URL query
+    const params = new URLSearchParams({
+      phone: data.phone,
+      email: data.email
+    });
+    router.push(`/sign-up/verify-email?${params.toString()}`);
+  } catch (err: any) {
+    console.error(err);
+    setApiError(err?.response?.data?.message || "Signup failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <AuthWrapper className="flex gap-10 -mt-10"> {/* ADD className HERE */}
-      <main className="flex gap-20"> {/* CHANGE TO flex gap-20 */}
+    <AuthWrapper className="flex gap-10 -mt-10">
+      <main className="flex gap-20">
         <CardWrapper className="px-8 py-8 flex flex-col gap-4 w-[628px]">
           <div>
             <h3 className="text-primary font-heading text-[30px] font-medium">
@@ -131,7 +137,6 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-            {/* ... KEEP ALL YOUR EXISTING FORM CODE EXACTLY AS IS ... */}
             <div className="flex gap-4">
               <Controller
                 name="email"
@@ -321,7 +326,6 @@ export default function SignUpPage() {
           </article>
         </CardWrapper>
 
-        {/* ADD THE 2-STEP UI SIDEBAR HERE */}
         <aside className="flex flex-col gap-9 w-[453px]">
           <h2 className="text-primary text-[34px] font-heading">
             Lets get you set up in just 2 steps

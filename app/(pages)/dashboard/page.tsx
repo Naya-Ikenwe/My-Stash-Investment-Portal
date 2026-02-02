@@ -1,35 +1,48 @@
+// app/page.tsx
 "use client";
 
-import { getAllPlans } from "@/app/api/Plan";
+import { useEffect, useState } from "react";
 import { userProfile } from "@/app/api/Users";
+import { getDashboardData } from "@/app/api/dashboard";
 import PortfolioCards from "@/app/components/PortfolioCards";
 import PortfolioGrowth from "@/app/components/PortfolioGrowth";
 import RecentActivities from "@/app/components/RecentActivities";
 import TransactionHistory from "@/app/components/TransactionHistory";
-import { useEffect, useState } from "react";
 
 type User = {
   data: {
     firstName: string;
   };
 };
+
 export default function Dashboard() {
-  const [user, setUser] = useState<User | null>();
+  const [user, setUser] = useState<User | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchDashboard = async () => {
       try {
-        const data = await userProfile();
-        // const plans = await getPlans()
-        // console.log("my plans: ", plans)
-        setUser(data);
-        console.log("Profile data:", data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
+        setLoading(true);
+        setError(null);
+        
+        const [userData, dashboardResponse] = await Promise.all([
+          userProfile(),
+          getDashboardData()
+        ]);
+        
+        setUser(userData);
+        setDashboardData(dashboardResponse.data);
+      } catch (err: any) {
+        console.error("Error fetching dashboard:", err);
+        setError(err.message || "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchDashboard();
   }, []);
 
   return (
@@ -42,20 +55,33 @@ export default function Dashboard() {
 
       <section className="flex gap-4">
         <div className="w-4/5 flex flex-col gap-4">
-          <PortfolioCards />
+          <PortfolioCards 
+            dashboardData={dashboardData} 
+            isLoading={loading}
+            error={error}
+          />
 
           <div className="flex gap-4">
             <div className="w-3/5">
-              <PortfolioGrowth />
+              <PortfolioGrowth 
+                dashboardData={dashboardData} 
+                isLoading={loading}
+              />
             </div>
 
             <div className="w-2/5">
-              <TransactionHistory />
+              <TransactionHistory 
+                dashboardData={dashboardData} 
+                isLoading={loading}
+              />
             </div>
           </div>
         </div>
 
-        <RecentActivities />
+        <RecentActivities 
+          dashboardData={dashboardData} 
+          isLoading={loading}
+        />
       </section>
     </main>
   );

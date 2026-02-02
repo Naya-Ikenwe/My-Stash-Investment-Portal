@@ -29,6 +29,7 @@ export default function ProfilePage() {
 
   const { user } = useAuthStore();
   console.log("user from store: ", user);
+
   return (
     <main className="flex flex-col gap-6">
       <h2 className="text-primary text-2xl font-medium">Profile Management</h2>
@@ -47,7 +48,8 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="personal">
-          <Personal user={user} />
+          {/* REMOVED: user prop - Personal component fetches its own data */}
+          <Personal />
         </TabsContent>
 
         <TabsContent value="next-of-kin">

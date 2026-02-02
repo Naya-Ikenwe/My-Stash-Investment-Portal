@@ -1,9 +1,10 @@
 import { useAuthStore } from "@/app/store/authStore";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const API = axios.create({
-  baseURL: "/api",
-  withCredentials: true, // Required for HttpOnly refresh token cookies
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -25,8 +26,11 @@ const processQueue = (error: any, token: string | null = null) => {
 
 // Attach access token to each request
 API.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  // ALWAYS get token from cookies (to match middleware)
+  const token = Cookies.get("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -54,31 +58,57 @@ API.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint (usually uses HttpOnly cookie)
+        console.log("🔄 Attempting to refresh token...");
+        
+        // Call refresh endpoint
         const refreshResponse = await axios.post(
-          "/user/refresh",
+          `${process.env.NEXT_PUBLIC_API_URL || "/api"}/user/refresh`,
           {},
-          { withCredentials: true }
+          { 
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
         );
 
         const newAccessToken = refreshResponse.data.access_token;
+        
+        if (!newAccessToken) {
+          throw new Error("No access token in refresh response");
+        }
 
-        // Update Zustand store
+        console.log("✅ Token refreshed successfully");
+
+        // CRITICAL: Update BOTH Zustand AND Cookies
         useAuthStore.getState().setAccessToken(newAccessToken);
+        Cookies.set("access_token", newAccessToken, { expires: 1, path: "/" });
 
-        // Retry queued requests
+        // Update Authorization header for retry
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        
+        // Process queued requests
         processQueue(null, newAccessToken);
 
         // Retry the original request
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return API(originalRequest);
       } catch (refreshError) {
+        console.error("❌ Refresh token failed:", refreshError);
+        
+        // Process queued requests with error
         processQueue(refreshError, null);
-        console.error("Refresh token failed", refreshError);
-
-        // Log out user
+        
+        // Clear all auth data
+        Cookies.remove("access_token");
+        Cookies.remove("refresh_token");
+        Cookies.remove("user");
         useAuthStore.getState().logout();
-
+        
+        // Redirect to login if in browser
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
