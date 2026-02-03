@@ -20,14 +20,14 @@ export default function DashboardTopLevel() {
   return (
     <>
       <main className="flex justify-end gap-5 items-center w-full mb-4">
-        <MdOutlineNotifications size={28} />
+        {/* <MdOutlineNotifications size={28} /> */}
 
-        <div>
+        {/* <div>
           <p className="text-primary">50% complete</p>
           <div className="w-32 h-2 bg-[#F7F7F7] rounded-full">
             <div className="h-2 bg-[#A243DC] rounded-full w-1/2"></div>
           </div>
-        </div>
+        </div> */}
 
         {/* Profile Dropdown */}
         <div className="relative flex items-center gap-2" ref={dropdownRef}>

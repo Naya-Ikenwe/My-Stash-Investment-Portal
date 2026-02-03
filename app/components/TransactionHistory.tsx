@@ -225,11 +225,11 @@ export default function TransactionHistory({
                   <p className="font-semibold">
                     ₦{transaction.amount.toLocaleString()}
                   </p>
-                  {transaction.gatewayFee > 0 && (
+                  {/* {transaction.gatewayFee > 0 && (
                     <p className="text-xs text-gray-500">
                       Fee: ₦{transaction.gatewayFee.toLocaleString()}
                     </p>
-                  )}
+                  )} */}
                   <p className="text-xs text-gray-500">
                     Ref: {transaction.reference.substring(0, 6)}...
                   </p>

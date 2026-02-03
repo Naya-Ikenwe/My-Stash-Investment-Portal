@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import API from "@/lib/axiosInstance";
+import { BankAccount } from "../types/plan";
 
 // Signup - updated with deviceName
 export const signupService = async (payload: { 
@@ -203,7 +204,12 @@ export const setUserPinService = async (payload: {
 // Get bank accounts
 export const getUserBankAccountsService = async () => {
   const res = await API.get("/bank");
-  return res.data;
+  console.log("bank", res.data);
+  return res.data as {
+    status: string;
+    message: string;
+    data: BankAccount;
+  };
 };
 
 // Add this to your user.ts file:

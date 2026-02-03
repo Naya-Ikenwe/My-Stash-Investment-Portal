@@ -68,14 +68,24 @@ export default function Authorization() {
   const [fetching, setFetching] = useState(true);
   const [apiError, setApiError] = useState("");
   const [apiSuccess, setApiSuccess] = useState("");
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [securityQuestions, setSecurityQuestions] = useState<SecurityQuestion[]>([]);
-  const [savedSecurityQuestion, setSavedSecurityQuestion] = useState<SavedSecurityQuestion | null>(null);
+  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
+  const [securityQuestions, setSecurityQuestions] = useState<
+    SecurityQuestion[]
+  >([]);
+  const [savedSecurityQuestion, setSavedSecurityQuestion] =
+    useState<SavedSecurityQuestion | null>(null);
   const [hasExistingBvn, setHasExistingBvn] = useState(false);
-  const [pinMode, setPinMode] = useState<'none' | 'setup' | 'change'>('none');
+  const [pinMode, setPinMode] = useState<"none" | "setup" | "change">("none");
   const [hasPin, setHasPin] = useState(false);
 
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       bvn: "",
       sourceOfIncome: "",
@@ -86,7 +96,7 @@ export default function Authorization() {
       oldPin: "",
       newPin: "",
     },
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   // Fetch all data on component mount
@@ -94,13 +104,13 @@ export default function Authorization() {
     const fetchInitialData = async () => {
       try {
         setFetching(true);
-        
+
         // 1. Fetch KYC data (BVN, NIN, Source of Income)
         const kycResponse = await getKycDocumentsService();
         if (kycResponse.data) {
           const hasBvn = !!kycResponse.data.bvn;
           setHasExistingBvn(hasBvn);
-          
+
           reset({
             bvn: kycResponse.data.bvn || "",
             sourceOfIncome: kycResponse.data.sourceOfIncome || "",
@@ -112,17 +122,19 @@ export default function Authorization() {
             newPin: "",
           });
         }
-        
+
         // 2. Fetch supported security questions
         try {
-          const questionsResponse = await API.get("/security/supported-questions");
+          const questionsResponse = await API.get(
+            "/security/supported-questions",
+          );
           if (questionsResponse.data?.data?.results) {
             setSecurityQuestions(questionsResponse.data.data.results);
           }
         } catch (questionsError) {
           console.error("Failed to fetch security questions:", questionsError);
         }
-        
+
         // 3. Fetch user's saved security question & answer
         try {
           const securityResponse = await getSecurityQuestionsService();
@@ -134,13 +146,10 @@ export default function Authorization() {
         } catch (securityError) {
           console.log("No security question saved yet");
         }
-        
+
         // 4. Fetch bank accounts
         const bankResponse = await getUserBankAccountsService();
-        if (bankResponse.data?.results) {
-          setBankAccounts(bankResponse.data.results);
-        }
-        
+        setBankAccount(bankResponse.data);
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
         setApiError("Failed to load data. Please refresh the page.");
@@ -165,7 +174,7 @@ export default function Authorization() {
           nin: data.nin.trim() || undefined,
           sourceOfIncome: data.sourceOfIncome.trim() || undefined,
         });
-        
+
         if (data.bvn.trim() && !hasExistingBvn) {
           setHasExistingBvn(true);
         }
@@ -177,31 +186,38 @@ export default function Authorization() {
           questionId: data.securityQuestionId,
           answer: data.securityAnswer.trim(),
         });
-        
+
         if (response.data) {
           setSavedSecurityQuestion(response.data);
         }
-        
+
         // Clear the answer field after successful save
         setValue("securityAnswer", "");
       }
 
       // 3. Handle PIN based on mode
-      if (pinMode === 'setup' && data.pin && data.pin.length === 4 && /^\d+$/.test(data.pin)) {
+      if (
+        pinMode === "setup" &&
+        data.pin &&
+        data.pin.length === 4 &&
+        /^\d+$/.test(data.pin)
+      ) {
         try {
           await setUserPinService({
             pin: data.pin,
           });
           setHasPin(true);
-          setPinMode('none');
+          setPinMode("none");
           setValue("pin", "");
           setApiSuccess("PIN set successfully!");
         } catch (setupError: any) {
-          if (setupError.response?.status === 400 && 
-              setupError.response?.data?.message?.includes("PIN already exists")) {
+          if (
+            setupError.response?.status === 400 &&
+            setupError.response?.data?.message?.includes("PIN already exists")
+          ) {
             // PIN already exists, inform user to use Change PIN
             setHasPin(true);
-            setPinMode('none');
+            setPinMode("none");
             setValue("pin", "");
             setApiError("PIN already exists. Please use 'Change PIN' instead.");
             setLoading(false);
@@ -209,21 +225,23 @@ export default function Authorization() {
           }
           throw setupError;
         }
-      } 
-      else if (pinMode === 'change' && data.oldPin && data.newPin) {
-        if (data.newPin.length === 4 && /^\d+$/.test(data.newPin) &&
-            data.oldPin.length === 4 && /^\d+$/.test(data.oldPin)) {
-          
+      } else if (pinMode === "change" && data.oldPin && data.newPin) {
+        if (
+          data.newPin.length === 4 &&
+          /^\d+$/.test(data.newPin) &&
+          data.oldPin.length === 4 &&
+          /^\d+$/.test(data.oldPin)
+        ) {
           if (data.oldPin === data.newPin) {
             throw new Error("New PIN cannot be same as old PIN");
           }
-          
+
           await changePinService({
             oldPin: data.oldPin,
             newPin: data.newPin,
           });
-          
-          setPinMode('none');
+
+          setPinMode("none");
           setValue("oldPin", "");
           setValue("newPin", "");
           setApiSuccess("PIN changed successfully!");
@@ -231,15 +249,21 @@ export default function Authorization() {
       }
 
       // If no PIN was processed but other changes were made
-      if (!apiSuccess && (data.bvn || data.nin || data.sourceOfIncome || data.securityAnswer)) {
+      if (
+        !apiSuccess &&
+        (data.bvn || data.nin || data.sourceOfIncome || data.securityAnswer)
+      ) {
         setApiSuccess("Changes saved successfully!");
       }
-      
+
       setTimeout(() => setApiSuccess(""), 5000);
-      
     } catch (error: any) {
       console.error("Save failed:", error);
-      setApiError(error.response?.data?.message || error.message || "Failed to save changes. Please try again.");
+      setApiError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to save changes. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -270,7 +294,7 @@ export default function Authorization() {
           <p className="text-green-600 text-sm">{apiSuccess}</p>
         </div>
       )}
-      
+
       {apiError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
           <p className="text-red-600 text-sm">{apiError}</p>
@@ -283,7 +307,10 @@ export default function Authorization() {
         </div>
       ) : (
         <>
-          <form onSubmit={handleSubmit(onSubmit)} className="w-3/5 flex flex-col items-center">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="w-3/5 flex flex-col items-center"
+          >
             <div className="grid grid-cols-2 gap-5 w-full">
               {/* BVN - Editable if not already set */}
               <Controller
@@ -299,13 +326,21 @@ export default function Authorization() {
                       maxLength={11}
                     />
                     {hasExistingBvn ? (
-                      <p className="text-xs text-gray-500 mt-1">BVN already saved</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        BVN already saved
+                      </p>
                     ) : !bvnValue ? (
-                      <p className="text-xs text-gray-500 mt-1">Enter your 11-digit BVN</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter your 11-digit BVN
+                      </p>
                     ) : bvnValue.length !== 11 ? (
-                      <p className="text-xs text-red-500 mt-1">BVN must be 11 digits</p>
+                      <p className="text-xs text-red-500 mt-1">
+                        BVN must be 11 digits
+                      </p>
                     ) : (
-                      <p className="text-xs text-green-500 mt-1">Valid BVN length</p>
+                      <p className="text-xs text-green-500 mt-1">
+                        Valid BVN length
+                      </p>
                     )}
                   </div>
                 )}
@@ -342,25 +377,30 @@ export default function Authorization() {
               <div>
                 {savedSecurityQuestion && savedSecurityQuestion.question ? (
                   <div className="mb-2">
-                    <p className="text-sm font-medium">Your saved security question:</p>
-                    <p className="text-sm text-gray-600">{savedSecurityQuestion.question.question}</p>
+                    <p className="text-sm font-medium">
+                      Your saved security question:
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {savedSecurityQuestion.question.question}
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Select a new question below to change it
                     </p>
                   </div>
                 ) : null}
-                
+
                 <Controller
                   name="securityQuestionId"
                   control={control}
                   render={({ field }) => (
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger className="w-full bg-white min-h-12 mt-2 py-0">
-                        <SelectValue 
-                          placeholder={savedSecurityQuestion ? "Select new question..." : "Select security question"} 
+                        <SelectValue
+                          placeholder={
+                            savedSecurityQuestion
+                              ? "Select new question..."
+                              : "Select security question"
+                          }
                         />
                       </SelectTrigger>
                       <SelectContent className="bg-white max-h-60">
@@ -385,7 +425,11 @@ export default function Authorization() {
                   <div>
                     <Input
                       {...field}
-                      placeholder={savedSecurityQuestion ? "Enter new answer" : "Security Answer"}
+                      placeholder={
+                        savedSecurityQuestion
+                          ? "Enter new answer"
+                          : "Security Answer"
+                      }
                       className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
                       value={field.value}
                       onChange={field.onChange}
@@ -404,38 +448,40 @@ export default function Authorization() {
                 <div className="flex gap-4">
                   <Button
                     type="button"
-                    variant={pinMode === 'setup' ? "default" : "outline"}
-                    className={`flex-1 ${pinMode === 'setup' ? 'bg-primary' : 'border-primary text-primary hover:bg-primary/10'}`}
+                    variant={pinMode === "setup" ? "default" : "outline"}
+                    className={`flex-1 ${pinMode === "setup" ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}`}
                     onClick={() => {
-                      setPinMode(pinMode === 'setup' ? 'none' : 'setup');
-                      if (pinMode !== 'setup') {
+                      setPinMode(pinMode === "setup" ? "none" : "setup");
+                      if (pinMode !== "setup") {
                         setValue("pin", "");
                       }
                     }}
                   >
-                    {pinMode === 'setup' ? 'Cancel Set PIN' : 'Set PIN'}
+                    {pinMode === "setup" ? "Cancel Set PIN" : "Set PIN"}
                   </Button>
-                  
+
                   <Button
                     type="button"
-                    variant={pinMode === 'change' ? "default" : "outline"}
-                    className={`flex-1 ${pinMode === 'change' ? 'bg-primary' : 'border-primary text-primary hover:bg-primary/10'}`}
+                    variant={pinMode === "change" ? "default" : "outline"}
+                    className={`flex-1 ${pinMode === "change" ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}`}
                     onClick={() => {
-                      setPinMode(pinMode === 'change' ? 'none' : 'change');
-                      if (pinMode !== 'change') {
+                      setPinMode(pinMode === "change" ? "none" : "change");
+                      if (pinMode !== "change") {
                         setValue("oldPin", "");
                         setValue("newPin", "");
                       }
                     }}
                   >
-                    {pinMode === 'change' ? 'Cancel Change PIN' : 'Change PIN'}
+                    {pinMode === "change" ? "Cancel Change PIN" : "Change PIN"}
                   </Button>
                 </div>
 
                 {/* PIN Setup Fields */}
-                {pinMode === 'setup' && (
+                {pinMode === "setup" && (
                   <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <p className="font-medium text-sm">Set up your 4-digit PIN</p>
+                    <p className="font-medium text-sm">
+                      Set up your 4-digit PIN
+                    </p>
                     <Controller
                       name="pin"
                       control={control}
@@ -443,8 +489,8 @@ export default function Authorization() {
                         required: "PIN is required",
                         pattern: {
                           value: /^\d{4}$/,
-                          message: "PIN must be exactly 4 digits"
-                        }
+                          message: "PIN must be exactly 4 digits",
+                        },
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <div>
@@ -462,7 +508,7 @@ export default function Authorization() {
                               }
                             }}
                             onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, '');
+                              const value = e.target.value.replace(/\D/g, "");
                               field.onChange(value);
                             }}
                           />
@@ -472,10 +518,14 @@ export default function Authorization() {
                                 {field.value.length}/4 digits
                               </p>
                             ) : (
-                              <p className="text-xs text-gray-500">Enter 4 digits (0-9)</p>
+                              <p className="text-xs text-gray-500">
+                                Enter 4 digits (0-9)
+                              </p>
                             )}
                             {error && (
-                              <p className="text-xs text-red-500">{error.message}</p>
+                              <p className="text-xs text-red-500">
+                                {error.message}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -485,7 +535,7 @@ export default function Authorization() {
                 )}
 
                 {/* PIN Change Fields */}
-                {pinMode === 'change' && (
+                {pinMode === "change" && (
                   <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                     <p className="font-medium text-sm">Change your PIN</p>
                     <div className="grid grid-cols-2 gap-4">
@@ -496,8 +546,8 @@ export default function Authorization() {
                           required: "Old PIN is required",
                           pattern: {
                             value: /^\d{4}$/,
-                            message: "Old PIN must be 4 digits"
-                          }
+                            message: "Old PIN must be 4 digits",
+                          },
                         }}
                         render={({ field, fieldState: { error } }) => (
                           <div>
@@ -515,7 +565,7 @@ export default function Authorization() {
                                 }
                               }}
                               onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, '');
+                                const value = e.target.value.replace(/\D/g, "");
                                 field.onChange(value);
                               }}
                             />
@@ -526,13 +576,15 @@ export default function Authorization() {
                                 </p>
                               )}
                               {error && (
-                                <p className="text-xs text-red-500">{error.message}</p>
+                                <p className="text-xs text-red-500">
+                                  {error.message}
+                                </p>
                               )}
                             </div>
                           </div>
                         )}
                       />
-                      
+
                       <Controller
                         name="newPin"
                         control={control}
@@ -540,12 +592,15 @@ export default function Authorization() {
                           required: "New PIN is required",
                           pattern: {
                             value: /^\d{4}$/,
-                            message: "New PIN must be 4 digits"
+                            message: "New PIN must be 4 digits",
                           },
                           validate: (value) => {
                             const oldPin = watch("oldPin");
-                            return value !== oldPin || "New PIN cannot be same as old PIN";
-                          }
+                            return (
+                              value !== oldPin ||
+                              "New PIN cannot be same as old PIN"
+                            );
+                          },
                         }}
                         render={({ field, fieldState: { error } }) => (
                           <div>
@@ -563,7 +618,7 @@ export default function Authorization() {
                                 }
                               }}
                               onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, '');
+                                const value = e.target.value.replace(/\D/g, "");
                                 field.onChange(value);
                               }}
                             />
@@ -574,7 +629,9 @@ export default function Authorization() {
                                 </p>
                               )}
                               {error && (
-                                <p className="text-xs text-red-500">{error.message}</p>
+                                <p className="text-xs text-red-500">
+                                  {error.message}
+                                </p>
                               )}
                             </div>
                           </div>
@@ -601,32 +658,34 @@ export default function Authorization() {
               Saved Bank Account Details
             </h2>
 
-            {bankAccounts.length === 0 ? (
+            {!bankAccount ? (
               <p className="text-gray-500">No bank accounts saved yet.</p>
             ) : (
               <div className="grid grid-cols-4 gap-4">
-                {bankAccounts.map((account) => (
-                  <div 
-                    key={account.id}
-                    className="flex items-center border py-2 px-3 rounded-md gap-3"
-                  >
-                    <SiCommerzbank size={24} />
-                    <div>
-                      {/* Show Account Number instead of Bank Name */}
-                      <h4 className="font-medium text-sm">
-                        {account.accountNumber}
-                      </h4>
-                      {account.accountName && (
-                        <p className="text-xs text-gray-500">{account.accountName}</p>
-                      )}
-                      <p className="text-xs text-gray-400">
-                        {account.bankCode === "057" ? "Zenith Bank" : 
-                         account.bankCode === "044" ? "Access Bank" :
-                         `Bank Code: ${account.bankCode}`}
+                <div
+                  key={bankAccount.id}
+                  className="flex items-center border py-2 px-3 rounded-md gap-3"
+                >
+                  <SiCommerzbank size={24} />
+                  <div>
+                    {/* Show Account Number instead of Bank Name */}
+                    <h4 className="font-medium text-sm">
+                      {bankAccount.accountNumber}
+                    </h4>
+                    {bankAccount.accountName && (
+                      <p className="text-xs text-gray-500">
+                        {bankAccount.accountName}
                       </p>
-                    </div>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      {bankAccount.bankCode === "057"
+                        ? "Zenith Bank"
+                        : bankAccount.bankCode === "044"
+                          ? "Access Bank"
+                          : `Bank Code: ${bankAccount.bankCode}`}
+                    </p>
                   </div>
-                ))}
+                </div>
               </div>
             )}
           </div>
