@@ -8,7 +8,7 @@ import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { IoIosArrowForward } from "react-icons/io";
 import TopUpModal from "@/app/components/TopupModal";
-import LiquidatePopup from "@/app/components/LiquidatePopup";
+import ContinueLiquidate from "@/app/components/ContinueLiquidate";
 import { getPlanById } from "@/app/api/Plan";
 
 // Define Plan type based on API
@@ -53,7 +53,7 @@ export default function PlanDetails({
   const [planId, setPlanId] = useState<string>("");
   const [pollingCount, setPollingCount] = useState(0);
   const [isPolling, setIsPolling] = useState(false); // NEW: Track if we're actively polling
-  
+
   // Track initial values for comparison
   const initialStatusRef = useRef<string | null>(null);
   const initialPrincipalRef = useRef<number | null>(null);
@@ -104,12 +104,12 @@ export default function PlanDetails({
 
       setPlan(mappedPlan);
       setRolloverEnabled(mappedPlan.rollover);
-      
+
       // Store initial values on first load
       if (isInitialLoad) {
         initialStatusRef.current = mappedPlan.status;
         initialPrincipalRef.current = mappedPlan.currentPrincipal;
-        
+
         // AUTO-START POLLING ONLY if plan is PENDING
         if (mappedPlan.status === "PENDING") {
           console.log("🚨 Plan is PENDING - starting auto-polling");
@@ -118,19 +118,19 @@ export default function PlanDetails({
           console.log("👁️ Plan is ACTIVE/MATURED - no auto-polling");
           setIsPolling(false);
         }
-        
+
         console.log("📊 Initial plan data:", {
           status: mappedPlan.status,
           currentPrincipal: mappedPlan.currentPrincipal,
-          isPolling: mappedPlan.status === "PENDING"
+          isPolling: mappedPlan.status === "PENDING",
         });
       }
-      
+
       console.log(`🔄 Plan data fetched:`, {
         status: mappedPlan.status,
         currentPrincipal: mappedPlan.currentPrincipal,
         isInitialLoad,
-        isPolling
+        isPolling,
       });
     } catch (err: any) {
       setError(err.message || "Failed to load plan");
@@ -151,8 +151,10 @@ export default function PlanDetails({
   useEffect(() => {
     if (!planId || !plan || !isPolling) return;
 
-    console.log(`⏰ Polling active for plan ${planId}... (status: ${plan.status}, poll count: ${pollingCount})`);
-    
+    console.log(
+      `⏰ Polling active for plan ${planId}... (status: ${plan.status}, poll count: ${pollingCount})`,
+    );
+
     const intervalId = setInterval(async () => {
       try {
         console.log(`🔄 Polling plan ${planId}... (poll: ${pollingCount + 1})`);
@@ -161,8 +163,9 @@ export default function PlanDetails({
 
         if (planData) {
           const statusChanged = planData.status !== plan.status;
-          const currentPrincipalChanged = planData.currentPrincipal !== plan.currentPrincipal;
-          
+          const currentPrincipalChanged =
+            planData.currentPrincipal !== plan.currentPrincipal;
+
           if (statusChanged || currentPrincipalChanged) {
             console.log(`📈 Plan update detected:`, {
               statusChanged,
@@ -170,9 +173,9 @@ export default function PlanDetails({
               oldStatus: plan.status,
               newStatus: planData.status,
               oldPrincipal: plan.currentPrincipal,
-              newPrincipal: planData.currentPrincipal
+              newPrincipal: planData.currentPrincipal,
             });
-            
+
             const hasRollover =
               planData.rolloverType === "PRINCIPAL_ONLY" ||
               planData.rolloverType === "PRINCIPAL_AND_INTEREST";
@@ -182,38 +185,44 @@ export default function PlanDetails({
                 ? {
                     ...prev,
                     status: planData.status || prev.status,
-                    currentPrincipal: planData.currentPrincipal || prev.currentPrincipal,
-                    amount: planData.currentPrincipal || planData.principal || prev.amount,
+                    currentPrincipal:
+                      planData.currentPrincipal || prev.currentPrincipal,
+                    amount:
+                      planData.currentPrincipal ||
+                      planData.principal ||
+                      prev.amount,
                     rollover: hasRollover,
                     rolloverType: planData.rolloverType || prev.rolloverType,
                   }
-                : null
+                : null,
             );
             setRolloverEnabled(hasRollover);
-            
+
             // Stop polling conditions:
             // 1. If PENDING plan became ACTIVE
             // 2. If we detected a change (for top-ups)
-            if ((plan.status === "PENDING" && planData.status === "ACTIVE") || 
-                currentPrincipalChanged) {
+            if (
+              (plan.status === "PENDING" && planData.status === "ACTIVE") ||
+              currentPrincipalChanged
+            ) {
               console.log(`✅ Update detected. Stopping polling.`);
               setIsPolling(false);
               setPollingCount(0);
             }
           }
-          
+
           setPollingCount((prev) => {
             const newCount = prev + 1;
-            
+
             // Stop polling after max attempts
             const maxAttempts = plan.status === "PENDING" ? 60 : 12; // 5min for PENDING, 1min for top-ups
-            
+
             if (newCount >= maxAttempts) {
               console.log(`🛑 Stopping polling after ${maxAttempts} attempts`);
               setIsPolling(false);
               return 0;
             }
-            
+
             return newCount;
           });
         }
@@ -306,8 +315,8 @@ export default function PlanDetails({
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
             <p className="text-sm">
-              ⏳ Waiting for payment confirmation...
-              This page will update automatically...
+              ⏳ Waiting for payment confirmation... This page will update
+              automatically...
             </p>
           </div>
         </div>
@@ -323,8 +332,8 @@ export default function PlanDetails({
                 plan.status === "ACTIVE"
                   ? "bg-blue-100 text-blue-600"
                   : plan.status === "MATURED"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-yellow-100 text-yellow-600"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-yellow-100 text-yellow-600"
               }`}
             >
               {plan.status}
@@ -332,12 +341,18 @@ export default function PlanDetails({
             </span>
           </h1>
 
-          <p className="text-4xl font-bold mt-4">₦{plan.currentPrincipal.toLocaleString()}</p>
-          <p className="text-sm text-gray-500 mt-1">
-            {plan.currentPrincipal !== plan.principal && (
-              <>Includes ₦{(plan.currentPrincipal - plan.principal).toLocaleString()} in top-ups</>
-            )}
+          <p className="text-4xl font-bold mt-4">
+            ₦{plan.currentPrincipal.toLocaleString()}
           </p>
+          {/* <p className="text-sm text-gray-500 mt-1">
+            {plan.currentPrincipal !== plan.principal && (
+              <>
+                Includes ₦
+                {(plan.currentPrincipal - plan.principal).toLocaleString()} in
+                top-ups
+              </>
+            )}
+          </p> */}
 
           <div className="flex gap-4 mt-6">
             <button
@@ -389,17 +404,23 @@ export default function PlanDetails({
 
             <div className="flex justify-between">
               <span className="font-euclid">Plan Maturity Date</span>
-              <span className="font-medium">{formatDate(plan.maturityDate)}</span>
+              <span className="font-medium">
+                {formatDate(plan.maturityDate)}
+              </span>
             </div>
 
             <div className="flex justify-between">
               <span className="font-euclid">Amount Invested</span>
-              <span className="font-medium">₦{plan.principal.toLocaleString()}</span>
+              <span className="font-medium">
+                ₦{plan.principal.toLocaleString()}
+              </span>
             </div>
 
             <div className="flex justify-between">
               <span className="font-euclid">Current Balance</span>
-              <span className="font-medium">₦{plan.currentPrincipal.toLocaleString()}</span>
+              <span className="font-medium">
+                ₦{plan.currentPrincipal.toLocaleString()}
+              </span>
             </div>
 
             <div className="flex justify-between">
@@ -409,7 +430,9 @@ export default function PlanDetails({
 
             <div className="flex justify-between">
               <span className="font-euclid">Total Accrued Returns</span>
-              <span className="font-medium">₦{plan.totalAccruedRoi.toLocaleString()}</span>
+              <span className="font-medium">
+                ₦{plan.totalAccruedRoi.toLocaleString()}
+              </span>
             </div>
 
             <div className="flex justify-between">
@@ -425,8 +448,13 @@ export default function PlanDetails({
       {/* Transaction History */}
       <div className="bg-[#F7F7F7] p-6 rounded-xl shadow-sm w-[557px] mt-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold font-freizeit text-[#303437]">Transaction History</h3>
-          <Link href="#" className="text-sm flex items-center gap-2 text-[#303437] hover:underline">
+          <h3 className="font-semibold font-freizeit text-[#303437]">
+            Transaction History
+          </h3>
+          <Link
+            href="#"
+            className="text-sm flex items-center gap-2 text-[#303437] hover:underline"
+          >
             <p className="font-manrope">View all</p>
             <IoIosArrowForward />
           </Link>
@@ -444,7 +472,9 @@ export default function PlanDetails({
                 />
                 <div>
                   <p className="font-medium font-euclid capitalize">
-                    {tx.type === "deposit" ? "Manual Deposit" : "Interest Payment"}
+                    {tx.type === "deposit"
+                      ? "Manual Deposit"
+                      : "Interest Payment"}
                   </p>
                   <p className="text-xs text-gray-500">{tx.date}</p>
                 </div>
@@ -459,17 +489,23 @@ export default function PlanDetails({
       </div>
 
       {/* TopUp Modal - Pass the startPolling function */}
-      <TopUpModal 
-        isOpen={showTopUpModal} 
+      <TopUpModal
+        isOpen={showTopUpModal}
         onClose={() => setShowTopUpModal(false)}
         planId={planId}
         onTopUpSuccess={startPollingForUpdates} // NEW: Callback for top-up success
       />
-      
-      <LiquidatePopup
+
+      <ContinueLiquidate
         isOpen={showLiquidatePopup}
         onClose={() => setShowLiquidatePopup(false)}
-        planStatus={plan.status}
+        onConfirm={() => {
+          // Refresh plan data after successful liquidation
+          fetchPlanData(planId);
+          setShowLiquidatePopup(false);
+        }}
+        planId={planId}
+        planBalance={plan.currentPrincipal}
       />
     </main>
   );

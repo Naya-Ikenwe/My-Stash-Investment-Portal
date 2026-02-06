@@ -1,33 +1,91 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaUserAlt } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { MdOutlineNotifications } from "react-icons/md";
 import { useAuthStore } from "../store/authStore";
+import { getNotificationSummary } from "../api/notification";
 
 export default function DashboardTopLevel() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const { logout } = useAuthStore();
+
+  // Fetch unread notification count
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        setIsLoading(true);
+        const summary = await getNotificationSummary();
+        setUnreadCount(summary.unread);
+      } catch (error) {
+        console.error("Failed to fetch notification count:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotificationCount();
+    const intervalId = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // 🔧 ADD THIS: Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // If dropdown is open AND click is outside the dropdown element
+      if (
+        open && 
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    // Clean up event listener when component unmounts
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]); // Re-run effect when 'open' state changes
 
   return (
     <>
       <main className="flex justify-end gap-5 items-center w-full mb-4">
-        {/* <MdOutlineNotifications size={28} /> */}
-
-        {/* <div>
-          <p className="text-primary">50% complete</p>
-          <div className="w-32 h-2 bg-[#F7F7F7] rounded-full">
-            <div className="h-2 bg-[#A243DC] rounded-full w-1/2"></div>
+        {/* Notifications Icon with Badge and Link */}
+        <Link href="/notifications" className="relative">
+          <div className="relative">
+            <MdOutlineNotifications 
+              size={28} 
+              className="cursor-pointer hover:text-primary transition-colors"
+            />
+            
+            {/* Unread count badge */}
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+            
+            {/* Loading indicator */}
+            {isLoading && unreadCount === 0 && (
+              <span className="absolute -top-2 -right-2 w-[18px] h-[18px] border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+            )}
           </div>
-        </div> */}
+        </Link>
 
         {/* Profile Dropdown */}
         <div className="relative flex items-center gap-2" ref={dropdownRef}>
@@ -40,7 +98,11 @@ export default function DashboardTopLevel() {
           />
 
           {/* Toggle only arrow */}
-          <button onClick={() => setOpen((prev) => !prev)}>
+          <button 
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label="Toggle profile menu"
+            aria-expanded={open}
+          >
             <IoMdArrowDropdown
               size={20}
               className={`cursor-pointer text-[#A243DC] transition-transform ${
@@ -49,6 +111,7 @@ export default function DashboardTopLevel() {
             />
           </button>
 
+          {/* Profile Dropdown Menu */}
           {open && (
             <div className="absolute right-0 top-10 bg-white rounded-xl shadow-md p-3 flex flex-col gap-2 border border-[#455A6426] w-40 z-50">
               {/* PROFILE */}
@@ -109,7 +172,7 @@ export default function DashboardTopLevel() {
             </div>
 
             <IoClose
-              className="absolute right-4 top-4"
+              className="absolute right-4 top-4 cursor-pointer"
               size={24}
               onClick={() => setShowLogoutModal(false)}
             />

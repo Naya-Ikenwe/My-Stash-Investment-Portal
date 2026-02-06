@@ -1,43 +1,122 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import SummaryLiquidate from "./SummaryLiquidate";
+import { getUserBankAccountsService } from "@/app/api/Users";
+import API from "@/lib/axiosInstance";
+
+// Bank account type from API
+interface BankAccount {
+  id: string;
+  accountName: string;
+  accountNumber: string;
+  bankCode: string;
+  createdAt: string;
+}
 
 export default function ContinueLiquidate({
   isOpen,
   onClose,
   onConfirm,
+  planId,
+  planBalance,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  planId: string;
+  planBalance: number;
 }) {
   // State to manage the amount input
-  const [amount, setAmount] = useState("120,000");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [amount, setAmount] = useState<string>(planBalance.toLocaleString());
   const [showSummary, setShowSummary] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<{
-    id: number;
-    name: string;
-    bank: string;
-    accountNumber: string;
-    image: string;
-  } | null>(null);
+  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [isFullLiquidation, setIsFullLiquidation] = useState(true);
 
-  // Mock bank account data
-  const bankAccounts = [
-    {
-      id: 1,
-      name: "Osatuyi Olatipe",
-      bank: "Access Bank",
-      accountNumber: "1234567890",
-      image: "/access.svg",
-    },
-  ];
+  // Fetch user's bank account on mount
+  useEffect(() => {
+    const fetchBankAccount = async () => {
+      try {
+        setLoading(true);
+        const response = await getUserBankAccountsService();
+        if (response.data) {
+          setBankAccount(response.data);
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch bank account:', err);
+        setError("Failed to load bank account. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchBankAccount();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Format amount for display
+  const formatAmount = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
+    // Format with commas
+    return digits ? parseInt(digits).toLocaleString() : '';
+  };
+
+  // Handle amount change
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatAmount(value);
+    setAmount(formatted);
+    setIsFullLiquidation(false);
+    
+    // If user cleared the field or entered 0, treat as full liquidation
+    const numericValue = parseInt(value.replace(/\D/g, '')) || 0;
+    if (numericValue === 0 || numericValue >= planBalance) {
+      setIsFullLiquidation(true);
+      setAmount(planBalance.toLocaleString());
+    }
+  };
+
+  // Handle liquidate all button
+  const handleLiquidateAll = () => {
+    setAmount(planBalance.toLocaleString());
+    setIsFullLiquidation(true);
+  };
+
+  // Get numeric amount
+  const getNumericAmount = () => {
+    return parseInt(amount.replace(/\D/g, '')) || 0;
+  };
+
+  // Validate before proceeding
+  const handleContinue = () => {
+    const numericAmount = getNumericAmount();
+    
+    if (!bankAccount) {
+      setError("No bank account found. Please add a bank account first.");
+      return;
+    }
+
+    if (numericAmount <= 0) {
+      setError("Please enter a valid amount");
+      return;
+    }
+
+    if (numericAmount > planBalance) {
+      setError("Amount cannot exceed plan balance");
+      return;
+    }
+
+    setError("");
+    setShowSummary(true);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
@@ -62,13 +141,22 @@ export default function ContinueLiquidate({
 
         <div className="px-8 pb-8">
           {/* Amount Input Section */}
-          <div className="flex flex-col items-center mb-10">
-            <label className="text-sm font-euclid text-gray-500 mb-3">Amount</label>
+          <div className="flex flex-col items-center mb-6">
+            <div className="flex items-center justify-between w-full mb-3">
+              <label className="text-sm font-euclid text-gray-500">
+                Amount (₦{planBalance.toLocaleString()} available)
+              </label>
+              <button
+                onClick={handleLiquidateAll}
+                className="text-primary text-sm font-medium hover:underline"
+              >
+                Liquidate All
+              </button>
+            </div>
 
             {/* NGN Currency Selector */}
             <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-1.5 rounded-full mb-2">
               <div className="flex items-center justify-center overflow-hidden rounded-full border border-black/10">
-                {/* Ensure /flag.svg is in your public directory */}
                 <Image
                   src="/flag.svg"
                   alt="NGN"
@@ -80,82 +168,88 @@ export default function ContinueLiquidate({
               <span className="text-sm font-semibold font-manrope text-gray-700">NGN</span>
             </button>
 
-            {/* Actual Amount Input Field */}
+            {/* Amount Input Field */}
             <input
               type="text"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full text-center text-4xl font-bold text-gray-900 focus:outline-none placeholder-gray-300"
+              onChange={handleAmountChange}
+              className="w-full text-center text-4xl font-bold text-gray-900 focus:outline-none placeholder-gray-300 border-b-2 border-gray-200 focus:border-primary pb-2"
               placeholder="0"
+              inputMode="numeric"
             />
-            <hr className="border border-[#455A6433] w-full mt-5" />
+            
+            {isFullLiquidation && (
+              <p className="text-xs text-green-600 mt-2">
+                Full liquidation selected
+              </p>
+            )}
           </div>
 
-          {/* Withdraw To Section */}
-          <div className="mb-12">
+          {/* Bank Account Display */}
+          <div className="mb-6">
             <p className="text-sm text-gray-500 font-euclid mb-3">Withdraw to</p>
-
-            {/* Custom Dropdown/Selector */}
-            <div
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`border border-gray-200 p-4 flex justify-between items-center cursor-pointer rounded-xl hover:border-gray-300 transition-all ${
-                isDropdownOpen ? "rounded-b-none border-b-0" : ""
-              }`}
-            >
-              <span className="text-sm font-medium text-gray-700">
-                {selectedAccount ? selectedAccount.name : "Bank Account"}
-              </span>
-              <ChevronDown
-                size={16}
-                className={`text-gray-500 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-
-            {/* Dropdown Content */}
-            {isDropdownOpen && (
-              <div className="border border-gray-200 border-t-0 rounded-b-xl p-3 space-y-2 bg-white">
-                {bankAccounts.map((account) => (
-                  <div
-                    key={account.id}
-                    onClick={() => {
-                      setSelectedAccount(account);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-all"
-                  >
-                    {/* Account Name at top */}
-                    <div className="flex items-center gap-3 mb-2">
-                      <Image
-                        src={account.image}
-                        alt={account.bank}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
-                      <div>
-                        <h4 className="font-semibold text-gray-800">
-                          {account.name}
-                        </h4>
-                        <p className="text-[10px] text-gray-600">
-                          {account.bank} · {account.accountNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            
+            {loading ? (
+              <div className="border border-gray-200 p-4 rounded-xl">
+                <p className="text-sm text-gray-500">Loading bank account...</p>
+              </div>
+            ) : bankAccount ? (
+              <div className="border border-gray-200 p-4 rounded-xl flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
+                  <Image
+                    src="/bank-icon.svg"
+                    alt="Bank"
+                    width={24}
+                    height={24}
+                  />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800">
+                    {bankAccount.accountName}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {bankAccount.accountNumber} • {bankAccount.bankCode === "057" ? "Zenith Bank" : 
+                     bankAccount.bankCode === "044" ? "Access Bank" : 
+                     `Bank Code: ${bankAccount.bankCode}`}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="border border-gray-200 p-4 rounded-xl text-center">
+                <p className="text-sm text-gray-500">No bank account found</p>
+                <button className="text-primary text-sm mt-1 hover:underline">
+                  Add bank account
+                </button>
               </div>
             )}
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Disclaimer Message */}
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <span className="font-semibold">Important:</span> Liquidating funds before maturity date will attract a breaking fee of 1% of the amount you want to liquidate.
+            </p>
           </div>
 
           {/* Continue Button */}
           <div className="flex justify-center">
             <button
-              onClick={() => setShowSummary(true)}
-              className="w-full px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-medium rounded-xl transition-colors font-manrope shadow-md shadow-purple-200"
+              onClick={handleContinue}
+              disabled={!bankAccount || getNumericAmount() <= 0 || loading}
+              className={`w-full px-8 py-3 text-white font-medium rounded-xl transition-colors font-manrope shadow-md ${
+                !bankAccount || getNumericAmount() <= 0 || loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#A243DC] hover:bg-[#8e3ac0] shadow-purple-200"
+              }`}
             >
-              Continue
+              {loading ? "Loading..." : "Continue"}
             </button>
           </div>
         </div>
@@ -165,7 +259,10 @@ export default function ContinueLiquidate({
           isOpen={showSummary}
           onClose={() => setShowSummary(false)}
           amount={amount}
-          selectedAccount={selectedAccount}
+          selectedAccount={bankAccount}
+          planId={planId}
+          isFullLiquidation={isFullLiquidation}
+          onLiquidationSuccess={onConfirm}
         />
       </div>
     </div>

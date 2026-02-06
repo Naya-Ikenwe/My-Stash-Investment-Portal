@@ -129,8 +129,6 @@ export const updateKycInfoService = async (payload: {
   return res.data;
 };
 
-// EXISTING: Update KYC information (JSON only - for VerifyIdentityPage)
-// KEEP THIS NAME - VerifyIdentityPage uses it
 export const updateKycService = async (payload: {
   bvn: string;
   nin?: string;
@@ -212,17 +210,16 @@ export const getUserBankAccountsService = async () => {
   };
 };
 
-// Add this to your user.ts file:
+
 // Change PIN
 export const changePinService = async (payload: {
   oldPin: string;
   newPin: string;
 }) => {
   const res = await API.post("/security/pin/change", payload);
+  console.log("change pin", res)
   return res.data;
 };
-
-// Add these to your existing user.ts file:
 
 // ===== TRANSACTION SERVICES =====
 
@@ -259,5 +256,31 @@ export const getTransactionsService = async (params?: {
 // Get single transaction by ID
 export const getTransactionByIdService = async (id: string) => {
   const res = await API.get(`/transaction/${id}`);
+  return res.data;
+};
+
+// ===== LIQUIDATION SERVICES =====
+
+// Liquidate plan
+export const liquidatePlanService = async (
+  planId: string,
+  payload: {
+    amount: number;
+    isFull: boolean;
+  }
+) => {
+  const res = await API.post(`/plan/${planId}/liquidate`, payload);
+  return res.data;
+};
+
+// Authorize intent
+export const authorizeIntentService = async (
+  intentId: string,
+  payload: {
+    method: "PIN";
+    pin: string;
+  }
+) => {
+  const res = await API.post(`/security/intents/${intentId}/authorize`, payload);
   return res.data;
 };
