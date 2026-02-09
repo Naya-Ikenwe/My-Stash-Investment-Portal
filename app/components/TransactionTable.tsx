@@ -81,9 +81,9 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Type & Intent
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 User & Account
-              </th>
+              </th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
               </th>
@@ -121,7 +121,7 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                     {formatIntent(transaction.intent)}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                {/* <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900">
                     {transaction.user.firstName} {transaction.user.lastName}
                   </div>
@@ -134,16 +134,16 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                       "No bank account"
                     )}
                   </div>
-                </td>
+                </td> */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-lg font-semibold text-gray-900">
                     ₦{transaction.amount.toLocaleString()}
                   </div>
-                  {transaction.gatewayFee > 0 && (
+                  {/* {transaction.gatewayFee > 0 && (
                     <div className="text-sm text-gray-500">
                       Fee: ₦{transaction.gatewayFee.toLocaleString()}
                     </div>
-                  )}
+                  )} */}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>

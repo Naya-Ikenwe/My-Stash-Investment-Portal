@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Lock, Unlock } from "lucide-react"; // Added Lock/Unlock icons
 import Image from "next/image";
 import SummaryLiquidate from "./SummaryLiquidate";
 import { getUserBankAccountsService } from "@/app/api/Users";
@@ -30,12 +30,13 @@ export default function ContinueLiquidate({
   planBalance: number;
 }) {
   // State to manage the amount input
-  const [amount, setAmount] = useState<string>(planBalance.toLocaleString());
+  const [amount, setAmount] = useState<string>("");
   const [showSummary, setShowSummary] = useState(false);
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [isFullLiquidation, setIsFullLiquidation] = useState(true);
+  const [isFullLiquidation, setIsFullLiquidation] = useState(false); // Changed to false by default
+  const [isInputEditable, setIsInputEditable] = useState(true); // Controls if input is editable
 
   // Fetch user's bank account on mount
   useEffect(() => {
@@ -56,10 +57,13 @@ export default function ContinueLiquidate({
 
     if (isOpen) {
       fetchBankAccount();
+      // Reset states when modal opens
+      setAmount("");
+      setIsFullLiquidation(false);
+      setIsInputEditable(true);
+      setError("");
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   // Format amount for display
   const formatAmount = (value: string) => {
@@ -74,24 +78,32 @@ export default function ContinueLiquidate({
     const value = e.target.value;
     const formatted = formatAmount(value);
     setAmount(formatted);
-    setIsFullLiquidation(false);
     
-    // If user cleared the field or entered 0, treat as full liquidation
-    const numericValue = parseInt(value.replace(/\D/g, '')) || 0;
-    if (numericValue === 0 || numericValue >= planBalance) {
-      setIsFullLiquidation(true);
-      setAmount(planBalance.toLocaleString());
+    // Auto-disable full liquidation if user types
+    if (isFullLiquidation) {
+      setIsFullLiquidation(false);
+      setIsInputEditable(true);
     }
   };
 
-  // Handle liquidate all button
-  const handleLiquidateAll = () => {
-    setAmount(planBalance.toLocaleString());
-    setIsFullLiquidation(true);
+  // Toggle full liquidation
+  const toggleFullLiquidation = () => {
+    if (!isFullLiquidation) {
+      // Turn ON: Set to full balance, lock input
+      setAmount(planBalance.toLocaleString());
+      setIsFullLiquidation(true);
+      setIsInputEditable(false);
+    } else {
+      // Turn OFF: Clear amount, unlock input
+      setAmount("");
+      setIsFullLiquidation(false);
+      setIsInputEditable(true);
+    }
   };
 
   // Get numeric amount
   const getNumericAmount = () => {
+    if (isFullLiquidation) return planBalance;
     return parseInt(amount.replace(/\D/g, '')) || 0;
   };
 
@@ -117,6 +129,8 @@ export default function ContinueLiquidate({
     setError("");
     setShowSummary(true);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
@@ -146,11 +160,24 @@ export default function ContinueLiquidate({
               <label className="text-sm font-euclid text-gray-500">
                 Amount (₦{planBalance.toLocaleString()} available)
               </label>
+              
+              {/* Liquidate All Toggle Button */}
               <button
-                onClick={handleLiquidateAll}
-                className="text-primary text-sm font-medium hover:underline"
+                onClick={toggleFullLiquidation}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
+                  isFullLiquidation 
+                    ? "bg-primary text-white" 
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
               >
-                Liquidate All
+                {isFullLiquidation ? (
+                  <Lock size={14} />
+                ) : (
+                  <Unlock size={14} />
+                )}
+                <span className="text-sm font-medium">
+                  {isFullLiquidation ? "Liquidate All" : "Liquidate All"}
+                </span>
               </button>
             </div>
 
@@ -168,19 +195,42 @@ export default function ContinueLiquidate({
               <span className="text-sm font-semibold font-manrope text-gray-700">NGN</span>
             </button>
 
-            {/* Amount Input Field */}
-            <input
-              type="text"
-              value={amount}
-              onChange={handleAmountChange}
-              className="w-full text-center text-4xl font-bold text-gray-900 focus:outline-none placeholder-gray-300 border-b-2 border-gray-200 focus:border-primary pb-2"
-              placeholder="0"
-              inputMode="numeric"
-            />
+            {/* Amount Input Field with Lock Indicator */}
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={amount}
+                onChange={handleAmountChange}
+                readOnly={!isInputEditable}
+                className={`w-full text-center text-4xl font-bold text-gray-900 focus:outline-none placeholder-gray-300 border-b-2 pb-2 ${
+                  isFullLiquidation 
+                    ? "border-green-500 bg-green-50/50" 
+                    : "border-gray-200 focus:border-primary"
+                } ${!isInputEditable ? "cursor-default" : ""}`}
+                placeholder="0"
+                inputMode="numeric"
+              />
+              
+              {/* Lock/Unlock Indicator */}
+              {!isInputEditable && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center">
+                  <Lock className="text-green-600" size={20} />
+                  <span className="ml-1 text-xs text-green-600">Full amount</span>
+                </div>
+              )}
+            </div>
             
-            {isFullLiquidation && (
-              <p className="text-xs text-green-600 mt-2">
-                Full liquidation selected
+            {/* Status Messages */}
+            {isFullLiquidation ? (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <p className="text-xs text-green-600">
+                  Liquidation all enabled. Entering custom amount will disable this.
+                </p>
+              </div>
+            ) : amount && (
+              <p className="text-xs text-gray-500 mt-2">
+                Entering ₦{getNumericAmount().toLocaleString()} of ₦{planBalance.toLocaleString()}
               </p>
             )}
           </div>
@@ -258,7 +308,7 @@ export default function ContinueLiquidate({
         <SummaryLiquidate
           isOpen={showSummary}
           onClose={() => setShowSummary(false)}
-          amount={amount}
+          amount={isFullLiquidation ? planBalance.toLocaleString() : amount}
           selectedAccount={bankAccount}
           planId={planId}
           isFullLiquidation={isFullLiquidation}

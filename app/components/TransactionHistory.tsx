@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PiEmptyBold } from "react-icons/pi";
 import { DashboardResponse } from "@/app/api/dashboard";
-import { getTransactionsService } from "@/app/api/Users"; // Import from user.ts
+import { getTransactionsService } from "@/app/api/Users";
 
 // Keep the types local to the component since they're only used here
 type TransactionUser = {
@@ -45,13 +45,15 @@ type Transaction = {
 };
 
 type TransactionHistoryProps = {
-  dashboardData: DashboardResponse['data'] | null;
+  dashboardData?: DashboardResponse['data'] | null; // Make optional
   isLoading?: boolean;
+  planId?: string; // NEW: Optional planId prop for filtering
 };
 
 export default function TransactionHistory({ 
   dashboardData, 
-  isLoading = false 
+  isLoading = false,
+  planId // NEW: Optional planId
 }: TransactionHistoryProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
@@ -65,12 +67,21 @@ export default function TransactionHistory({
       setTransactionsLoading(true);
       setError(null);
       
-      // Use the service function from user.ts
-      const response = await getTransactionsService({
+      // Build query params - ADD planId if provided
+      const queryParams: any = {
         page: pageNum,
         limit: limit,
         status: 'SUCCESS',
-      });
+      };
+      
+      // Add planId to filter if provided
+      if (planId) {
+        queryParams.planId = planId;
+        console.log(`🔍 Fetching transactions for plan: ${planId}`);
+      }
+      
+      // Use the service function from user.ts
+      const response = await getTransactionsService(queryParams);
       
       if (response?.data?.results) {
         setTransactions(response.data.results);
@@ -95,7 +106,7 @@ export default function TransactionHistory({
     if (!isLoading) {
       fetchTransactions();
     }
-  }, [isLoading]);
+  }, [isLoading, planId]); // Add planId to dependency array
 
   // Helper function to format transaction type for display
   const formatTransactionType = (type: string, intent: string): string => {
@@ -157,19 +168,16 @@ export default function TransactionHistory({
   return (
     <div className="bg-[#F7F7F7] p-4 rounded-2xl w-full h-full flex flex-col gap-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Transaction History</h3>
+        <h3 className="font-semibold">
+          Transaction History 
+          {planId && <span className="text-xs text-gray-500 ml-2">(Plan Specific)</span>}
+        </h3>
         <div className="flex items-center gap-2">
           {totalCount > 0 && (
             <span className="text-xs text-gray-500">
-              {transactions.length} recent transactions
+              {transactions.length} {planId ? 'plan' : 'recent'} transactions
             </span>
           )}
-          <Link 
-            href={'/dashboard/transaction-history'} 
-            className="text-primary text-sm hover:underline"
-          >
-            View All
-          </Link>
         </div>
       </div>
 
@@ -194,8 +202,12 @@ export default function TransactionHistory({
             <div className="bg-white p-4 rounded-full">
               <PiEmptyBold className="text-[#455A64] inline-block" size={32} />
             </div>
-            <p className="text-gray-600">No transactions yet</p>
-            <p className="text-xs text-gray-500">Your transactions will appear here</p>
+            <p className="text-gray-600">
+              {planId ? 'No transactions for this plan yet' : 'No transactions yet'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {planId ? 'Transactions for this plan will appear here' : 'Your transactions will appear here'}
+            </p>
           </div>
         </div>
       ) : (
@@ -225,11 +237,6 @@ export default function TransactionHistory({
                   <p className="font-semibold">
                     ₦{transaction.amount.toLocaleString()}
                   </p>
-                  {/* {transaction.gatewayFee > 0 && (
-                    <p className="text-xs text-gray-500">
-                      Fee: ₦{transaction.gatewayFee.toLocaleString()}
-                    </p>
-                  )} */}
                   <p className="text-xs text-gray-500">
                     Ref: {transaction.reference.substring(0, 6)}...
                   </p>
@@ -242,10 +249,10 @@ export default function TransactionHistory({
           {totalCount > limit && (
             <div className="pt-2 border-t">
               <Link 
-                href={'/dashboard/transaction-history'} 
+                href={planId ? `/dashboard/transaction-history?planId=${planId}` : '/dashboard/transaction-history'} 
                 className="text-primary text-sm hover:underline block text-center"
               >
-                View all {totalCount} transactions →
+                View all {planId ? 'plan' : ''} transactions →
               </Link>
             </div>
           )}

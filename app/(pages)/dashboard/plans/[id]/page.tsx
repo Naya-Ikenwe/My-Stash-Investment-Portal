@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { FiArrowDownLeft, FiArrowUpRight } from "react-icons/fi";
 import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { IoIosArrowForward } from "react-icons/io";
 import TopUpModal from "@/app/components/TopupModal";
 import ContinueLiquidate from "@/app/components/ContinueLiquidate";
+import TransactionHistory from "@/app/components/TransactionHistory"; // NEW: Import the component
 import { getPlanById } from "@/app/api/Plan";
 
 // Define Plan type based on API
@@ -32,12 +32,6 @@ interface Plan {
   totalAccruedRoi: number;
 }
 
-// Mock transactions
-const mockTransactions = [
-  { id: 1, type: "deposit" as const, date: "2025-01-30", amount: 20000 },
-  { id: 2, type: "interest" as const, date: "2025-02-28", amount: 200 },
-];
-
 export default function PlanDetails({
   params,
 }: {
@@ -52,7 +46,7 @@ export default function PlanDetails({
   const [rolloverEnabled, setRolloverEnabled] = useState(false);
   const [planId, setPlanId] = useState<string>("");
   const [pollingCount, setPollingCount] = useState(0);
-  const [isPolling, setIsPolling] = useState(false); // NEW: Track if we're actively polling
+  const [isPolling, setIsPolling] = useState(false);
 
   // Track initial values for comparison
   const initialStatusRef = useRef<string | null>(null);
@@ -118,20 +112,7 @@ export default function PlanDetails({
           console.log("👁️ Plan is ACTIVE/MATURED - no auto-polling");
           setIsPolling(false);
         }
-
-        console.log("📊 Initial plan data:", {
-          status: mappedPlan.status,
-          currentPrincipal: mappedPlan.currentPrincipal,
-          isPolling: mappedPlan.status === "PENDING",
-        });
       }
-
-      console.log(`🔄 Plan data fetched:`, {
-        status: mappedPlan.status,
-        currentPrincipal: mappedPlan.currentPrincipal,
-        isInitialLoad,
-        isPolling,
-      });
     } catch (err: any) {
       setError(err.message || "Failed to load plan");
       setPlan(null);
@@ -150,10 +131,6 @@ export default function PlanDetails({
   // Polling for plan updates
   useEffect(() => {
     if (!planId || !plan || !isPolling) return;
-
-    console.log(
-      `⏰ Polling active for plan ${planId}... (status: ${plan.status}, poll count: ${pollingCount})`,
-    );
 
     const intervalId = setInterval(async () => {
       try {
@@ -344,15 +321,6 @@ export default function PlanDetails({
           <p className="text-4xl font-bold mt-4">
             ₦{plan.currentPrincipal.toLocaleString()}
           </p>
-          {/* <p className="text-sm text-gray-500 mt-1">
-            {plan.currentPrincipal !== plan.principal && (
-              <>
-                Includes ₦
-                {(plan.currentPrincipal - plan.principal).toLocaleString()} in
-                top-ups
-              </>
-            )}
-          </p> */}
 
           <div className="flex gap-4 mt-6">
             <button
@@ -386,8 +354,6 @@ export default function PlanDetails({
               <p className="font-manrope">Liquidate</p>
             </button>
           </div>
-
-          {/* COMMENTED OUT: Reinvest after maturity toggle */}
         </div>
 
         {/* RIGHT CARD */}
@@ -445,47 +411,12 @@ export default function PlanDetails({
         </div>
       </div>
 
-      {/* Transaction History */}
-      <div className="bg-[#F7F7F7] p-6 rounded-xl shadow-sm w-[557px] mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold font-freizeit text-[#303437]">
-            Transaction History
-          </h3>
-          <Link
-            href="#"
-            className="text-sm flex items-center gap-2 text-[#303437] hover:underline"
-          >
-            <p className="font-manrope">View all</p>
-            <IoIosArrowForward />
-          </Link>
-        </div>
-
-        <div className="space-y-4">
-          {mockTransactions.map((tx) => (
-            <div key={tx.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Image
-                  src={tx.type === "deposit" ? "/manual.svg" : "/interest.svg"}
-                  alt={tx.type}
-                  width={32}
-                  height={32}
-                />
-                <div>
-                  <p className="font-medium font-euclid capitalize">
-                    {tx.type === "deposit"
-                      ? "Manual Deposit"
-                      : "Interest Payment"}
-                  </p>
-                  <p className="text-xs text-gray-500">{tx.date}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">₦{tx.amount.toLocaleString()}</p>
-                <p className="text-xs text-green-600">Successful</p>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Transaction History - REPLACED with Real Component */}
+      <div className="mt-6 w-[557px]">
+        <TransactionHistory 
+          planId={planId} // Pass planId to filter transactions
+          isLoading={isLoading}
+        />
       </div>
 
       {/* TopUp Modal - Pass the startPolling function */}
@@ -493,7 +424,7 @@ export default function PlanDetails({
         isOpen={showTopUpModal}
         onClose={() => setShowTopUpModal(false)}
         planId={planId}
-        onTopUpSuccess={startPollingForUpdates} // NEW: Callback for top-up success
+        onTopUpSuccess={startPollingForUpdates}
       />
 
       <ContinueLiquidate

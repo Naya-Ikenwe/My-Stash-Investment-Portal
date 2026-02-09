@@ -284,3 +284,85 @@ export const authorizeIntentService = async (
   const res = await API.post(`/security/intents/${intentId}/authorize`, payload);
   return res.data;
 };
+
+// app/api/Users.ts (add these to the bottom of your existing file)
+
+// ===== NEXT OF KIN SERVICES =====
+
+export interface NextOfKinData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  relationship: string;
+  userId: string;
+}
+
+export interface NextOfKinResponse {
+  status: string;
+  message: string;
+  data: NextOfKinData;
+}
+
+// GET saved next of kin details
+export const getNextOfKin = async (): Promise<NextOfKinData | null> => {
+  try {
+    console.log("🔄 Fetching next of kin details...");
+    const response = await API.get<NextOfKinResponse>("/user/next-of-kin");
+    
+    console.log("✅ Next of kin response:", response.data);
+    
+    if (response.data.status === "success") {
+      return response.data.data;
+    }
+    
+    return null;
+  } catch (error: any) {
+    // Handle 404 specifically (no next of kin saved yet)
+    if (error.response?.status === 404) {
+      console.log("ℹ️ No next of kin found - user hasn't saved any yet");
+      return null;
+    }
+    
+    // Handle 401 (token issues)
+    if (error.response?.status === 401) {
+      console.error("🔐 Unauthorized - token may be invalid/expired");
+      throw new Error("Session expired. Please log in again.");
+    }
+    
+    console.error("❌ Error fetching next of kin:", error);
+    throw error;
+  }
+};
+
+// SAVE/UPDATE next of kin details
+export const saveNextOfKin = async (data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  relationship: string;
+}): Promise<NextOfKinData> => {
+  try {
+    console.log("💾 Saving next of kin details:", data);
+    
+    const response = await API.put<NextOfKinResponse>("/user/next-of-kin", data);
+    
+    console.log("✅ Next of kin saved successfully:", response.data);
+    
+    if (response.data.status === "success") {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || "Failed to save next of kin");
+  } catch (error: any) {
+    console.error("❌ Error saving next of kin:", error);
+    
+    if (error.response?.status === 401) {
+      throw new Error("Session expired. Please log in again.");
+    }
+    
+    throw new Error(error.response?.data?.message || "Failed to save next of kin details");
+  }
+};

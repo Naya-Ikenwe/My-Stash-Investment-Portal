@@ -113,8 +113,8 @@ export default function RecentActivities({
                 !activity.isRead ? 'bg-white' : ''
               }`}
             >
-              {/* SIMPLE PURPLE DOT (NO BELL ICONS) */}
-              <div className="flex-shrink-0">
+              {/* SIMPLE PURPLE DOT */}
+              <div className="shrink-0">
                 <div className={`w-2 h-2 rounded-full mt-2 ${
                   !activity.isRead ? 'bg-[#A243DC]' : 'bg-gray-300'
                 }`}></div>
