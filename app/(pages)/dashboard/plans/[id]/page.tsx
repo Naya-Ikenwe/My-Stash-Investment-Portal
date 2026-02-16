@@ -8,15 +8,20 @@ import { MdOutlineKeyboardArrowLeft } from "react-icons/md";
 import { IoIosArrowForward } from "react-icons/io";
 import TopUpModal from "@/app/components/TopupModal";
 import ContinueLiquidate from "@/app/components/ContinueLiquidate";
-import TransactionHistory from "@/app/components/TransactionHistory"; // NEW: Import the component
-import { getPlanById } from "@/app/api/Plan";
+import RolloverModal from "@/app/components/RolloverModal";
+import WithdrawModal from "@/app/components/WithdrawModal";
+import PaymentMethodSelection from "@/app/components/PaymentMethodSelection";
+import InstantTopup from "@/app/components/InstantTopup";
+import BankTransferModal from "@/app/components/BankTransferModal";
+import TransactionHistory from "@/app/components/TransactionHistory";
+import { getPlanById, rolloverPlan, InstantTransferDetails, BankTransferDetails } from "@/app/api/Plan";
 
 // Define Plan type based on API
 interface Plan {
   id: string;
   name: string;
   amount: number;
-  status: "PENDING" | "ACTIVE" | "MATURED";
+  status: "PENDING" | "ACTIVE" | "MATURED" | "CLOSED";
   maturityDate: string;
   createdAt: string;
   principal: number;
@@ -43,10 +48,19 @@ export default function PlanDetails({
   const [error, setError] = useState<string | null>(null);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [showLiquidatePopup, setShowLiquidatePopup] = useState(false);
+  const [showRolloverModal, setShowRolloverModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [rolloverEnabled, setRolloverEnabled] = useState(false);
   const [planId, setPlanId] = useState<string>("");
   const [pollingCount, setPollingCount] = useState(0);
   const [isPolling, setIsPolling] = useState(false);
+  const [showPaymentMethodSelection, setShowPaymentMethodSelection] = useState(false);
+  const [showInstantTransferPayment, setShowInstantTransferPayment] = useState(false);
+  const [showBankTransferPayment, setShowBankTransferPayment] = useState(false);
+  const [paymentInstantTransfer, setPaymentInstantTransfer] = useState<InstantTransferDetails | null>(null);
+  const [paymentBankTransfer, setPaymentBankTransfer] = useState<BankTransferDetails | null>(null);
+  const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // Track initial values for comparison
   const initialStatusRef = useRef<string | null>(null);
@@ -171,7 +185,7 @@ export default function PlanDetails({
                     rollover: hasRollover,
                     rolloverType: planData.rolloverType || prev.rolloverType,
                   }
-                : null,
+                : null
             );
             setRolloverEnabled(hasRollover);
 
@@ -222,6 +236,44 @@ export default function PlanDetails({
     }
   }, [planId]);
 
+  // Auto-rollover check for MATURED plans (after 7 days)
+  useEffect(() => {
+    if (!plan || plan.status !== "MATURED") return;
+
+    const checkAutoRollover = async () => {
+      try {
+        const maturityDate = new Date(plan.maturityDate);
+        const now = new Date();
+        const daysSinceMaturity = Math.floor(
+          (now.getTime() - maturityDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        console.log(`📅 Days since maturity: ${daysSinceMaturity} for plan ${planId}`);
+
+        // Auto-rollover after 7 days
+        if (daysSinceMaturity >= 7) {
+          console.log(`🔄 Auto-triggering rollover for plan ${planId}`);
+          
+          try {
+            // Default to PRINCIPAL_AND_INTEREST for auto-rollover
+            const response = await rolloverPlan(planId, "PRINCIPAL_AND_INTEREST");
+            console.log("✅ Auto-rollover completed:", response.data);
+            
+            // Refresh plan data
+            fetchPlanData(planId, false);
+          } catch (rolloverErr) {
+            console.error("Auto-rollover API call failed:", rolloverErr);
+          }
+        }
+      } catch (err) {
+        console.error("Auto-rollover check failed:", err);
+      }
+    };
+
+    const autoRolloverTimer = setTimeout(checkAutoRollover, 2000); // Check after 2 seconds
+    return () => clearTimeout(autoRolloverTimer);
+  }, [plan, planId]);
+
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not set";
     try {
@@ -233,6 +285,47 @@ export default function PlanDetails({
     } catch {
       return "Invalid date";
     }
+  };
+
+  // Handle "Make Payment" button for pending plans
+  const handleMakePayment = async () => {
+    if (!planId) return;
+
+    setIsLoadingPayment(true);
+    setPaymentError(null);
+
+    try {
+      // For pending plans, we need to fetch payment details from the initial plan creation
+      // Since there's no dedicated endpoint, we'll show the payment method selection directly
+      // with empty values as a fallback
+      alert("Payment option will be available once implemented with backend support.");
+      
+    } catch (err: any) {
+      console.error("Failed to load payment details:", err);
+      setPaymentError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load payment options. Please try again."
+      );
+    } finally {
+      setIsLoadingPayment(false);
+    }
+  };
+
+  const handleSelectInstantTransfer = () => {
+    setShowPaymentMethodSelection(false);
+    setShowInstantTransferPayment(true);
+  };
+
+  const handleSelectBankTransfer = () => {
+    setShowPaymentMethodSelection(false);
+    setShowBankTransferPayment(true);
+  };
+
+  const handleBackFromPayment = () => {
+    setShowInstantTransferPayment(false);
+    setShowBankTransferPayment(false);
+    setShowPaymentMethodSelection(true);
   };
 
   if (isLoading)
@@ -286,7 +379,6 @@ export default function PlanDetails({
         <p className="font-euclid">Back</p>
       </Link>
 
-      {/* Polling status messages - Show ONLY when actively polling AND plan is PENDING */}
       {isPolling && plan.status === "PENDING" && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
           <div className="flex items-center gap-2">
@@ -296,6 +388,15 @@ export default function PlanDetails({
               automatically...
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Auto-Rollover status for MATURED plans */}
+      {plan.status === "MATURED" && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+          <p className="text-sm">
+            ℹ️ This plan has matured. After 7 days without action, it will be automatically rolled over.
+          </p>
         </div>
       )}
 
@@ -310,7 +411,9 @@ export default function PlanDetails({
                   ? "bg-blue-100 text-blue-600"
                   : plan.status === "MATURED"
                     ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-600"
+                    : plan.status === "CLOSED"
+                      ? "bg-gray-300 text-gray-700"
+                      : "bg-yellow-100 text-yellow-600"
               }`}
             >
               {plan.status}
@@ -323,36 +426,73 @@ export default function PlanDetails({
           </p>
 
           <div className="flex gap-4 mt-6">
-            <button
-              onClick={() => setShowTopUpModal(true)}
-              disabled={plan.status === "PENDING"}
-              className={`flex gap-2 items-center px-6 py-2 rounded-lg cursor-pointer ${
-                plan.status === "PENDING"
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-[#A243DC] text-white"
-              }`}
-            >
-              <FiArrowDownLeft size={20} />
-              <p className="font-manrope">
-                {plan.status === "MATURED" ? "Rollover" : "Top-up"}
-              </p>
-            </button>
+            {plan.status === "PENDING" ? (
+              <button
+                onClick={handleMakePayment}
+                disabled={isLoadingPayment}
+                className="flex gap-2 items-center px-6 py-2 rounded-lg cursor-pointer bg-[#A243DC] text-white font-manrope disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoadingPayment ? (
+                  <>
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <FiArrowDownLeft size={20} />
+                    <p>Make Payment</p>
+                  </>
+                )}
+              </button>
+            ) : plan.status === "CLOSED" ? (
+              <div className="p-4 bg-gray-100 rounded-lg text-gray-600 text-sm">
+                <p>This plan has been closed and withdrawn.</p>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    if (plan.status === "MATURED") {
+                      setShowRolloverModal(true);
+                    } else {
+                      setShowTopUpModal(true);
+                    }
+                  }}
+                  className="flex gap-2 items-center px-6 py-2 rounded-lg cursor-pointer bg-[#A243DC] text-white"
+                >
+                  <FiArrowDownLeft size={20} />
+                  <p className="font-manrope">
+                    {plan.status === "MATURED" ? "Rollover" : "Top-up"}
+                  </p>
+                </button>
 
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setShowLiquidatePopup(true);
-              }}
-              disabled={plan.status === "PENDING"}
-              className={`border flex items-center gap-2 text-center px-6 py-2 rounded-lg ${
-                plan.status === "PENDING"
-                  ? "border-gray-300 text-gray-400 cursor-not-allowed"
-                  : "border-[#A243DC] text-[#A243DC] cursor-pointer"
-              }`}
-            >
-              <FiArrowUpRight size={20} />
-              <p className="font-manrope">Liquidate</p>
-            </button>
+                {plan.status === "ACTIVE" && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowLiquidatePopup(true);
+                    }}
+                    className="border border-[#A243DC] text-[#A243DC] cursor-pointer flex items-center gap-2 text-center px-6 py-2 rounded-lg"
+                  >
+                    <FiArrowUpRight size={20} />
+                    <p className="font-manrope">Liquidate</p>
+                  </button>
+                )}
+
+                {plan.status === "MATURED" && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowWithdrawModal(true);
+                    }}
+                    className="border border-red-500 text-red-500 cursor-pointer flex items-center gap-2 text-center px-6 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <FiArrowUpRight size={20} />
+                    <p className="font-manrope">Withdraw All</p>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -432,12 +572,103 @@ export default function PlanDetails({
         onClose={() => setShowLiquidatePopup(false)}
         onConfirm={() => {
           // Refresh plan data after successful liquidation
-          fetchPlanData(planId);
+          console.log("✅ Liquidation successful - refreshing plan data");
+          setTimeout(() => {
+            fetchPlanData(planId, false);
+            startPollingForUpdates();
+          }, 500);
           setShowLiquidatePopup(false);
         }}
         planId={planId}
         planBalance={plan.currentPrincipal}
       />
+
+      {/* Payment Method Selection Modal for Pending Plans */}
+      {showPaymentMethodSelection && paymentInstantTransfer && paymentBankTransfer && (
+        <PaymentMethodSelection
+          isOpen={showPaymentMethodSelection}
+          instantTransfer={paymentInstantTransfer}
+          bankTransfer={paymentBankTransfer}
+          onSelectInstant={handleSelectInstantTransfer}
+          onSelectBank={handleSelectBankTransfer}
+          onClose={handleBackFromPayment}
+        />
+      )}
+
+      {/* Instant Transfer Modal for Pending Plans */}
+      {showInstantTransferPayment && paymentInstantTransfer && (
+        <InstantTopup
+          isOpen={showInstantTransferPayment}
+          instantTransfer={paymentInstantTransfer}
+          planId={planId}
+          onConfirm={() => {
+            // Refresh plan data after successful payment
+            fetchPlanData(planId, false);
+            startPollingForUpdates();
+          }}
+          onBack={handleBackFromPayment}
+        />
+      )}
+
+      {/* Bank Transfer Modal for Pending Plans */}
+      {showBankTransferPayment && paymentBankTransfer && (
+        <BankTransferModal
+          isOpen={showBankTransferPayment}
+          bankTransfer={paymentBankTransfer}
+          planId={planId}
+          onBack={handleBackFromPayment}
+        />
+      )}
+
+      {/* Rollover Modal for Matured Plans */}
+      {showRolloverModal && plan && (
+        <RolloverModal
+          isOpen={showRolloverModal}
+          planId={planId}
+          totalAccruedRoi={plan.totalAccruedRoi}
+          principal={plan.principal}
+          onClose={() => setShowRolloverModal(false)}
+          onSuccess={(newPlanId: string) => {
+            // Navigate to new plan after successful rollover
+            console.log("🔄 Navigating to new plan:", newPlanId);
+            router.push(`/dashboard/plans/${newPlanId}`);
+          }}
+        />
+      )}
+
+      {/* Withdraw Modal */}
+      {showWithdrawModal && plan && (
+        <WithdrawModal
+          isOpen={showWithdrawModal}
+          planId={planId}
+          planName={plan.name}
+          onClose={() => setShowWithdrawModal(false)}
+          onWithdrawSuccess={() => {
+            // Refresh plan data after successful withdrawal
+            console.log("✅ Withdrawal successful - refreshing plan data");
+            setTimeout(() => {
+              fetchPlanData(planId, false);
+              startPollingForUpdates();
+            }, 500);
+          }}
+        />
+      )}
+
+      {/* Error message for payment loading */}
+      {paymentError && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm">
+            <h3 className="text-lg font-bold text-red-600 mb-4">Error</h3>
+            <p className="text-gray-700 mb-6">{paymentError}</p>
+            <button
+              onClick={() => setPaymentError(null)}
+              className="w-full px-4 py-2 bg-[#A243DC] text-white rounded-lg font-semibold hover:bg-[#8e3ac0] transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

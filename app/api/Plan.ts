@@ -21,7 +21,7 @@ export interface PlanResponse {
   roiType: string;
   rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST";
   startDate: string;
-  status: "PENDING" | "ACTIVE" | "MATURED";
+  status: "PENDING" | "ACTIVE" | "MATURED" | "CLOSED";
   userId: string;
   lastRoiDisbursedAt: string | null;
   lastLiquidatedAt: string | null;
@@ -31,17 +31,34 @@ export interface PlanResponse {
   parentPlanId?: string;
 }
 
+export interface InstantTransferDetails {
+  bankAccountNumber: string;
+  bankName: string;
+  bankAccountName: string;
+  channel: string;
+  expiresIn: string;
+  amount: number;
+  fee: number;
+  net: number;
+  reference: string;
+  checkoutUrl: string;
+}
+
+export interface BankTransferDetails {
+  bankAccountNumber: string;
+  bankName: string;
+  bankAccountName: string;
+  channel: string;
+  amount: number;
+  reference: string;
+}
+
 export interface CreatePlanResponse {
   data: {
     plan: PlanResponse;
     payment: {
-      bankAccountNumber: string;
-      bankName: string;
-      channel: string;
-      expiresIn: string;
-      bankAccountName: string;
-      amountToPay: number;
-      reference: string;
+      instantTransfer: InstantTransferDetails;
+      bankTransfer: BankTransferDetails;
     };
   };
   message: string;
@@ -56,15 +73,40 @@ export interface TopUpPlanResponse {
   status: string;
   data: {
     payment: {
-      bankAccountNumber: string;
-      bankName: string;
-      channel: string;
-      expiresIn: string;
-      bankAccountName: string;
-      amountToPay: number;
-      reference: string;
+      instantTransfer: InstantTransferDetails;
+      bankTransfer: BankTransferDetails;
     };
   };
+}
+
+// ----------------------
+// CALCULATE PLAN SUMMARY INTERFACE
+// ----------------------
+export interface PlanSummaryRequest {
+  duration: number;
+  payoutFrequency: string;
+  principal: number;
+}
+
+export interface PlanSummaryData {
+  principal: number;
+  duration: number;
+  roiRate: number;
+  payoutFrequency: string;
+  expectedMaturityDate: string;
+  totalExpectedReturns: number;
+  expectedRoiGross: number;
+  expectedRoi: number;
+  withholdingTax: number;
+  withholdingTaxRate: number;
+  payoutPerPeriod: number;
+  numberOfPayouts: number;
+}
+
+export interface CalculatePlanSummaryResponse {
+  message: string;
+  status: string;
+  data: PlanSummaryData;
 }
 
 // ----------------------
@@ -76,10 +118,63 @@ export const createPlan = async (payload: PlanFormData) => {
 };
 
 // ----------------------
+// GET PLAN PAYMENT DETAILS (for pending plans)
+// ----------------------
+export const getPlanPaymentDetails = async (planId: string) => {
+  const response = await API.get<CreatePlanResponse>(`/plan/${planId}/payment`);
+  return response.data;
+};
+
+// ----------------------
+// CALCULATE PLAN SUMMARY
+// ----------------------
+export const calculatePlanSummary = async (payload: PlanSummaryRequest) => {
+  const response = await API.post<CalculatePlanSummaryResponse>(
+    "/plan/calculate-summary",
+    payload
+  );
+  return response.data;
+};
+
+// ----------------------
 // TOP-UP PLAN
 // ----------------------
+export interface TopUpRequest {
+  amount: number;
+}
+
+export interface TopUpData {
+  id: string;
+  newPrincipal: number;
+  paymentReference: string;
+  previousPrincipal: number;
+  topUpAmount: number;
+  planId: string;
+  transactionId: string;
+  createdAt: string;
+  transaction: {
+    id: string;
+    amount: number;
+    intent: string;
+    direction: string;
+    reference: string;
+  };
+}
+
+export interface TopUpResponse {
+  message: string;
+  status: string;
+  data: {
+    payment: {
+      instantTransfer: InstantTransferDetails;
+      bankTransfer: BankTransferDetails;
+    };
+    topUp: TopUpData;
+  };
+}
+
 export const topUpPlan = async (planId: string, amount: number) => {
-  const response = await API.post<TopUpPlanResponse>(
+  const response = await API.post<TopUpResponse>(
     `/plan/${planId}/top-up`,
     { amount }
   );
@@ -87,9 +182,106 @@ export const topUpPlan = async (planId: string, amount: number) => {
 };
 
 // ----------------------
+// ROLLOVER PLAN
+// ----------------------
+export interface RolloverRequest {
+  rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST";
+}
+
+export interface RolloverResponse {
+  message: string;
+  status: string;
+  data: {
+    plan: PlanResponse;
+    payment: {
+      instantTransfer: InstantTransferDetails;
+      bankTransfer: BankTransferDetails;
+    };
+  };
+}
+
+export const rolloverPlan = async (
+  planId: string,
+  rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST"
+) => {
+  const response = await API.post<RolloverResponse>(`/plan/${planId}/rollover`, {
+    rolloverType,
+  });
+  return response.data;
+};
+
+// ----------------------
+// LIQUIDATE PLAN
+// ----------------------
+export interface LiquidateRequest {
+  amount: number;
+  isFull: boolean;
+}
+
+export interface LiquidateData {
+  id: string;
+  amount: number;
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  corporateUserId: string;
+  createdAt: string;
+  planId: string;
+  netPayout: number;
+  roiAccrued: number;
+  roiNet: number;
+  roiPenalty: number;
+  withholdingTax: number;
+  remainingPrincipal: number;
+  bankAccountId: string;
+  type: "PARTIAL" | "FULL";
+  transactionId: string;
+  transaction: {
+    id: string;
+    amount: number;
+    intent: string;
+    direction: string;
+    reference: string;
+  };
+}
+
+export interface LiquidateResponse {
+  message: string;
+  status: string;
+  data: LiquidateData;
+}
+
+export const liquidatePlan = async (planId: string, amount: number, isFull: boolean) => {
+  const response = await API.post<LiquidateResponse>(
+    `/plan/${planId}/liquidate`,
+    { amount, isFull }
+  );
+  return response.data;
+};
+
+// ----------------------
+// WITHDRAW PLAN
+// ----------------------
+export interface WithdrawResponse {
+  message: string;
+  status: string;
+  data: {
+    id: string;
+    status: "CLOSED";
+    closedDate: string;
+    [key: string]: any;
+  };
+}
+
+export const withdrawPlan = async (planId: string) => {
+  const response = await API.post<WithdrawResponse>(
+    `/plan/${planId}/withdraw`
+  );
+  return response.data;
+};
+
+// ----------------------
 // GET ALL PLANS (optional pagination)
 // ----------------------
-export const getAllPlans = async (page = 1, limit = 20) => {
+export const getAllPlans = async (page = 1, limit = 100) => {
   const response = await API.get(`/plan?page=${page}&limit=${limit}`);
   return response.data.data.results.map((plan: any) => ({
     ...plan,
@@ -100,10 +292,9 @@ export const getAllPlans = async (page = 1, limit = 20) => {
   }));
 };
 
-// ----------------------
 // GET PLAN BY ID
-// ----------------------
 export const getPlanById = async (planId: string) => {
+  // The interceptor will add _t timestamp, but we'll also add a cache-busting header
   const response = await API.get<{ message: string; status: string; data: PlanResponse }>(
     `/plan/${planId}`
   );
@@ -216,4 +407,40 @@ export const enableAPIDebugging = () => {
       return Promise.reject(error);
     }
   );
+};
+
+// ----------------------
+// CALCULATE LIQUIDATION SUMMARY
+// ----------------------
+export interface LiquidationSummary {
+  liquidationAmount: number;
+  currentPrincipal: number;
+  totalRoiAccrued: number;
+  proratedRoiAccrued: number;
+  roiPenalty: number;
+  withholdingTax: number;
+  roiNet: number;
+  netPayout: number;
+  remainingPrincipal: number;
+  liquidationType: "PARTIAL" | "FULL";
+  roiPenaltyRate: number;
+  withholdingTaxRate: number;
+}
+
+export interface CalculateLiquidationResponse {
+  message: string;
+  status: string;
+  data: LiquidationSummary;
+}
+
+export const calculateLiquidationSummary = async (
+  planId: string,
+  amount: number,
+  isFull: boolean
+) => {
+  const response = await API.post<CalculateLiquidationResponse>(
+    `/plan/${planId}/calculate-liquidation-summary`,
+    { amount, isFull }
+  );
+  return response.data;
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import Password from "./Password";
-import { liquidatePlanService } from "@/app/api/Users";
+import { liquidatePlan, calculateLiquidationSummary, LiquidationSummary } from "@/app/api/Plan";
 
 interface BankAccount {
   id: string;
@@ -33,15 +33,37 @@ export default function SummaryLiquidate({
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const [error, setError] = useState<string>("");
-  const [intentId, setIntentId] = useState<string>("");
+  const [success, setSuccess] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-
-  if (!isOpen || !selectedAccount) return null;
+  const [intentId, setIntentId] = useState<string>("");
+  const [liquidationSummary, setLiquidationSummary] = useState<LiquidationSummary | null>(null);
 
   const numericAmount = parseInt(amount.replace(/,/g, "")) || 0;
-  const breakingFee = isFullLiquidation ? 0 : numericAmount * 0.01; // 1% fee for partial liquidation
-  const netAmount = numericAmount - breakingFee;
+
+  // Load liquidation summary when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadSummary();
+    }
+  }, [isOpen, planId, numericAmount, isFullLiquidation]);
+
+  const loadSummary = async () => {
+    setLoadingSummary(true);
+    try {
+      const response = await calculateLiquidationSummary(planId, numericAmount, isFullLiquidation);
+      console.log("📊 Liquidation Summary:", response.data);
+      setLiquidationSummary(response.data);
+    } catch (err: any) {
+      console.error("❌ Failed to load summary:", err);
+      setError("Failed to calculate liquidation summary. Please try again.");
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
+  if (!isOpen || !selectedAccount) return null;
 
   const handleConfirm = async () => {
     if (!agreeToTerms) {
@@ -53,29 +75,48 @@ export default function SummaryLiquidate({
     setError("");
 
     try {
-      // Call liquidation API
-      const response = await liquidatePlanService(planId, {
-        amount: numericAmount,
-        isFull: isFullLiquidation,
-      });
-
-      if (response.data?.intent?.id) {
-        setIntentId(response.data.intent.id);
+      console.log(`📤 Calling liquidate endpoint for plan ${planId}...`);
+      
+      const response = await liquidatePlan(planId, numericAmount, isFullLiquidation);
+      
+      console.log("✅ Liquidation initiated:", response);
+      
+      // Show password modal for PIN authorization
+      // The ID is nested in data.intent.id
+      const liquidationId = response?.data?.intent?.id || response?.data?.id || response?.id;
+      console.log("Liquidation ID:", liquidationId);
+      if (liquidationId) {
+        setIntentId(liquidationId);
         setShowPassword(true);
       } else {
-        throw new Error("No intent ID received from server");
+        console.error("Response structure:", response);
+        throw new Error("No liquidation ID received from server");
       }
+      
     } catch (err: any) {
-      console.error("Liquidation failed:", err);
-      setError(err.response?.data?.message || "Failed to initiate liquidation. Please try again.");
+      console.error("❌ Liquidation failed:", err);
+      setError(err.response?.data?.message || err.message || "Failed to initiate liquidation. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (loadingSummary && isOpen) {
+    return (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
+        <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative p-8">
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#A243DC]"></div>
+            <p className="text-gray-600">Calculating liquidation summary...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative p-8">
+      <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative p-8 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -86,39 +127,43 @@ export default function SummaryLiquidate({
 
         {/* Title */}
         <h2 className="text-center text-2xl font-euclid font-bold text-gray-900">
-          Summary
+          Liquidation Summary
         </h2>
 
-        {/* Amount */}
+        {/* Liquidation Amount */}
         <div className="text-center mt-6">
-          <p className="text-sm font-euclid text-gray-500">Amount</p>
-          <p className="text-4xl font-bold font-freizeit text-gray-900">₦{amount}</p>
+          <p className="text-sm font-euclid text-gray-500">Amount to Liquidate</p>
+          <p className="text-4xl font-bold font-freizeit text-gray-900">
+            ₦{liquidationSummary?.liquidationAmount.toLocaleString() || amount}
+          </p>
           {isFullLiquidation && (
             <p className="text-xs text-green-600 mt-1">Full Liquidation</p>
           )}
         </div>
 
-        {/* Breaking Fee (only for partial liquidation) */}
-        {!isFullLiquidation && breakingFee > 0 && (
-          <div className="mt-4 text-center">
-            <p className="text-sm font-euclid text-gray-500">
-              Breaking Fee (1%)
-            </p>
-            <p className="text-lg font-semibold text-red-600">
-              -₦{breakingFee.toLocaleString()}
-            </p>
+        {/* Breakdown */}
+        {liquidationSummary && (
+          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-700">Amount to Liquidate</span>
+                <span className="text-2xl font-bold text-gray-900">₦{liquidationSummary.liquidationAmount.toLocaleString()}</span>
+              </div>
+              
+              {(liquidationSummary.roiPenalty > 0 || liquidationSummary.withholdingTax > 0) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Fees & Charges</span>
+                  <span className="text-lg font-semibold text-red-600">-₦{(liquidationSummary.roiPenalty + liquidationSummary.withholdingTax).toLocaleString()}</span>
+                </div>
+              )}
+              
+              <div className="border-t border-yellow-300 pt-3 flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-700">You Receive</span>
+                <span className="text-2xl font-bold text-green-600">₦{liquidationSummary.netPayout.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* Net Amount */}
-        <div className="mt-4 text-center">
-          <p className="text-sm font-euclid text-gray-500">
-            Net Amount You Receive
-          </p>
-          <p className="text-2xl font-bold text-green-600">
-            ₦{netAmount.toLocaleString()}
-          </p>
-        </div>
 
         {/* Destination Account */}
         <div className="mt-8">
@@ -189,19 +234,22 @@ export default function SummaryLiquidate({
                 : "bg-[#A243DC] text-white hover:bg-[#8e3ac0]"
             }`}
           >
-            {loading ? "Processing..." : "Confirm"}
+            {loading ? "Processing..." : success ? "✓ Liquidated" : "Confirm"}
           </button>
         </div>
 
-        {/* Password Modal */}
+        {/* Password Modal for Authorization */}
         <Password
           isOpen={showPassword}
           onClose={() => setShowPassword(false)}
           intentId={intentId}
           onAuthorizationSuccess={() => {
             setShowPassword(false);
-            onClose();
-            onLiquidationSuccess();
+            setSuccess(true);
+            setTimeout(() => {
+              onClose();
+              onLiquidationSuccess();
+            }, 1000);
           }}
         />
       </div>

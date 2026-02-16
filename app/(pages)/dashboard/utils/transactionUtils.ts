@@ -2,9 +2,8 @@
 
 export const formatTransactionType = (type: string): string => {
   const typeMap: Record<string, string> = {
-    'PAYMENT': 'Payment',
-    'TRANSFER': 'Transfer', 
-    'REFUND': 'Refund'
+    'CREDIT': 'Credit',
+    'DEBIT': 'Debit', 
   };
   return typeMap[type] || type;
 };
@@ -283,7 +282,7 @@ export const generateCSVData = (transactions: any[]): string => {
     const row = [
       formatDate(transaction.createdAt),
       transaction.reference,
-      formatTransactionType(transaction.type),
+      formatTransactionType(transaction.direction),
       formatIntent(transaction.intent),
       transaction.amount,
       getStatusText(transaction.status),

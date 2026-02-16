@@ -3,34 +3,23 @@
 import React, { useState, useEffect } from "react";
 import { X, Copy, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-interface PaymentDetails {
-  bankAccountNumber: string;
-  bankName: string;
-  channel: string;
-  expiresIn: string;
-  bankAccountName: string;
-  amountToPay: number;
-  reference: string;
-}
+import { InstantTransferDetails } from "../api/Plan";
 
 interface InstantTopupProps {
   isOpen: boolean;
-  paymentDetails: PaymentDetails;
+  instantTransfer: InstantTransferDetails;
   planId: string;
   onConfirm?: () => void;
   onBack: () => void;
-  method?: string;
   isTopUp?: boolean;
 }
 
 export default function InstantTopup({
   isOpen,
-  paymentDetails,
+  instantTransfer,
   planId,
   onConfirm,
   onBack,
-  method,
   isTopUp = false,
 }: InstantTopupProps) {
   const router = useRouter();
@@ -43,26 +32,27 @@ export default function InstantTopup({
     return 59 * 60 + 55;
   };
 
-  const [timeLeft, setTimeLeft] = useState(parseExpiresIn(paymentDetails?.expiresIn || "1h"));
+  const [timeLeft, setTimeLeft] = useState(parseExpiresIn(instantTransfer?.expiresIn || "1h"));
+  const [useIframe, setUseIframe] = useState(true);
 
   useEffect(() => {
     if (!isOpen) return;
     
     console.log(`🔼 ${isTopUp ? 'Top-up' : 'Plan creation'} modal opened with:`, {
       planId: planId,
-      paymentDetails: paymentDetails,
-      expiresIn: paymentDetails?.expiresIn,
+      instantTransfer: instantTransfer,
+      expiresIn: instantTransfer?.expiresIn,
       isTopUp: isTopUp
     });
     
-    setTimeLeft(parseExpiresIn(paymentDetails?.expiresIn || "1h"));
+    setTimeLeft(parseExpiresIn(instantTransfer?.expiresIn || "1h"));
 
     const timerId = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [isOpen, paymentDetails, planId, isTopUp]);
+  }, [isOpen, instantTransfer, planId, isTopUp]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -75,134 +65,181 @@ export default function InstantTopup({
     alert("Copied!");
   };
 
-  const handleOpenPaystack = () => {
-    if (paymentDetails?.bankAccountNumber) {
-      window.open(paymentDetails.bankAccountNumber, "_blank");
-    }
-  };
-
   const handleConfirmPayment = () => {
-    console.log(`🔄 User clicked 'I have paid' for ${isTopUp ? 'top-up' : 'plan creation'}`);
+    console.log(`🔄 User clicked 'Payment Confirmed' for ${isTopUp ? 'top-up' : 'plan creation'}`);
     
-    // Call optional onConfirm callback if provided
     if (onConfirm) {
       onConfirm();
     }
     
     console.log(`🚀 Redirecting to PLAN DETAILS: /dashboard/plans/${planId}`);
     
-    // Close modal and redirect to PLAN DETAILS PAGE
     onBack();
     router.push(`/dashboard/plans/${planId}`);
   };
 
   if (!isOpen) return null;
 
-  const displayAmount = paymentDetails?.amountToPay 
-    ? `₦${paymentDetails.amountToPay.toLocaleString()}` 
+  // Principal/Net amount (what user is investing)
+  const displayPrincipal = instantTransfer?.net 
+    ? `₦${instantTransfer.net.toLocaleString()}` 
+    : "₦0";
+
+  // Service fee
+  const displayFee = instantTransfer?.fee
+    ? `₦${instantTransfer.fee.toLocaleString()}`
+    : "₦0";
+
+  // Total amount to pay
+  const totalAmount = instantTransfer?.amount 
+    ? `₦${instantTransfer.amount.toLocaleString()}` 
     : "₦0";
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[450px] rounded-2xl shadow-2xl p-8 relative flex flex-col">
+      <div className={`bg-white rounded-2xl shadow-2xl relative flex flex-col ${
+        useIframe && instantTransfer?.checkoutUrl
+          ? "w-[85vw] h-[95vh]"
+          : "w-[600px] max-h-[90vh]"
+      }`}>
         <button
           onClick={onBack}
-          className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors z-10 bg-white rounded-full p-2"
         >
           <X size={24} />
         </button>
 
-        <div className="text-center mt-2 mb-8">
-          <p className="text-sm font-euclid text-gray-600 mb-2">
-            Account number expires in
-          </p>
-          <h2 className="text-4xl font-bold text-gray-900 tracking-wider">
-            {formatTime(timeLeft)}
-          </h2>
-        </div>
+        {/* Show iframe if Paystack checkout URL is available */}
+        {useIframe && instantTransfer?.checkoutUrl ? (
+          <>
+            <div className="text-center py-4 px-8 border-b border-gray-200">
+              <p className="text-sm font-semibold text-gray-700">
+                Complete Payment via Paystack
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Account expires in {formatTime(timeLeft)}
+              </p>
+            </div>
 
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-euclid text-gray-500 font-medium">Amount</span>
-            <div className="flex items-center gap-2">
-              <span className="text-[#A243DC] font-bold">{displayAmount}</span>
+            <div className="flex-1 overflow-auto">
+              <iframe
+                src={instantTransfer.checkoutUrl}
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                scrolling="auto"
+                onError={() => setUseIframe(false)}
+              />
+            </div>
+
+            <div className="border-t border-gray-200 bg-white p-8 flex gap-3 items-start">
+              <AlertCircle size={16} className="text-blue-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700 leading-relaxed">
+                Complete the payment in the Paystack form above, then click "Payment Confirmed"
+              </p>
+            </div>
+
+            <div className="px-8 pb-8 flex justify-end gap-3">
               <button
-                onClick={() => handleCopy(paymentDetails?.amountToPay?.toString() || "")}
-                className="text-gray-400 hover:text-[#A243DC] transition-colors"
+                onClick={onBack}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
               >
-                <Copy size={18} />
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                className="px-6 py-2 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-bold text-sm rounded-lg transition-colors"
+              >
+                Payment Confirmed
               </button>
             </div>
-          </div>
+          </>
+        ) : (
+          <>
+            {/* Fallback: Show payment details with amount breakdown */}
+            <div className="p-8 overflow-y-auto flex flex-col gap-6">
+              <div className="text-center">
+                <p className="text-sm font-semibold text-gray-600 mb-2">
+                  Account number expires in
+                </p>
+                <h2 className="text-4xl font-bold text-gray-900 tracking-wider">
+                  {formatTime(timeLeft)}
+                </h2>
+              </div>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-euclid font-medium">Bank</span>
-            <span className="text-gray-900 font-euclid font-medium">Source MFB</span>
-          </div>
+              {/* Amount Breakdown */}
+              <div className="space-y-3 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-gray-700">Amount (Principal Only)</span>
+                  <span className="text-gray-900 font-bold text-lg">{displayPrincipal}</span>
+                </div>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-euclid font-medium">Bank Name</span>
-            <span className="text-gray-900 font-euclid font-medium">myStash Investment</span>
-          </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-gray-700">Service Fee</span>
+                  <span className="text-orange-600 font-bold">{displayFee}</span>
+                </div>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-euclid text-gray-500 font-medium">
-              Account Number
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleOpenPaystack}
-                className="text-[#A243DC] font-bold text-lg flex items-center gap-1 hover:underline"
-              >
-                Pay with Paystack
-                <ExternalLink size={16} />
-              </button>
-              <button
-                onClick={() => handleCopy(paymentDetails?.reference || "")}
-                className="text-gray-400 hover:text-[#A243DC] transition-colors"
-                title="Copy Reference"
-              >
-                <Copy size={18} />
-              </button>
-            </div>
-          </div>
+                <div className="border-t-2 border-yellow-300 pt-3 flex justify-between items-center">
+                  <span className="text-sm font-bold text-gray-900">Total You Pay</span>
+                  <span className="text-[#A243DC] font-bold text-xl">{totalAmount}</span>
+                </div>
+              </div>
 
-          {paymentDetails?.reference && (
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-euclid text-gray-500 font-medium">
-                Payment Reference
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-900 font-mono text-sm">
-                  {paymentDetails.reference}
-                </span>
-                <button
-                  onClick={() => handleCopy(paymentDetails.reference)}
-                  className="text-gray-400 hover:text-[#A243DC] transition-colors"
-                >
-                  <Copy size={18} />
-                </button>
+              <hr className="border-gray-200" />
+
+              {/* Payment Details */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500 font-medium">Bank</span>
+                  <span className="text-gray-900 font-semibold">{instantTransfer?.bankName || "Source MFB"}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500 font-medium">Account Name</span>
+                  <span className="text-gray-900 font-semibold">{instantTransfer?.bankAccountName || "myStash Investment"}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500 font-medium">Channel</span>
+                  <span className="text-gray-900 font-semibold">{instantTransfer?.channel || "PAYSTACK"}</span>
+                </div>
+
+                {instantTransfer?.reference && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500 font-medium">Reference</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-900 font-mono text-xs">
+                        {instantTransfer.reference}
+                      </span>
+                      <button
+                        onClick={() => handleCopy(instantTransfer.reference)}
+                        className="text-gray-400 hover:text-[#A243DC] transition-colors"
+                      >
+                        <Copy size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 items-start bg-blue-50 p-4 rounded-lg">
+                <AlertCircle size={18} className="text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                  Transfer the total amount shown above within the given timeframe.
+                </p>
               </div>
             </div>
-          )}
 
-          <div className="flex gap-3 mt-6 items-start">
-            <AlertCircle size={18} className="text-gray-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-600 font-euclid leading-relaxed">
-              Transfer only <span className="font-bold">{displayAmount}</span> within
-              the given timeframe
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-10 flex justify-end">
-          <button
-            onClick={handleConfirmPayment}
-            className="px-6 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-bold text-xs tracking-widest rounded-lg transition-colors font-euclid uppercase shadow-lg shadow-purple-100"
-          >
-            I have paid
-          </button>
-        </div>
+            <div className="border-t border-gray-200 p-8 flex justify-end">
+              <button
+                onClick={handleConfirmPayment}
+                className="px-8 py-3 bg-[#A243DC] hover:bg-[#8e3ac0] text-white font-bold text-sm tracking-widest rounded-lg transition-colors uppercase shadow-lg shadow-purple-100"
+              >
+                I have paid
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

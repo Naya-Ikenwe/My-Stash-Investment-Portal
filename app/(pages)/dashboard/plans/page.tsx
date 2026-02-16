@@ -15,9 +15,10 @@ import {
 import Link from "next/link";
 import { getAllPlans, PlanResponse } from "@/app/api/Plan";
 
+
 export default function PlansPage() {
   const [statusFilter, setStatusFilter] = useState<
-    "All" | "ACTIVE" | "MATURED" | "PENDING"
+    "All" | "ACTIVE" | "MATURED" | "PENDING" | "CLOSED"
   >("All");
   const [tenorFilter, setTenorFilter] = useState<
     "All" | "6 months" | "12 months"
@@ -57,8 +58,23 @@ export default function PlansPage() {
     );
   };
 
-  // Filter plans
+  // Filter plans - Show ONLY active rolled-over plans, completely hide old matured parents
   const filteredPlans = plans.filter((plan) => {
+    // HIDE any MATURED plan that has been rolled over (it should not appear at all)
+    if (plan.status === "MATURED" && plan.rolloverType) {
+      return false; // Hide the old rolled-over plan completely
+    }
+
+    // HIDE any MATURED plan that has an ACTIVE child (the parent is redundant)
+    if (plan.status === "MATURED") {
+      const hasActiveChild = plans.some(
+        (p) => p.parentPlanId === plan.id && p.status === "ACTIVE"
+      );
+      if (hasActiveChild) {
+        return false; // Hide parent, show only the child
+      }
+    }
+
     const statusMatch = statusFilter === "All" || plan.status === statusFilter;
     const searchMatch = plan.name
       .toLowerCase()
@@ -72,10 +88,10 @@ export default function PlansPage() {
     return statusMatch && searchMatch && tenorMatch;
   });
 
-  // Sort: ACTIVE first, then PENDING, then MATURED
+  // Sort: ACTIVE first, then PENDING, then MATURED, then CLOSED
   const sortedPlans = [...filteredPlans].sort((a, b) => {
-    const order = ["ACTIVE", "PENDING", "MATURED"];
-    return order.indexOf(a.status) - order.indexOf(b.status);
+    const order = ["ACTIVE", "PENDING", "MATURED", "CLOSED"];
+    return order.indexOf(a.status || "PENDING") - order.indexOf(b.status || "PENDING");
   });
 
   // Pagination
@@ -111,7 +127,7 @@ export default function PlansPage() {
             </button>
             {isStatusDropdownOpen && (
               <div className="absolute top-10 left-0 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                {["All", "ACTIVE", "MATURED", "PENDING"].map((status) => (
+                {["All", "ACTIVE", "MATURED", "PENDING", "CLOSED"].map((status) => (
                   <button
                     key={status}
                     onClick={() => {
@@ -214,14 +230,20 @@ export default function PlansPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {paginatedPlans.map((plan) => (
                 <Link href={`/dashboard/plans/${plan.id}`} key={plan.id}>
-                  <div className="w-full h-full px-5 py-10 border rounded-xl shadow-sm bg-[#F7F7F7] relative cursor-pointer hover:shadow-md transition">
+                  <div className={`w-full h-full px-5 py-10 border rounded-xl shadow-sm relative cursor-pointer hover:shadow-md transition ${
+                    plan.status === "CLOSED"
+                      ? "bg-gray-200 opacity-50 pointer-events-none"
+                      : "bg-[#F7F7F7]"
+                  }`}>
                     <span
                       className={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full ${
                         plan.status === "ACTIVE"
                           ? "bg-blue-100 text-blue-600"
                           : plan.status === "MATURED"
                             ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-600"
+                            : plan.status === "CLOSED"
+                              ? "bg-gray-300 text-gray-700"
+                              : "bg-yellow-100 text-yellow-600"
                       }`}
                     >
                       {plan.status}

@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       {
         source: "/api/:path*",
         destination:
-          "https://jewellery-provision-heart-debate.trycloudflare.com/:path*",
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
       },
     ];
   },

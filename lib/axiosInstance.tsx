@@ -3,7 +3,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -24,13 +24,28 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Attach access token to each request
+// Attach access token to each request and add cache-busting
 API.interceptors.request.use((config) => {
   // ALWAYS get token from cookies (to match middleware)
   const token = Cookies.get("access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // ✅ ADD CACHE-BUSTING FOR ALL GET REQUESTS
+  if (config.method?.toLowerCase() === 'get') {
+    // Add timestamp parameter to prevent caching
+    config.params = {
+      ...config.params,
+      _t: new Date().getTime() // Cache-busting timestamp
+    };
+    
+    // Also add cache-control headers
+    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    config.headers['Pragma'] = 'no-cache';
+    config.headers['Expires'] = '0';
+  }
+  
   return config;
 });
 

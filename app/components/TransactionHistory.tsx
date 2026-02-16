@@ -111,7 +111,7 @@ export default function TransactionHistory({
   // Helper function to format transaction type for display
   const formatTransactionType = (type: string, intent: string): string => {
     const intentMap: Record<string, string> = {
-      'CREATE_PLAN': 'Investment Created',
+      'ACTIVATE_PLAN': 'Investment Created',
       'TOP_UP_PLAN': 'Investment Top-up',
       'ROI_PAYOUT': 'ROI Payout',
       'LIQUIDATION': 'Investment Liquidated',

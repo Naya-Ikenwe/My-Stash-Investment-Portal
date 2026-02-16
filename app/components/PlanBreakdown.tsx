@@ -2,46 +2,28 @@
 
 import CardWrapper from "@/app/components/CardWrapper";
 import InstantTopup from "@/app/components/InstantTopup";
+import BankTransferModal from "@/app/components/BankTransferModal";
+import PaymentMethodSelection from "@/app/components/PaymentMethodSelection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaCircle } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
 import { PlanFormData } from "../types/plan";
 import { UseFormReturn } from "react-hook-form";
-import { createPlan } from "../api/Plan";
+import {
+  createPlan,
+  calculatePlanSummary,
+  PlanSummaryData,
+  InstantTransferDetails,
+  BankTransferDetails,
+} from "../api/Plan";
 
 type Breakdown = {
   name: string;
   amount: number;
 };
-
-interface PaymentDetails {
-  bankAccountNumber: string;
-  bankName: string;
-  channel: string;
-  expiresIn: string;
-  bankAccountName: string;
-  amountToPay: number;
-  reference: string;
-}
-
-interface PlanResponse {
-  id: string;
-  payoutAccountId: string;
-  name: string;
-  status: "PENDING" | "ACTIVE" | "MATURED";
-}
-
-interface CreatePlanResponse {
-  data: {
-    plan: PlanResponse;
-    payment: PaymentDetails;
-  };
-  message: string;
-  status: string;
-}
 
 export default function PlanBreakdown({
   onBack,
@@ -58,32 +40,78 @@ export default function PlanBreakdown({
       year: "numeric",
     });
 
-  const initial: Breakdown[] = [
-    { name: "August Interest", amount: 174171 },
-    { name: "August Witholding Tax", amount: 1741 },
-    { name: "August Net Interest", amount: 156771 },
-  ];
-
-  const subsequently: Breakdown[] = [
-    { name: "Interest", amount: 2000000 },
-    { name: "Witholding Tax", amount: 2000 },
-    { name: "Net Interest", amount: 18000 },
-  ];
-
-  const total: Breakdown[] = [
-    { name: "Interest", amount: 117475 },
-    { name: "Witholding Tax", amount: 1174 },
-    { name: "Net Interest", amount: 105677 },
-  ];
-
-  const [fundSourceOpen, setFundSourceOpen] = useState(false);
+  const [initial, setInitial] = useState<Breakdown[]>([]);
+  const [subsequently, setSubsequently] = useState<Breakdown[]>([]);
+  const [total, setTotal] = useState<Breakdown[]>([]);
+  const [roiRate, setRoiRate] = useState<number>(0);
+  const [showMethodSelection, setShowMethodSelection] = useState(false);
+  const [showInstantTransfer, setShowInstantTransfer] = useState(false);
+  const [showBankTransfer, setShowBankTransfer] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(
-    null,
-  );
+  const [instantTransfer, setInstantTransfer] = useState<InstantTransferDetails | null>(null);
+  const [bankTransfer, setBankTransfer] = useState<BankTransferDetails | null>(null);
   const [createdPlanId, setCreatedPlanId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+
+  // Fetch plan summary on component mount
+  useEffect(() => {
+    const fetchPlanSummary = async () => {
+      try {
+        setIsLoadingSummary(true);
+        const response = await calculatePlanSummary({
+          duration: planData.duration,
+          payoutFrequency: "MONTHLY",
+          principal: planData.principal,
+        });
+
+        if (response.data) {
+          const summary = response.data;
+
+          // Build breakdown sections from API response
+          const initialBreakdown: Breakdown[] = [
+            { name: "Principal Amount", amount: summary.principal },
+            { name: "Expected ROI (Gross)", amount: summary.expectedRoiGross },
+            { name: "Withholding Tax", amount: summary.withholdingTax },
+            { name: "Expected ROI (Net)", amount: summary.expectedRoi },
+          ];
+
+          const subsequentlyBreakdown: Breakdown[] = [
+            {
+              name: "Payout Per Period",
+              amount: summary.payoutPerPeriod,
+            },
+            {
+              name: "Number of Payouts",
+              amount: summary.numberOfPayouts,
+            },
+          ];
+
+          const totalBreakdown: Breakdown[] = [
+            { name: "Total Expected Returns", amount: summary.totalExpectedReturns },
+            {
+              name: "Total Interest Earned",
+              amount: summary.totalExpectedReturns - summary.principal,
+            },
+            { name: "ROI Rate", amount: summary.roiRate * 100 },
+          ];
+
+          setInitial(initialBreakdown);
+          setSubsequently(subsequentlyBreakdown);
+          setTotal(totalBreakdown);
+          setRoiRate(summary.roiRate * 100);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch plan summary:", err);
+        setError("Failed to load plan summary. Please try again.");
+      } finally {
+        setIsLoadingSummary(false);
+      }
+    };
+
+    fetchPlanSummary();
+  }, [planData.duration, planData.principal]);
 
   const handleAgreeAndContinue = async () => {
     if (!termsAccepted) {
@@ -95,92 +123,75 @@ export default function PlanBreakdown({
     setError(null);
 
     try {
-      // Get the current form values
       const currentFormData = form.getValues();
 
-      // DEBUG: Log everything
-      console.log("📋 CURRENT FORM DATA in PlanBreakdown:", {
-        allFields: currentFormData,
-        payoutAccountId: currentFormData.payoutAccountId,
-        hasPayoutAccountId: !!currentFormData.payoutAccountId,
-        payoutAccountIdType: typeof currentFormData.payoutAccountId,
-        payoutAccountIdLength: currentFormData.payoutAccountId?.length,
+      console.log("📋 Creating plan with data:", {
+        name: currentFormData.name,
+        principal: currentFormData.principal,
+        duration: currentFormData.duration,
       });
 
-      // Check if payoutAccountId is empty
-      if (!currentFormData.payoutAccountId) {
-        throw new Error(
-          "Bank account not selected. Please go back and select a bank.",
-        );
-      }
-
-      // Prepare the payload
+      // Prepare the payload - simplified based on new endpoint
       const completePayload = {
         name: currentFormData.name,
         principal: currentFormData.principal,
         duration: currentFormData.duration,
-        startDate: currentFormData.startDate,
-        endDate: currentFormData.endDate,
-        payoutFrequency: "MONTHLY" as const,
-        rollover: currentFormData.rollover,
-        rolloverType: currentFormData.rolloverType,
-        payoutAccountId: currentFormData.payoutAccountId, // This should come from form
+        payoutFrequency: "MONTHLY",
+        rolloverType: currentFormData.rolloverType || "PRINCIPAL_ONLY",
       };
 
       console.log("🚀 Final payload for POST /plan:", completePayload);
-      console.log(
-        "🔗 Will call endpoint with bank ID:",
-        currentFormData.payoutAccountId,
-      );
 
       // Call the createPlan endpoint
       console.log("📞 Calling createPlan() API function...");
-      const response: CreatePlanResponse = await createPlan(completePayload);
+      const response = await createPlan(completePayload as any);
 
       console.log("✅ Plan creation API response:", {
         success: true,
         planId: response.data.plan.id,
         status: response.data.plan.status,
-        paymentReference: response.data.payment.reference,
       });
 
       // Store the payment details from the response
-      setPaymentDetails(response.data.payment);
+      setInstantTransfer(response.data.payment.instantTransfer);
+      setBankTransfer(response.data.payment.bankTransfer);
       setCreatedPlanId(response.data.plan.id);
 
-      console.log(
-        "✅ Plan created successfully. Plan ID:",
-        response.data.plan.id,
-      );
-      console.log("💰 Payment details:", response.data.payment);
-
-      // Open the payment modal
-      setFundSourceOpen(true);
-      console.log("🔼 InstantTopup modal should now open");
-      
-    } catch (error: any) {
-      console.error("❌ Failed to create plan:", {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          baseURL: error.config?.baseURL,
-        },
-        formData: form.getValues(),
-        payoutAccountId: form.getValues().payoutAccountId,
+      console.log("✅ Plan created successfully. Plan ID:", response.data.plan.id);
+      console.log("💰 Payment methods available:", {
+        instantTransfer: response.data.payment.instantTransfer,
+        bankTransfer: response.data.payment.bankTransfer,
       });
+
+      // Show payment method selection modal
+      setShowMethodSelection(true);
+    } catch (error: any) {
+      console.error("❌ Failed to create plan:", error);
 
       setError(
         error.response?.data?.message ||
           error.message ||
-          "Failed to create plan. Please check all required fields.",
+          "Failed to create plan. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSelectInstantTransfer = () => {
+    setShowMethodSelection(false);
+    setShowInstantTransfer(true);
+  };
+
+  const handleSelectBankTransfer = () => {
+    setShowMethodSelection(false);
+    setShowBankTransfer(true);
+  };
+
+  const handleBackFromPayment = () => {
+    setShowInstantTransfer(false);
+    setShowBankTransfer(false);
+    setShowMethodSelection(true);
   };
 
   return (
@@ -206,7 +217,7 @@ export default function PlanBreakdown({
               <p>
                 Interest rate:{" "}
                 <span className="text-[#44C56F]">
-                  24% per anum (2% per month)
+                  {roiRate.toFixed(2)}% per anum ({(roiRate / 12).toFixed(2)}% per month)
                 </span>{" "}
               </p>
             </div>
@@ -244,61 +255,77 @@ export default function PlanBreakdown({
         )}
 
         <div className="flex flex-col gap-4 text-[16px]">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h4 className="mb-1.5 text-[#37474F] text-sm">Initial</h4>
-              <hr className="border-[#455A6447]" />
+          {isLoadingSummary ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">Loading plan summary...</p>
             </div>
-            <div className="flex flex-col gap-3">
-              {initial.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <p>{item.name}</p>
-                  <p>₦{item.amount.toLocaleString()}</p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="mb-1.5 text-[#37474F] text-sm">Initial</h4>
+                  <hr className="border-[#455A6447]" />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex flex-col gap-3">
+                  {initial.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between"
+                    >
+                      <p>{item.name}</p>
+                      <p>₦{item.amount.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="flex flex-col gap-4">
-            <div>
-              <h4 className="mb-1.5 text-[#37474F] text-sm">
-                Subsequently(Monthly)
-              </h4>
-              <hr className="border-[#455A6447]" />
-            </div>
-            <div className="flex flex-col gap-3">
-              {subsequently.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <p>{item.name}</p>
-                  <p>₦{item.amount.toLocaleString()}</p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="mb-1.5 text-[#37474F] text-sm">
+                    Payout Details
+                  </h4>
+                  <hr className="border-[#455A6447]" />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex flex-col gap-3">
+                  {subsequently.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between"
+                    >
+                      <p>{item.name}</p>
+                      <p>
+                        {item.name === "Number of Payouts"
+                          ? item.amount
+                          : `₦${item.amount.toLocaleString()}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="flex flex-col gap-4">
-            <div>
-              <h4 className="mb-1.5 text-[#37474F] text-sm">Total</h4>
-              <hr className="border-[#455A6447]" />
-            </div>
-            <div className="flex flex-col gap-3">
-              {total.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <p>{item.name}</p>
-                  <p>₦{item.amount.toLocaleString()}</p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h4 className="mb-1.5 text-[#37474F] text-sm">Summary</h4>
+                  <hr className="border-[#455A6447]" />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="flex flex-col gap-3">
+                  {total.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between"
+                    >
+                      <p>{item.name}</p>
+                      <p>
+                        {item.name === "ROI Rate"
+                          ? `${item.amount.toFixed(2)}%`
+                          : `₦${item.amount.toLocaleString()}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <form className="flex flex-col gap-16">
@@ -359,16 +386,38 @@ export default function PlanBreakdown({
         </form>
       </CardWrapper>
 
-      {/* InstantTopup Modal - Opens after plan is created */}
-      {fundSourceOpen && paymentDetails && createdPlanId && (
+      {/* Payment Method Selection Modal */}
+      {showMethodSelection && instantTransfer && bankTransfer && createdPlanId && (
+        <PaymentMethodSelection
+          isOpen={showMethodSelection}
+          instantTransfer={instantTransfer}
+          bankTransfer={bankTransfer}
+          onSelectInstant={handleSelectInstantTransfer}
+          onSelectBank={handleSelectBankTransfer}
+          onClose={handleBackFromPayment}
+        />
+      )}
+
+      {/* Instant Transfer Modal */}
+      {showInstantTransfer && instantTransfer && createdPlanId && (
         <InstantTopup
-          isOpen={fundSourceOpen}
-          paymentDetails={paymentDetails}
+          isOpen={showInstantTransfer}
+          instantTransfer={instantTransfer}
           planId={createdPlanId}
           onConfirm={() => {
             // Handled inside InstantTopup component
           }}
-          onBack={() => setFundSourceOpen(false)}
+          onBack={handleBackFromPayment}
+        />
+      )}
+
+      {/* Bank Transfer Modal */}
+      {showBankTransfer && bankTransfer && createdPlanId && (
+        <BankTransferModal
+          isOpen={showBankTransfer}
+          bankTransfer={bankTransfer}
+          planId={createdPlanId}
+          onBack={handleBackFromPayment}
         />
       )}
     </>
