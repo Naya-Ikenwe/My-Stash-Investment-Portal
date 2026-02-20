@@ -246,12 +246,12 @@ export default function ContinueLiquidate({
             ) : bankAccount ? (
               <div className="border border-gray-200 p-4 rounded-xl flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
-                  <Image
+                  {/* <Image
                     src="/bank-icon.svg"
                     alt="Bank"
                     width={24}
                     height={24}
-                  />
+                  /> */}
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-800">

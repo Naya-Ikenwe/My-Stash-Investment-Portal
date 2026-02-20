@@ -20,9 +20,14 @@ export default function BankTransferModal({
 }: BankTransferModalProps) {
   const router = useRouter();
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Copied!");
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      alert("Failed to copy");
+    }
   };
 
   const handleConfirmPayment = () => {
@@ -60,8 +65,12 @@ export default function BankTransferModal({
             <div className="flex items-center gap-2">
               <span className="text-[#44C56F] font-bold text-lg">{displayAmount}</span>
               <button
-                onClick={() => handleCopy(bankTransfer.amount?.toString() || "")}
-                className="text-gray-400 hover:text-[#44C56F] transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopy(bankTransfer.amount?.toString() || "");
+                }}
+                className="text-gray-400 hover:text-[#44C56F] transition-colors cursor-pointer"
                 title="Copy amount"
               >
                 <Copy size={18} />
@@ -88,8 +97,12 @@ export default function BankTransferModal({
                 {bankTransfer.bankAccountNumber}
               </span>
               <button
-                onClick={() => handleCopy(bankTransfer.bankAccountNumber)}
-                className="text-gray-400 hover:text-[#44C56F] transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopy(bankTransfer.bankAccountNumber);
+                }}
+                className="text-gray-400 hover:text-[#44C56F] transition-colors cursor-pointer"
                 title="Copy account number"
               >
                 <Copy size={18} />
@@ -106,8 +119,12 @@ export default function BankTransferModal({
                 {bankTransfer.reference}
               </span>
               <button
-                onClick={() => handleCopy(bankTransfer.reference)}
-                className="text-gray-400 hover:text-[#44C56F] transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopy(bankTransfer.reference);
+                }}
+                className="text-gray-400 hover:text-[#44C56F] transition-colors cursor-pointer"
                 title="Copy reference"
               >
                 <Copy size={18} />

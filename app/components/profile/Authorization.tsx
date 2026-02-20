@@ -18,11 +18,11 @@ import {
   updateKycInfoService,
   getSecurityQuestionsService,
   setSecurityAnswerService,
-  setUserPinService,
-  changePinService,
   getUserBankAccountsService,
 } from "@/app/api/Users";
 import API from "@/lib/axiosInstance";
+import SetPinModal from "@/app/components/SetPinModal";
+import ChangePinModal from "@/app/components/ChangePinModal";
 
 type BankAccount = {
   id: string;
@@ -75,8 +75,8 @@ export default function Authorization() {
   const [savedSecurityQuestion, setSavedSecurityQuestion] =
     useState<SavedSecurityQuestion | null>(null);
   const [hasExistingBvn, setHasExistingBvn] = useState(false);
-  const [pinMode, setPinMode] = useState<"none" | "setup" | "change">("none");
-  const [hasPin, setHasPin] = useState(false);
+  const [showSetPinModal, setShowSetPinModal] = useState(false);
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
 
   const {
     control,
@@ -195,64 +195,8 @@ export default function Authorization() {
         setValue("securityAnswer", "");
       }
 
-      // 3. Handle PIN based on mode
-      if (
-        pinMode === "setup" &&
-        data.pin &&
-        data.pin.length === 4 &&
-        /^\d+$/.test(data.pin)
-      ) {
-        try {
-          await setUserPinService({
-            pin: data.pin,
-          });
-          setHasPin(true);
-          setPinMode("none");
-          setValue("pin", "");
-          setApiSuccess("PIN set successfully!");
-        } catch (setupError: any) {
-          if (
-            setupError.response?.status === 400 &&
-            setupError.response?.data?.message?.includes("PIN already exists")
-          ) {
-            // PIN already exists, inform user to use Change PIN
-            setHasPin(true);
-            setPinMode("none");
-            setValue("pin", "");
-            setApiError("PIN already exists. Please use 'Change PIN' instead.");
-            setLoading(false);
-            return;
-          }
-          throw setupError;
-        }
-      } else if (pinMode === "change" && data.oldPin && data.newPin) {
-        if (
-          data.newPin.length === 4 &&
-          /^\d+$/.test(data.newPin) &&
-          data.oldPin.length === 4 &&
-          /^\d+$/.test(data.oldPin)
-        ) {
-          if (data.oldPin === data.newPin) {
-            throw new Error("New PIN cannot be same as old PIN");
-          }
-
-          await changePinService({
-            oldPin: data.oldPin,
-            newPin: data.newPin,
-          });
-
-          setPinMode("none");
-          setValue("oldPin", "");
-          setValue("newPin", "");
-          setApiSuccess("PIN changed successfully!");
-        }
-      }
-
-      // If no PIN was processed but other changes were made
-      if (
-        !apiSuccess &&
-        (data.bvn || data.nin || data.sourceOfIncome || data.securityAnswer)
-      ) {
+      // If changes were made
+      if (data.bvn || data.nin || data.sourceOfIncome || data.securityAnswer) {
         setApiSuccess("Changes saved successfully!");
       }
 
@@ -269,9 +213,6 @@ export default function Authorization() {
     }
   };
 
-  const pinValue = watch("pin");
-  const oldPinValue = watch("oldPin");
-  const newPinValue = watch("newPin");
   const securityAnswerValue = watch("securityAnswer");
   const bvnValue = watch("bvn");
 
@@ -443,203 +384,30 @@ export default function Authorization() {
                 )}
               />
 
-              {/* PIN Section - Always show both buttons */}
+              {/* PIN Section - Using Modals */}
               <div className="col-span-2 space-y-4">
                 <div className="flex gap-4">
-                  <Button
+                  <button
                     type="button"
-                    variant={pinMode === "setup" ? "default" : "outline"}
-                    className={`flex-1 ${pinMode === "setup" ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}`}
-                    onClick={() => {
-                      setPinMode(pinMode === "setup" ? "none" : "setup");
-                      if (pinMode !== "setup") {
-                        setValue("pin", "");
-                      }
-                    }}
+                    onClick={() => setShowSetPinModal(true)}
+                    className="flex-1 border border-primary text-primary py-3 rounded-xl hover:bg-primary/10 transition-colors"
                   >
-                    {pinMode === "setup" ? "Cancel Set PIN" : "Set PIN"}
-                  </Button>
+                    Set PIN
+                  </button>
 
-                  <Button
+                  <button
                     type="button"
-                    variant={pinMode === "change" ? "default" : "outline"}
-                    className={`flex-1 ${pinMode === "change" ? "bg-primary" : "border-primary text-primary hover:bg-primary/10"}`}
-                    onClick={() => {
-                      setPinMode(pinMode === "change" ? "none" : "change");
-                      if (pinMode !== "change") {
-                        setValue("oldPin", "");
-                        setValue("newPin", "");
-                      }
-                    }}
+                    onClick={() => setShowChangePinModal(true)}
+                    className="flex-1 border border-primary text-primary py-3 rounded-xl hover:bg-primary/10 transition-colors"
                   >
-                    {pinMode === "change" ? "Cancel Change PIN" : "Change PIN"}
-                  </Button>
+                    Change PIN
+                  </button>
                 </div>
 
-                {/* PIN Setup Fields */}
-                {pinMode === "setup" && (
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <p className="font-medium text-sm">
-                      Set up your 4-digit PIN
-                    </p>
-                    <Controller
-                      name="pin"
-                      control={control}
-                      rules={{
-                        required: "PIN is required",
-                        pattern: {
-                          value: /^\d{4}$/,
-                          message: "PIN must be exactly 4 digits",
-                        },
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <div>
-                          <Input
-                            {...field}
-                            type="tel"
-                            placeholder="Enter 4-digit PIN"
-                            className="bg-white h-12"
-                            maxLength={4}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            onKeyPress={(e) => {
-                              if (!/[0-9]/.test(e.key)) {
-                                e.preventDefault();
-                              }
-                            }}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, "");
-                              field.onChange(value);
-                            }}
-                          />
-                          <div className="flex justify-between mt-1">
-                            {field.value ? (
-                              <p className="text-xs text-gray-500">
-                                {field.value.length}/4 digits
-                              </p>
-                            ) : (
-                              <p className="text-xs text-gray-500">
-                                Enter 4 digits (0-9)
-                              </p>
-                            )}
-                            {error && (
-                              <p className="text-xs text-red-500">
-                                {error.message}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    />
-                  </div>
-                )}
-
-                {/* PIN Change Fields */}
-                {pinMode === "change" && (
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <p className="font-medium text-sm">Change your PIN</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Controller
-                        name="oldPin"
-                        control={control}
-                        rules={{
-                          required: "Old PIN is required",
-                          pattern: {
-                            value: /^\d{4}$/,
-                            message: "Old PIN must be 4 digits",
-                          },
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <div>
-                            <Input
-                              {...field}
-                              type="tel"
-                              placeholder="Old PIN"
-                              className="bg-white h-12"
-                              maxLength={4}
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              onKeyPress={(e) => {
-                                if (!/[0-9]/.test(e.key)) {
-                                  e.preventDefault();
-                                }
-                              }}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, "");
-                                field.onChange(value);
-                              }}
-                            />
-                            <div className="mt-1">
-                              {field.value && (
-                                <p className="text-xs text-gray-500">
-                                  {field.value.length}/4 digits
-                                </p>
-                              )}
-                              {error && (
-                                <p className="text-xs text-red-500">
-                                  {error.message}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      />
-
-                      <Controller
-                        name="newPin"
-                        control={control}
-                        rules={{
-                          required: "New PIN is required",
-                          pattern: {
-                            value: /^\d{4}$/,
-                            message: "New PIN must be 4 digits",
-                          },
-                          validate: (value) => {
-                            const oldPin = watch("oldPin");
-                            return (
-                              value !== oldPin ||
-                              "New PIN cannot be same as old PIN"
-                            );
-                          },
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <div>
-                            <Input
-                              {...field}
-                              type="tel"
-                              placeholder="New PIN"
-                              className="bg-white h-12"
-                              maxLength={4}
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              onKeyPress={(e) => {
-                                if (!/[0-9]/.test(e.key)) {
-                                  e.preventDefault();
-                                }
-                              }}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, "");
-                                field.onChange(value);
-                              }}
-                            />
-                            <div className="mt-1">
-                              {field.value && (
-                                <p className="text-xs text-gray-500">
-                                  {field.value.length}/4 digits
-                                </p>
-                              )}
-                              {error && (
-                                <p className="text-xs text-red-500">
-                                  {error.message}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Info Text */}
+                <p className="text-sm text-gray-500 text-center">
+                  Set a 4-digit PIN to authorize transactions like liquidations
+                </p>
               </div>
             </div>
 
@@ -689,6 +457,25 @@ export default function Authorization() {
               </div>
             )}
           </div>
+
+          {/* PIN Modals */}
+          <SetPinModal
+            isOpen={showSetPinModal}
+            onClose={() => setShowSetPinModal(false)}
+            onSuccess={() => {
+              setApiSuccess("PIN set successfully!");
+              setTimeout(() => setApiSuccess(""), 3000);
+            }}
+          />
+
+          <ChangePinModal
+            isOpen={showChangePinModal}
+            onClose={() => setShowChangePinModal(false)}
+            onSuccess={() => {
+              setApiSuccess("PIN changed successfully!");
+              setTimeout(() => setApiSuccess(""), 3000);
+            }}
+          />
         </>
       )}
     </main>

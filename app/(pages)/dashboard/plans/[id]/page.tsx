@@ -14,7 +14,7 @@ import PaymentMethodSelection from "@/app/components/PaymentMethodSelection";
 import InstantTopup from "@/app/components/InstantTopup";
 import BankTransferModal from "@/app/components/BankTransferModal";
 import TransactionHistory from "@/app/components/TransactionHistory";
-import { getPlanById, rolloverPlan, InstantTransferDetails, BankTransferDetails } from "@/app/api/Plan";
+import { getPlanById, rolloverPlan, activatePlan, InstantTransferDetails, BankTransferDetails } from "@/app/api/Plan";
 
 // Define Plan type based on API
 interface Plan {
@@ -295,10 +295,15 @@ export default function PlanDetails({
     setPaymentError(null);
 
     try {
-      // For pending plans, we need to fetch payment details from the initial plan creation
-      // Since there's no dedicated endpoint, we'll show the payment method selection directly
-      // with empty values as a fallback
-      alert("Payment option will be available once implemented with backend support.");
+      // Call activatePlan to get payment options
+      const paymentData = await activatePlan(planId);
+      
+      // Set payment data
+      setPaymentInstantTransfer(paymentData.instantTransfer);
+      setPaymentBankTransfer(paymentData.bankTransfer);
+      
+      // Show payment method selection modal
+      setShowPaymentMethodSelection(true);
       
     } catch (err: any) {
       console.error("Failed to load payment details:", err);

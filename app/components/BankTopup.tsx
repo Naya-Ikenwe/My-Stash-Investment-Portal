@@ -18,9 +18,14 @@ export default function BankTopup({
   if (!isOpen) return null;
 
   // Copy to clipboard helper
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!"); // You can replace this with a toast notification
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      alert("Failed to copy");
+    }
   };
 
   return (
@@ -51,8 +56,12 @@ export default function BankTopup({
                 ₦{amount}
               </span>
               <button
-                onClick={() => handleCopy(amount)}
-                className="text-[#A243DC] hover:text-[#8e3ac0] transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopy(amount);
+                }}
+                className="text-[#A243DC] hover:text-[#8e3ac0] transition-colors cursor-pointer"
               >
                 <Copy size={18} />
               </button>
@@ -87,8 +96,12 @@ export default function BankTopup({
                 5065244473
               </span>
               <button
-                onClick={() => handleCopy("5065244473")}
-                className="text-[#A243DC] hover:text-[#8e3ac0] transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopy("5065244473");
+                }}
+                className="text-[#A243DC] hover:text-[#8e3ac0] transition-colors cursor-pointer"
               >
                 <Copy size={18} />
               </button>

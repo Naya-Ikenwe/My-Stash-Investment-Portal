@@ -278,18 +278,54 @@ export const withdrawPlan = async (planId: string) => {
   return response.data;
 };
 
+// ----------------------// ACTIVATE PLAN (Make Payment for PENDING)
 // ----------------------
-// GET ALL PLANS (optional pagination)
+export interface ActivatePlanResponse {
+  message: string;
+  status: string;
+  data: {
+    payment: {
+      instantTransfer: InstantTransferDetails;
+      bankTransfer: BankTransferDetails;
+    };
+  };
+}
+
+export const activatePlan = async (planId: string) => {
+  const response = await API.post<ActivatePlanResponse>(
+    `/plan/${planId}/activate`
+  );
+  return response.data.data.payment;
+};
+
+// ----------------------// GET ALL PLANS
 // ----------------------
-export const getAllPlans = async (page = 1, limit = 100) => {
-  const response = await API.get(`/plan?page=${page}&limit=${limit}`);
-  return response.data.data.results.map((plan: any) => ({
+export const getAllPlans = async (page = 1, limit = 8) => {
+  const response = await API.get(`/plan?page=${page}&limit=${limit}&sort=createdAt:desc`);
+  
+  console.log("🔍 API Response:", response.data);
+  
+  const results = response.data.data.results?.map((plan: any) => ({
     ...plan,
-    // Force numeric conversion
     principal: Number(plan.principal ?? 0),
     currentPrincipal: Number(plan.currentPrincipal ?? 0),
     totalAccruedRoi: Number(plan.totalAccruedRoi ?? 0),
-  }));
+  })) || [];
+  
+  const total = response.data.data.totalCount || 0;
+  const totalPages = Math.ceil(total / limit);
+  
+  console.log("📊 Pagination:", { page, limit, total, totalPages, resultsLength: results.length });
+  
+  return {
+    data: results,
+    pagination: {
+      page: response.data.data.page || page,
+      limit: response.data.data.limit || limit,
+      total,
+      totalPages,
+    }
+  };
 };
 
 // GET PLAN BY ID

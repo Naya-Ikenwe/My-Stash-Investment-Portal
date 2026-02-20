@@ -108,9 +108,13 @@ export default function TransactionHistory({
     }
   }, [isLoading, planId]); // Add planId to dependency array
 
-  // Helper function to format transaction type for display
+  // Helper function to format transaction type for display - FIXED
   const formatTransactionType = (type: string, intent: string): string => {
+    // Add safety check for undefined values
+    if (!type && !intent) return 'Transaction';
+    
     const intentMap: Record<string, string> = {
+      'CREATE_PLAN': 'Investment Created',
       'ACTIVATE_PLAN': 'Investment Created',
       'TOP_UP_PLAN': 'Investment Top-up',
       'ROI_PAYOUT': 'ROI Payout',
@@ -119,7 +123,17 @@ export default function TransactionHistory({
       'WITHDRAWAL': 'Withdrawal',
     };
 
-    return intentMap[intent] || type.toLowerCase();
+    // Try to use intent first, fallback to type
+    if (intent && intentMap[intent]) {
+      return intentMap[intent];
+    }
+    
+    // If type exists, format it properly
+    if (type) {
+      return type.toLowerCase().replace(/_/g, ' ');
+    }
+    
+    return 'Transaction';
   };
 
   // Helper function to get status color
@@ -224,7 +238,7 @@ export default function TransactionHistory({
                       {formatDate(transaction.createdAt)}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(transaction.status)} bg-opacity-10 ${transaction.status === 'SUCCESS' ? 'bg-green-100' : transaction.status === 'PENDING' ? 'bg-yellow-100' : 'bg-red-100'}`}>
-                      {transaction.status.toLowerCase()}
+                      {transaction.status?.toLowerCase() || 'unknown'}
                     </span>
                   </div>
                   {transaction.bankAccount && (
@@ -235,10 +249,10 @@ export default function TransactionHistory({
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">
-                    ₦{transaction.amount.toLocaleString()}
+                    ₦{transaction.amount?.toLocaleString() || 0}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Ref: {transaction.reference.substring(0, 6)}...
+                    Ref: {transaction.reference?.substring(0, 6) || 'N/A'}...
                   </p>
                 </div>
               </div>

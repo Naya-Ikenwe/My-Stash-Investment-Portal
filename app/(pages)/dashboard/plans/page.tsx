@@ -30,23 +30,26 @@ export default function PlansPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [plans, setPlans] = useState<PlanResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchPlans = async () => {
       setIsLoading(true);
       try {
-        const results = await getAllPlans(); // results is already PlanResponse[]
-        setPlans(results); // ✅ correct
+        const response = await getAllPlans(currentPage, cardPerPage);
+        setPlans(response.data);
+        setTotalPages(response.pagination.totalPages);
       } catch (error) {
         console.error("Failed to fetch plans:", error);
         setPlans([]);
+        setTotalPages(0);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchPlans();
-  }, []);
+  }, [currentPage]);
 
   // Days until maturity
   const getDaysUntilMaturity = (dateStr: string) => {
@@ -58,48 +61,23 @@ export default function PlansPage() {
     );
   };
 
-  // Filter plans - Show ONLY active rolled-over plans, completely hide old matured parents
+  // Filter plans by search only (no hiding) - sort by creation date naturally from backend
   const filteredPlans = plans.filter((plan) => {
-    // HIDE any MATURED plan that has been rolled over (it should not appear at all)
-    if (plan.status === "MATURED" && plan.rolloverType) {
-      return false; // Hide the old rolled-over plan completely
-    }
-
-    // HIDE any MATURED plan that has an ACTIVE child (the parent is redundant)
-    if (plan.status === "MATURED") {
-      const hasActiveChild = plans.some(
-        (p) => p.parentPlanId === plan.id && p.status === "ACTIVE"
-      );
-      if (hasActiveChild) {
-        return false; // Hide parent, show only the child
-      }
-    }
-
-    const statusMatch = statusFilter === "All" || plan.status === statusFilter;
     const searchMatch = plan.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
+    const statusMatch = statusFilter === "All" || plan.status === statusFilter;
     let tenorMatch = true;
     if (tenorFilter !== "All") {
       const days = getDaysUntilMaturity(plan.maturityDate);
       if (tenorFilter === "6 months") tenorMatch = days >= 140 && days <= 210;
       if (tenorFilter === "12 months") tenorMatch = days > 210;
     }
-    return statusMatch && searchMatch && tenorMatch;
+    return searchMatch && statusMatch && tenorMatch;
   });
 
-  // Sort: ACTIVE first, then PENDING, then MATURED, then CLOSED
-  const sortedPlans = [...filteredPlans].sort((a, b) => {
-    const order = ["ACTIVE", "PENDING", "MATURED", "CLOSED"];
-    return order.indexOf(a.status || "PENDING") - order.indexOf(b.status || "PENDING");
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedPlans.length / cardPerPage);
-  const paginatedPlans = sortedPlans.slice(
-    (currentPage - 1) * cardPerPage,
-    currentPage * cardPerPage,
-  );
+  // No additional sorting needed - backend returns sorted by creation date
+  const displayedPlans = filteredPlans;
 
   return (
     <main className="w-full h-full rounded-[14px]">
@@ -211,7 +189,7 @@ export default function PlansPage() {
               <p className="text-gray-500">Loading plans...</p>
             </div>
           </div>
-        ) : paginatedPlans.length === 0 ? (
+        ) : displayedPlans.length === 0 ? (
           <div className="h-20 w-full flex flex-col items-center justify-center mt-10">
             <p className="text-center text-gray-500">
               {searchQuery
@@ -228,7 +206,7 @@ export default function PlansPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {paginatedPlans.map((plan) => (
+              {displayedPlans.map((plan) => (
                 <Link href={`/dashboard/plans/${plan.id}`} key={plan.id}>
                   <div className={`w-full h-full px-5 py-10 border rounded-xl shadow-sm relative cursor-pointer hover:shadow-md transition ${
                     plan.status === "CLOSED"

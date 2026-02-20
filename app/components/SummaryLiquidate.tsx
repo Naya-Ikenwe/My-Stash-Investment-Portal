@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import Password from "./Password";
 import { liquidatePlan, calculateLiquidationSummary, LiquidationSummary } from "@/app/api/Plan";
+import { getUserProfileService } from "@/app/api/Users";
 
 interface BankAccount {
   id: string;
@@ -39,12 +40,30 @@ export default function SummaryLiquidate({
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [intentId, setIntentId] = useState<string>("");
   const [liquidationSummary, setLiquidationSummary] = useState<LiquidationSummary | null>(null);
+  const [hasPin, setHasPin] = useState(true);
 
   const numericAmount = parseInt(amount.replace(/,/g, "")) || 0;
 
-  // Load liquidation summary when modal opens
+  // Helper function to format amounts to 2 decimal places
+  const formatAmount = (value: number | undefined) => {
+    if (value === undefined || value === null) return "0.00";
+    return value.toFixed(2).toLocaleString();
+  };
+
+  // Check if user has PIN when modal opens
   useEffect(() => {
+    const checkUserPin = async () => {
+      try {
+        const profile = await getUserProfileService();
+        setHasPin(!!profile.data?.hasPin);
+      } catch (err) {
+        console.error("Failed to check PIN status:", err);
+        setHasPin(false);
+      }
+    };
+
     if (isOpen) {
+      checkUserPin();
       loadSummary();
     }
   }, [isOpen, planId, numericAmount, isFullLiquidation]);
@@ -81,8 +100,6 @@ export default function SummaryLiquidate({
       
       console.log("✅ Liquidation initiated:", response);
       
-      // Show password modal for PIN authorization
-      // The ID is nested in data.intent.id
       const liquidationId = response?.data?.intent?.id || response?.data?.id || response?.id;
       console.log("Liquidation ID:", liquidationId);
       if (liquidationId) {
@@ -114,6 +131,15 @@ export default function SummaryLiquidate({
     );
   }
 
+  // Calculate fee breakdown for display
+  const totalFees = liquidationSummary 
+    ? liquidationSummary.roiPenalty + liquidationSummary.withholdingTax 
+    : 0;
+    
+  const interestEarned = liquidationSummary 
+    ? liquidationSummary.proratedRoiAccrued 
+    : 0;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
       <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative p-8 max-h-[90vh] overflow-y-auto">
@@ -134,34 +160,71 @@ export default function SummaryLiquidate({
         <div className="text-center mt-6">
           <p className="text-sm font-euclid text-gray-500">Amount to Liquidate</p>
           <p className="text-4xl font-bold font-freizeit text-gray-900">
-            ₦{liquidationSummary?.liquidationAmount.toLocaleString() || amount}
+            ₦{liquidationSummary ? formatAmount(liquidationSummary.liquidationAmount) : amount}
           </p>
           {isFullLiquidation && (
             <p className="text-xs text-green-600 mt-1">Full Liquidation</p>
           )}
         </div>
 
-        {/* Breakdown */}
+        {/* Breakdown - Clean and User Friendly */}
         {liquidationSummary && (
-          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Amount to Liquidate</span>
-                <span className="text-2xl font-bold text-gray-900">₦{liquidationSummary.liquidationAmount.toLocaleString()}</span>
-              </div>
-              
-              {(liquidationSummary.roiPenalty > 0 || liquidationSummary.withholdingTax > 0) && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Fees & Charges</span>
-                  <span className="text-lg font-semibold text-red-600">-₦{(liquidationSummary.roiPenalty + liquidationSummary.withholdingTax).toLocaleString()}</span>
-                </div>
-              )}
-              
-              <div className="border-t border-yellow-300 pt-3 flex justify-between items-center">
-                <span className="text-sm font-semibold text-gray-700">You Receive</span>
-                <span className="text-2xl font-bold text-green-600">₦{liquidationSummary.netPayout.toLocaleString()}</span>
-              </div>
+          <div className="mt-6 bg-gray-50 rounded-lg p-4 space-y-3">
+            {/* Principal Amount */}
+            <div className="flex justify-between items-center text-gray-700">
+              <span className="text-sm">Principal to withdraw</span>
+              <span className="font-medium">₦{formatAmount(liquidationSummary.liquidationAmount)}</span>
             </div>
+            
+            {/* Interest Earned */}
+            {interestEarned > 0 && (
+              <div className="flex justify-between items-center text-gray-700">
+                <span className="text-sm">Interest accrued on this amount</span>
+                <span className="font-medium text-green-600">+₦{formatAmount(interestEarned)}</span>
+              </div>
+            )}
+            
+            {/* Divider */}
+            <div className="border-t border-gray-200 my-2"></div>
+            
+            {/* Fees Section */}
+            {totalFees > 0 && (
+              <>
+                <div className="flex justify-between items-center text-gray-700">
+                  <span className="text-sm font-medium">Fees & Charges</span>
+                  <span className="text-sm text-red-600">-₦{formatAmount(totalFees)}</span>
+                </div>
+                
+                {/* Fee Breakdown */}
+                <div className="pl-4 space-y-1">
+                  {liquidationSummary.roiPenalty > 0 && (
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <span>Early liquidation penalty ({(liquidationSummary.roiPenaltyRate * 100)}%)</span>
+                      <span>-₦{formatAmount(liquidationSummary.roiPenalty)}</span>
+                    </div>
+                  )}
+                  {liquidationSummary.withholdingTax > 0 && (
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <span>Withholding tax ({(liquidationSummary.withholdingTaxRate * 100)}%)</span>
+                      <span>-₦{formatAmount(liquidationSummary.withholdingTax)}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="border-t border-gray-200 my-2"></div>
+              </>
+            )}
+            
+            {/* You Receive */}
+            <div className="flex justify-between items-center">
+              <span className="text-base font-semibold text-gray-800">You receive</span>
+              <span className="text-2xl font-bold text-green-600">₦{formatAmount(liquidationSummary.netPayout)}</span>
+            </div>
+            
+            {/* Info Note */}
+            <p className="text-xs text-gray-500 mt-2 italic">
+              Fees are applied only to the interest earned on the amount you're liquidating.
+            </p>
           </div>
         )}
 
@@ -251,6 +314,7 @@ export default function SummaryLiquidate({
               onLiquidationSuccess();
             }, 1000);
           }}
+          hasPin={hasPin}
         />
       </div>
     </div>

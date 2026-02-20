@@ -79,7 +79,7 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                 Date & Reference
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type & Intent
+                Type 
               </th>
               {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 User & Account
@@ -103,14 +103,14 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                     {new Date(transaction.createdAt).toLocaleDateString()}
                   </div>
                   <div className="text-sm text-gray-500 flex items-center gap-1">
-                    <span className="truncate max-w-[120px]">{transaction.reference}</span>
-                    <button
+                    {/* <span className="truncate max-w-[120px]">{transaction.reference}</span> */}
+                    {/* <button
                       onClick={() => copyToClipboard(transaction.reference)}
                       className="text-gray-400 hover:text-gray-600"
                       title="Copy reference"
                     >
                       <IoCopy size={14} />
-                    </button>
+                    </button> */}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -250,14 +250,14 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                         <label className="text-sm text-gray-500">Account Number</label>
                         <p>{selectedTransaction.bankAccount.accountNumber}</p>
                       </div>
-                      <div>
+                      {/* <div>
                         <label className="text-sm text-gray-500">Bank Code</label>
                         <p>{selectedTransaction.bankAccount.bankCode}</p>
-                      </div>
-                      <div>
+                      </div> */}
+                      {/* <div>
                         <label className="text-sm text-gray-500">Active Status</label>
                         <p>{selectedTransaction.bankAccount.isActive ? "Active" : "Inactive"}</p>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 )}
@@ -272,14 +272,14 @@ const TransactionTable = ({ transactions }: TransactionTableProps) => {
                 )}
               </div>
               
-              <div className="mt-6 pt-6 border-t flex justify-end">
+              {/* <div className="mt-6 pt-6 border-t flex justify-end">
                 <button
                   onClick={() => setSelectedTransaction(null)}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                 >
                   Close
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

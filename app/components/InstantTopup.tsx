@@ -60,9 +60,14 @@ export default function InstantTopup({
     return `${m.toString().padStart(2, "0")} : ${s.toString().padStart(2, "0")}`;
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Copied!");
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      alert("Failed to copy");
+    }
   };
 
   const handleConfirmPayment = () => {
@@ -170,19 +175,13 @@ export default function InstantTopup({
               {/* Amount Breakdown */}
               <div className="space-y-3 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-gray-700">Amount (Principal Only)</span>
-                  <span className="text-gray-900 font-bold text-lg">{displayPrincipal}</span>
+                  <span className="text-lg font-bold text-gray-900">Total Amount</span>
+                  <span className="text-[#A243DC] font-bold text-2xl">{totalAmount}</span>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-gray-700">Service Fee</span>
-                  <span className="text-orange-600 font-bold">{displayFee}</span>
-                </div>
-
-                <div className="border-t-2 border-yellow-300 pt-3 flex justify-between items-center">
-                  <span className="text-sm font-bold text-gray-900">Total You Pay</span>
-                  <span className="text-[#A243DC] font-bold text-xl">{totalAmount}</span>
-                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  This amount includes a service fee of {displayFee}
+                </p>
               </div>
 
               <hr className="border-gray-200" />
@@ -212,8 +211,12 @@ export default function InstantTopup({
                         {instantTransfer.reference}
                       </span>
                       <button
-                        onClick={() => handleCopy(instantTransfer.reference)}
-                        className="text-gray-400 hover:text-[#A243DC] transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleCopy(instantTransfer.reference);
+                        }}
+                        className="text-gray-400 hover:text-[#A243DC] transition-colors cursor-pointer"
                       >
                         <Copy size={18} />
                       </button>
