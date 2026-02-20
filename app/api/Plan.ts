@@ -115,7 +115,7 @@ export interface CalculatePlanSummaryResponse {
 export const createPlan = async (payload: PlanFormData) => {
   const response = await API.post<CreatePlanResponse>("/plan", payload);
   return response.data;
-};
+};0
 
 // ----------------------
 // GET PLAN PAYMENT DETAILS (for pending plans)
@@ -131,7 +131,7 @@ export const getPlanPaymentDetails = async (planId: string) => {
 export const calculatePlanSummary = async (payload: PlanSummaryRequest) => {
   const response = await API.post<CalculatePlanSummaryResponse>(
     "/plan/calculate-summary",
-    payload
+    payload,
   );
   return response.data;
 };
@@ -174,10 +174,9 @@ export interface TopUpResponse {
 }
 
 export const topUpPlan = async (planId: string, amount: number) => {
-  const response = await API.post<TopUpResponse>(
-    `/plan/${planId}/top-up`,
-    { amount }
-  );
+  const response = await API.post<TopUpResponse>(`/plan/${planId}/top-up`, {
+    amount,
+  });
   return response.data;
 };
 
@@ -202,11 +201,14 @@ export interface RolloverResponse {
 
 export const rolloverPlan = async (
   planId: string,
-  rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST"
+  rolloverType: "PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST",
 ) => {
-  const response = await API.post<RolloverResponse>(`/plan/${planId}/rollover`, {
-    rolloverType,
-  });
+  const response = await API.post<RolloverResponse>(
+    `/plan/${planId}/rollover`,
+    {
+      rolloverType,
+    },
+  );
   return response.data;
 };
 
@@ -243,16 +245,44 @@ export interface LiquidateData {
   };
 }
 
+type IntentType = "AUTHORIZE_LIQUIDATION";
+
+type IntentStatus = "FAILED" | "CREATED" | "AUTHORIZED" | "EXECUTED" | "EXPIRED"
+
+type AuthorizationMethod = "PIN" | "PASSOWRD" | "OTP" | 'TOTP'
+
+export interface Intent {
+  id: string;
+  type: IntentType;
+  status: IntentStatus;
+  requiredAuthMethods: AuthorizationMethod[];
+  expiresAt: string;
+  userId: string
+};
+
 export interface LiquidateResponse {
   message: string;
   status: string;
   data: LiquidateData;
 }
 
-export const liquidatePlan = async (planId: string, amount: number, isFull: boolean) => {
-  const response = await API.post<LiquidateResponse>(
+export interface IntentRespose<T> {
+  status: "AUTHORIZATION_REQUIRED",
+  message: string;
+  data: {
+    intent: Intent;
+    operation: T
+  }
+}
+
+export const liquidatePlan = async (
+  planId: string,
+  amount: number,
+  isFull: boolean,
+) => {
+  const response = await API.post<LiquidateResponse | IntentRespose<LiquidateResponse>>(
     `/plan/${planId}/liquidate`,
-    { amount, isFull }
+    { amount, isFull },
   );
   return response.data;
 };
@@ -272,9 +302,7 @@ export interface WithdrawResponse {
 }
 
 export const withdrawPlan = async (planId: string) => {
-  const response = await API.post<WithdrawResponse>(
-    `/plan/${planId}/withdraw`
-  );
+  const response = await API.post<WithdrawResponse>(`/plan/${planId}/withdraw`);
   return response.data;
 };
 
@@ -293,7 +321,7 @@ export interface ActivatePlanResponse {
 
 export const activatePlan = async (planId: string) => {
   const response = await API.post<ActivatePlanResponse>(
-    `/plan/${planId}/activate`
+    `/plan/${planId}/activate`,
   );
   return response.data.data.payment;
 };
@@ -301,22 +329,31 @@ export const activatePlan = async (planId: string) => {
 // ----------------------// GET ALL PLANS
 // ----------------------
 export const getAllPlans = async (page = 1, limit = 8) => {
-  const response = await API.get(`/plan?page=${page}&limit=${limit}&sort=createdAt:desc`);
-  
+  const response = await API.get(
+    `/plan?page=${page}&limit=${limit}&sort=createdAt:desc`,
+  );
+
   console.log("🔍 API Response:", response.data);
-  
-  const results = response.data.data.results?.map((plan: any) => ({
-    ...plan,
-    principal: Number(plan.principal ?? 0),
-    currentPrincipal: Number(plan.currentPrincipal ?? 0),
-    totalAccruedRoi: Number(plan.totalAccruedRoi ?? 0),
-  })) || [];
-  
+
+  const results =
+    response.data.data.results?.map((plan: any) => ({
+      ...plan,
+      principal: Number(plan.principal ?? 0),
+      currentPrincipal: Number(plan.currentPrincipal ?? 0),
+      totalAccruedRoi: Number(plan.totalAccruedRoi ?? 0),
+    })) || [];
+
   const total = response.data.data.totalCount || 0;
   const totalPages = Math.ceil(total / limit);
-  
-  console.log("📊 Pagination:", { page, limit, total, totalPages, resultsLength: results.length });
-  
+
+  console.log("📊 Pagination:", {
+    page,
+    limit,
+    total,
+    totalPages,
+    resultsLength: results.length,
+  });
+
   return {
     data: results,
     pagination: {
@@ -324,16 +361,18 @@ export const getAllPlans = async (page = 1, limit = 8) => {
       limit: response.data.data.limit || limit,
       total,
       totalPages,
-    }
+    },
   };
 };
 
 // GET PLAN BY ID
 export const getPlanById = async (planId: string) => {
   // The interceptor will add _t timestamp, but we'll also add a cache-busting header
-  const response = await API.get<{ message: string; status: string; data: PlanResponse }>(
-    `/plan/${planId}`
-  );
+  const response = await API.get<{
+    message: string;
+    status: string;
+    data: PlanResponse;
+  }>(`/plan/${planId}`);
   return response.data.data;
 };
 
@@ -354,9 +393,9 @@ export interface GetBankAccountsResponse {
 export const getBankAccounts = async (): Promise<BankAccount[]> => {
   try {
     console.log("🔄 [DEBUG] Making API call to /bank endpoint...");
-    
+
     const response = await API.get<GetBankAccountsResponse>("/bank");
-    
+
     console.log("✅ [DEBUG] API Response received successfully!");
     console.log("📊 [DEBUG] Response status:", response.data.status);
     console.log("📦 [DEBUG] Response data structure:", {
@@ -364,32 +403,35 @@ export const getBankAccounts = async (): Promise<BankAccount[]> => {
       hasStatus: !!response.data.status,
       hasData: !!response.data.data,
       resultsCount: response.data.data?.results?.length || 0,
-      totalCount: response.data.data?.totalCount || 0
+      totalCount: response.data.data?.totalCount || 0,
     });
-    
+
     if (response.data.status === "success") {
       const bankAccounts = response.data.data?.results || [];
-      
+
       console.log(`🎯 [DEBUG] Found ${bankAccounts.length} bank account(s)`);
-      
+
       if (bankAccounts.length === 0) {
         console.log("ℹ️ [DEBUG] Results array is empty - no bank accounts");
         return []; // Return empty array, don't throw
       }
-      
+
       // Log first bank account for verification
       if (bankAccounts[0]) {
         console.log("📋 [DEBUG] First bank account details:", {
           id: bankAccounts[0].id,
           accountNumber: bankAccounts[0].accountNumber,
           bankCode: bankAccounts[0].bankCode,
-          accountName: bankAccounts[0].accountName || "(empty)"
+          accountName: bankAccounts[0].accountName || "(empty)",
         });
       }
-      
+
       return bankAccounts;
     } else {
-      console.warn("⚠️ [DEBUG] API returned non-success status:", response.data.status);
+      console.warn(
+        "⚠️ [DEBUG] API returned non-success status:",
+        response.data.status,
+      );
       console.warn("📝 [DEBUG] API message:", response.data.message);
       return []; // Return empty array, don't throw
     }
@@ -401,17 +443,23 @@ export const getBankAccounts = async (): Promise<BankAccount[]> => {
     console.error("   Error Message:", error.message);
     console.error("   Request URL:", error.config?.url || "Unknown");
     console.error("   Request Method:", error.config?.method || "Unknown");
-    
+
     if (error.response?.data) {
       console.error("   Response Body:", error.response.data);
-      console.error("   Response Message:", error.response.data?.message || "No message");
-      console.error("   Response Status:", error.response.data?.status || "No status");
+      console.error(
+        "   Response Message:",
+        error.response.data?.message || "No message",
+      );
+      console.error(
+        "   Response Status:",
+        error.response.data?.status || "No status",
+      );
     }
-    
+
     if (error.response?.headers) {
       console.error("   Response Headers:", error.response.headers);
     }
-    
+
     // CRITICAL: Return empty array instead of throwing
     console.log("🟡 [DEBUG] Returning empty array (graceful fallback)");
     return [];
@@ -426,7 +474,7 @@ export const enableAPIDebugging = () => {
     console.log("   Method:", config.method);
     console.log("   Headers:", {
       Authorization: config.headers?.Authorization ? "Present" : "Missing",
-      "Content-Type": config.headers?.["Content-Type"]
+      "Content-Type": config.headers?.["Content-Type"],
     });
     return config;
   });
@@ -439,9 +487,13 @@ export const enableAPIDebugging = () => {
     },
     (error) => {
       console.error("❌ [AXIOS ERROR] From:", error.config?.url);
-      console.error("   Status:", error.response?.status, error.response?.statusText);
+      console.error(
+        "   Status:",
+        error.response?.status,
+        error.response?.statusText,
+      );
       return Promise.reject(error);
-    }
+    },
   );
 };
 
@@ -472,11 +524,11 @@ export interface CalculateLiquidationResponse {
 export const calculateLiquidationSummary = async (
   planId: string,
   amount: number,
-  isFull: boolean
+  isFull: boolean,
 ) => {
   const response = await API.post<CalculateLiquidationResponse>(
     `/plan/${planId}/calculate-liquidation-summary`,
-    { amount, isFull }
+    { amount, isFull },
   );
   return response.data;
 };

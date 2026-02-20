@@ -48,13 +48,16 @@ export default function FundSource({
       } else {
         // Use mock data if no callback provided
         setPaymentDetails({
-          amountToPay: Number(amount) || 0,
+          amount: Number(amount) || 0,
+          net: Number(amount) || 0,
+          fee: 0,
           bankAccountNumber: "0123456789",
           bankName: "Source MFB",
           channel: "bank_transfer",
           expiresIn: "1h",
           bankAccountName: "myStash Investment",
           reference: `REF-${Date.now()}`,
+          checkoutUrl: "", // Add empty checkoutUrl for fallback view
         });
         setSelectedMethod(id);
       }
@@ -78,8 +81,8 @@ export default function FundSource({
     return (
       <InstantTopup
         isOpen={true}
-        paymentDetails={paymentDetails} // ✅ Correct prop
-        planId={planId} // ✅ Required prop
+        instantTransfer={paymentDetails} // ✅ Changed from paymentDetails to instantTransfer
+        planId={planId}
         onConfirm={handleConfirm}
         onBack={handleBack}
         isTopUp={true}

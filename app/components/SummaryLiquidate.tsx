@@ -4,7 +4,13 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import Password from "./Password";
-import { liquidatePlan, calculateLiquidationSummary, LiquidationSummary } from "@/app/api/Plan";
+import {
+  liquidatePlan,
+  calculateLiquidationSummary,
+  LiquidationSummary,
+  IntentRespose,
+  LiquidateResponse,
+} from "@/app/api/Plan";
 import { getUserProfileService } from "@/app/api/Users";
 
 interface BankAccount {
@@ -39,7 +45,8 @@ export default function SummaryLiquidate({
   const [success, setSuccess] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [intentId, setIntentId] = useState<string>("");
-  const [liquidationSummary, setLiquidationSummary] = useState<LiquidationSummary | null>(null);
+  const [liquidationSummary, setLiquidationSummary] =
+    useState<LiquidationSummary | null>(null);
   const [hasPin, setHasPin] = useState(true);
 
   const numericAmount = parseInt(amount.replace(/,/g, "")) || 0;
@@ -71,7 +78,11 @@ export default function SummaryLiquidate({
   const loadSummary = async () => {
     setLoadingSummary(true);
     try {
-      const response = await calculateLiquidationSummary(planId, numericAmount, isFullLiquidation);
+      const response = await calculateLiquidationSummary(
+        planId,
+        numericAmount,
+        isFullLiquidation,
+      );
       console.log("📊 Liquidation Summary:", response.data);
       setLiquidationSummary(response.data);
     } catch (err: any) {
@@ -84,6 +95,8 @@ export default function SummaryLiquidate({
 
   if (!isOpen || !selectedAccount) return null;
 
+  // In the handleConfirm function:
+
   const handleConfirm = async () => {
     if (!agreeToTerms) {
       setError("Please agree to the terms & conditions");
@@ -95,24 +108,33 @@ export default function SummaryLiquidate({
 
     try {
       console.log(`📤 Calling liquidate endpoint for plan ${planId}...`);
-      
-      const response = await liquidatePlan(planId, numericAmount, isFullLiquidation);
-      
+
+      const response = await liquidatePlan(
+        planId,
+        numericAmount,
+        isFullLiquidation,
+      );
+
       console.log("✅ Liquidation initiated:", response);
-      
-      const liquidationId = response?.data?.intent?.id || response?.data?.id || response?.id;
-      console.log("Liquidation ID:", liquidationId);
-      if (liquidationId) {
-        setIntentId(liquidationId);
-        setShowPassword(true);
-      } else {
-        console.error("Response structure:", response);
-        throw new Error("No liquidation ID received from server");
+
+      if (response.status === "AUTHORIZATION_REQUIRED") {
+        const res = response as IntentRespose<LiquidateResponse>;
+        const intentId = res.data.intent.id;
+
+        console.log("Intent ID (for authorization):", intentId);
+
+        if (intentId) {
+          setIntentId(intentId);
+          setShowPassword(true);
+        }
       }
-      
     } catch (err: any) {
       console.error("❌ Liquidation failed:", err);
-      setError(err.response?.data?.message || err.message || "Failed to initiate liquidation. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to initiate liquidation. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -132,12 +154,12 @@ export default function SummaryLiquidate({
   }
 
   // Calculate fee breakdown for display
-  const totalFees = liquidationSummary 
-    ? liquidationSummary.roiPenalty + liquidationSummary.withholdingTax 
+  const totalFees = liquidationSummary
+    ? liquidationSummary.roiPenalty + liquidationSummary.withholdingTax
     : 0;
-    
-  const interestEarned = liquidationSummary 
-    ? liquidationSummary.proratedRoiAccrued 
+
+  const interestEarned = liquidationSummary
+    ? liquidationSummary.proratedRoiAccrued
     : 0;
 
   return (
@@ -158,9 +180,14 @@ export default function SummaryLiquidate({
 
         {/* Liquidation Amount */}
         <div className="text-center mt-6">
-          <p className="text-sm font-euclid text-gray-500">Amount to Liquidate</p>
+          <p className="text-sm font-euclid text-gray-500">
+            Amount to Liquidate
+          </p>
           <p className="text-4xl font-bold font-freizeit text-gray-900">
-            ₦{liquidationSummary ? formatAmount(liquidationSummary.liquidationAmount) : amount}
+            ₦
+            {liquidationSummary
+              ? formatAmount(liquidationSummary.liquidationAmount)
+              : amount}
           </p>
           {isFullLiquidation && (
             <p className="text-xs text-green-600 mt-1">Full Liquidation</p>
@@ -173,57 +200,78 @@ export default function SummaryLiquidate({
             {/* Principal Amount */}
             <div className="flex justify-between items-center text-gray-700">
               <span className="text-sm">Principal to withdraw</span>
-              <span className="font-medium">₦{formatAmount(liquidationSummary.liquidationAmount)}</span>
+              <span className="font-medium">
+                ₦{formatAmount(liquidationSummary.liquidationAmount)}
+              </span>
             </div>
-            
+
             {/* Interest Earned */}
             {interestEarned > 0 && (
               <div className="flex justify-between items-center text-gray-700">
                 <span className="text-sm">Interest accrued on this amount</span>
-                <span className="font-medium text-green-600">+₦{formatAmount(interestEarned)}</span>
+                <span className="font-medium text-green-600">
+                  +₦{formatAmount(interestEarned)}
+                </span>
               </div>
             )}
-            
+
             {/* Divider */}
             <div className="border-t border-gray-200 my-2"></div>
-            
+
             {/* Fees Section */}
             {totalFees > 0 && (
               <>
                 <div className="flex justify-between items-center text-gray-700">
                   <span className="text-sm font-medium">Fees & Charges</span>
-                  <span className="text-sm text-red-600">-₦{formatAmount(totalFees)}</span>
+                  <span className="text-sm text-red-600">
+                    -₦{formatAmount(totalFees)}
+                  </span>
                 </div>
-                
+
                 {/* Fee Breakdown */}
                 <div className="pl-4 space-y-1">
                   {liquidationSummary.roiPenalty > 0 && (
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>Early liquidation penalty ({(liquidationSummary.roiPenaltyRate * 100)}%)</span>
-                      <span>-₦{formatAmount(liquidationSummary.roiPenalty)}</span>
+                      <span>
+                        Early liquidation penalty (
+                        {liquidationSummary.roiPenaltyRate * 100}%)
+                      </span>
+                      <span>
+                        -₦{formatAmount(liquidationSummary.roiPenalty)}
+                      </span>
                     </div>
                   )}
                   {liquidationSummary.withholdingTax > 0 && (
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>Withholding tax ({(liquidationSummary.withholdingTaxRate * 100)}%)</span>
-                      <span>-₦{formatAmount(liquidationSummary.withholdingTax)}</span>
+                      <span>
+                        Withholding tax (
+                        {liquidationSummary.withholdingTaxRate * 100}%)
+                      </span>
+                      <span>
+                        -₦{formatAmount(liquidationSummary.withholdingTax)}
+                      </span>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="border-t border-gray-200 my-2"></div>
               </>
             )}
-            
+
             {/* You Receive */}
             <div className="flex justify-between items-center">
-              <span className="text-base font-semibold text-gray-800">You receive</span>
-              <span className="text-2xl font-bold text-green-600">₦{formatAmount(liquidationSummary.netPayout)}</span>
+              <span className="text-base font-semibold text-gray-800">
+                You receive
+              </span>
+              <span className="text-2xl font-bold text-green-600">
+                ₦{formatAmount(liquidationSummary.netPayout)}
+              </span>
             </div>
-            
+
             {/* Info Note */}
             <p className="text-xs text-gray-500 mt-2 italic">
-              Fees are applied only to the interest earned on the amount you're liquidating.
+              Fees are applied only to the interest earned on the amount you're
+              liquidating.
             </p>
           </div>
         )}
@@ -248,9 +296,12 @@ export default function SummaryLiquidate({
                 {selectedAccount.accountName}
               </p>
               <p className="text-sm text-gray-600">
-                {selectedAccount.accountNumber} • {selectedAccount.bankCode === "057" ? "Zenith Bank" : 
-                 selectedAccount.bankCode === "044" ? "Access Bank" : 
-                 `Bank Code: ${selectedAccount.bankCode}`}
+                {selectedAccount.accountNumber} •{" "}
+                {selectedAccount.bankCode === "057"
+                  ? "Zenith Bank"
+                  : selectedAccount.bankCode === "044"
+                    ? "Access Bank"
+                    : `Bank Code: ${selectedAccount.bankCode}`}
               </p>
             </div>
           </div>
@@ -261,9 +312,9 @@ export default function SummaryLiquidate({
           <p className="text-sm font-euclid text-gray-700">
             Agree to early liquidation terms <br />& conditions
           </p>
-          <input 
-            type="checkbox" 
-            className="w-4 h-4" 
+          <input
+            type="checkbox"
+            className="w-4 h-4"
             checked={agreeToTerms}
             onChange={(e) => {
               setAgreeToTerms(e.target.checked);
