@@ -208,10 +208,10 @@ export default function TransactionHistoryPage() {
           </div>
         </div>
         
-        <TransactionStats 
+        {/* <TransactionStats 
           filters={filters}
           onFilterChange={handleFilterChange}
-        />
+        /> */}
       </div>
 
       {/* Filters Panel */}

@@ -109,7 +109,7 @@ export default function PaymentMethodSelection({
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-10 bg-yellow-100 border border-gray-200 rounded-xl p-4 text-sm text-gray-600 leading-relaxed">
+        <div className="mt-10 bg-yellow-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600 leading-relaxed">
           <p>
             Instant transfers include a service fee of{" "}
             <span className="font-semibold text-gray-900">

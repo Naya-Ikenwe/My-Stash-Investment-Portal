@@ -8,9 +8,11 @@ import PortfolioCards from "@/app/components/PortfolioCards";
 import PortfolioGrowth from "@/app/components/PortfolioGrowth";
 import RecentActivities from "@/app/components/RecentActivities";
 import TransactionHistory from "@/app/components/TransactionHistory";
+import { useAuthStore } from "@/app/store/authStore";
 
 type User = {
   data: {
+    id: string;
     firstName: string;
   };
 };
@@ -20,6 +22,7 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { setUser: setAuthUser } = useAuthStore();
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -33,6 +36,9 @@ export default function Dashboard() {
         ]);
         
         setUser(userData);
+        if (userData?.data) {
+          setAuthUser(userData.data);
+        }
         setDashboardData(dashboardResponse.data);
       } catch (err: any) {
         console.error("Error fetching dashboard:", err);
@@ -43,7 +49,7 @@ export default function Dashboard() {
     };
 
     fetchDashboard();
-  }, []);
+  }, [setAuthUser]);
 
   return (
     <main>
@@ -57,6 +63,7 @@ export default function Dashboard() {
         <div className="w-4/5 flex flex-col gap-4">
           <PortfolioCards 
             dashboardData={dashboardData} 
+            userId={user?.data?.id} // 👈 Only this line added
             isLoading={loading}
             error={error}
           />

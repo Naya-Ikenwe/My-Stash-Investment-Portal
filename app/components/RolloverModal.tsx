@@ -33,7 +33,8 @@ export default function RolloverModal({
     try {
       const response = await rolloverPlan(planId, selectedOption);
 
-      const newPlanId = response.data?.plan?.id || response.data?.id;
+      // ✅ CORRECT: The new plan ID is in response.data.plan.id
+      const newPlanId = response.data?.plan?.id;
 
       console.log("✅ Rollover successful - New Plan ID:", newPlanId);
 
@@ -55,7 +56,8 @@ export default function RolloverModal({
     } catch (err: any) {
       // Check if the error is just a response parsing issue but rollover was successful
       if (err.response?.status === 200 || err.response?.status === 201) {
-        const newPlanId = err.response?.data?.plan?.id || err.response?.data?.id;
+        // ✅ CORRECT: Access the new plan ID from error response
+        const newPlanId = err.response?.data?.data?.plan?.id;
         
         console.log("✅ Rollover completed - New Plan ID:", newPlanId);
         
