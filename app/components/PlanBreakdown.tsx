@@ -194,6 +194,12 @@ export default function PlanBreakdown({
     setShowMethodSelection(true);
   };
 
+  const handleClosePaymentFlow = () => {
+  setShowMethodSelection(false);
+  setShowInstantTransfer(false);
+  setShowBankTransfer(false);
+};
+
   return (
     <>
       <CardWrapper className="max-w-4xl mx-auto px-20 py-8 relative flex flex-col gap-8">
@@ -388,15 +394,15 @@ export default function PlanBreakdown({
 
       {/* Payment Method Selection Modal */}
       {showMethodSelection && instantTransfer && bankTransfer && createdPlanId && (
-        <PaymentMethodSelection
-          isOpen={showMethodSelection}
-          instantTransfer={instantTransfer}
-          bankTransfer={bankTransfer}
-          onSelectInstant={handleSelectInstantTransfer}
-          onSelectBank={handleSelectBankTransfer}
-          onClose={handleBackFromPayment}
-        />
-      )}
+  <PaymentMethodSelection
+    isOpen={showMethodSelection}
+    instantTransfer={instantTransfer}
+    bankTransfer={bankTransfer}
+    onSelectInstant={handleSelectInstantTransfer}
+    onSelectBank={handleSelectBankTransfer}
+    onClose={handleClosePaymentFlow} // 👈 Use this instead of handleBackFromPayment
+  />
+)}
 
       {/* Instant Transfer Modal */}
       {showInstantTransfer && instantTransfer && createdPlanId && (

@@ -259,6 +259,14 @@ export const getTransactionByIdService = async (id: string) => {
   return res.data;
 };
 
+export const requestStatementReport = async (payload: {
+  fromDate: string;
+  toDate: string;
+}) => {
+  const res = await API.post("/transaction/report", payload);
+  return res.data;
+};
+
 // ===== LIQUIDATION SERVICES =====
 
 // Liquidate plan
@@ -285,7 +293,6 @@ export const authorizeIntentService = async (
   return res.data;
 };
 
-// app/api/Users.ts (add these to the bottom of your existing file)
 
 // ===== NEXT OF KIN SERVICES =====
 

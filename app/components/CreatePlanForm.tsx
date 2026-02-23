@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import { CreateFormPlanProps, PlanFormData } from "../types/plan";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+// Helper function to format number with commas
+const formatNumber = (value: number | undefined): string => {
+  if (value === undefined || value === null) return "";
+  return value.toLocaleString();
+};
 
 export default function CreatePlanForm({
   onBack,
@@ -24,6 +30,24 @@ export default function CreatePlanForm({
 }: CreateFormPlanProps) {
   const { control, handleSubmit, watch, setValue, getValues } = form;
   const rolloverValue = watch("rollover");
+  const [displayAmount, setDisplayAmount] = useState("");
+
+  // Watch all required fields
+  const name = watch("name");
+  const principal = watch("principal");
+  const duration = watch("duration");
+
+  // Check if form is valid
+  const isFormValid = 
+    !!name?.trim() && 
+    !!principal && 
+    principal >= 1000000 && 
+    !!duration;
+
+  // Update display amount when principal changes
+  useEffect(() => {
+    setDisplayAmount(formatNumber(principal));
+  }, [principal]);
 
   const onSubmit = (data: PlanFormData) => {
     const { duration, startDate } = getValues();
@@ -79,7 +103,7 @@ export default function CreatePlanForm({
             />
           </div>
 
-          {/* Principal */}
+          {/* Principal with number formatting */}
           <div>
             <label htmlFor="principal">How much do you want to fund?</label>
             <Controller
@@ -87,14 +111,26 @@ export default function CreatePlanForm({
               control={control}
               render={({ field }) => (
                 <Input
-                  {...field}
-                  type="number"
-                  onChange={(e) => field.onChange(Number(e.target.value))}
+                  type="text"
+                  value={displayAmount}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/,/g, "");
+                    if (rawValue === "" || /^\d+$/.test(rawValue)) {
+                      const numValue = rawValue === "" ? undefined : Number(rawValue);
+                      field.onChange(numValue);
+                      setDisplayAmount(formatNumber(numValue));
+                    }
+                  }}
+                  onBlur={() => {
+                    setDisplayAmount(formatNumber(field.value));
+                  }}
                   required
-                  className="bg-white h-12 mt-2"
+                  className="bg-white h-12 mt-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter amount"
                 />
               )}
             />
+            <p className="text-gray-500 text-sm mt-1">Minimum investment amount is ₦1,000,000</p>
           </div>
 
           {/* Duration */}
@@ -110,7 +146,7 @@ export default function CreatePlanForm({
                   required
                 >
                   <SelectTrigger className="w-full bg-white min-h-12 mt-2 py-0">
-                    <SelectValue className="text-black" />
+                    <SelectValue className="text-black" placeholder="Select duration" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectGroup>
@@ -123,14 +159,6 @@ export default function CreatePlanForm({
               )}
             />
           </div>
-
-          {/* 🚫 BANK SECTION COMPLETELY BYPASSED */}
-          {/*
-          <div>
-            <label htmlFor="payoutAccountId">Select Bank Account</label>
-            ...
-          </div>
-          */}
 
           {/* Rollover Toggle */}
           <div className="mt-4 p-4 border border-[#2323231A] rounded-lg bg-white">
@@ -211,11 +239,17 @@ export default function CreatePlanForm({
             )}
           </div>
 
-          <Input
+          <button
             type="submit"
-            value="Continue"
-            className="bg-[#A243DC] text-white mt-5 cursor-pointer hover:bg-[#8a38c2] transition-colors"
-          />
+            disabled={!isFormValid}
+            className={`w-full py-3 rounded-lg font-medium transition-colors ${
+              isFormValid 
+                ? "bg-[#A243DC] text-white" 
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continue
+          </button>
         </form>
       </CardWrapper>
 

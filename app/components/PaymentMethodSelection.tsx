@@ -27,18 +27,33 @@ export default function PaymentMethodSelection({
   const formatCurrency = (amount: number) =>
     `₦${amount.toLocaleString()}`;
 
+  const handleClose = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Close button clicked"); // Debug log
+    onClose();
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // Close when clicking the overlay background
+    if (e.target === e.currentTarget) {
+      console.log("Overlay clicked"); // Debug log
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm ">
+    <div 
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm"
+      onClick={handleOverlayClick}
+    >
       <div className="bg-white w-[650px] rounded-4xl shadow-2xl p-20 relative">
         
         {/* Close Button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onClose();
-          }}
-          className="absolute top-8 right-8 text-gray-400 hover:text-gray-600 transition-colors"
+          onClick={handleClose}
+          className="absolute top-8 right-8 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer z-10"
+          type="button"
         >
           <X size={26} />
         </button>
@@ -55,12 +70,17 @@ export default function PaymentMethodSelection({
           
           {/* Instant Transfer */}
           <div
-            onClick={onSelectInstant}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("Instant Transfer selected"); // Debug log
+              onSelectInstant();
+            }}
             className="flex items-center justify-between border border-gray-200 rounded-2xl px-6 py-6 cursor-pointer hover:border-[#A243DC] hover:bg-purple-50 transition-all"
           >
             <div className="flex items-center space-x-4">
               <Image
-                src="/instant.svg" // Replace with your real path
+                src="/instant.svg"
                 alt="Instant Transfer"
                 width={28}
                 height={28}
@@ -83,12 +103,17 @@ export default function PaymentMethodSelection({
 
           {/* Bank Transfer */}
           <div
-            onClick={onSelectBank}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("Bank Transfer selected"); // Debug log
+              onSelectBank();
+            }}
             className="flex items-center justify-between border border-gray-200 rounded-2xl px-6 py-6 cursor-pointer hover:border-[#A243DC] hover:bg-purple-50 transition-all"
           >
             <div className="flex items-center space-x-4">
               <Image
-                src="/purplehouse.svg" // Replace with your real path
+                src="/purplehouse.svg"
                 alt="Bank Transfer"
                 width={28}
                 height={28}
