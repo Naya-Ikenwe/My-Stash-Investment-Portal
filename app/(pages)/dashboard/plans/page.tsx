@@ -172,7 +172,7 @@ export default function PlansPage() {
               className="w-full lg:w-[220px] h-11 pl-10 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
             />
           </div>
-          <button className="bg-[#A243DC] text-white rounded-md w-full lg:w-[160px] flex items-center gap-2 justify-center h-[44px]">
+          <button className="bg-[#A243DC] text-white rounded-md w-full lg:w-40 flex items-center gap-2 justify-center h-11">
             <p>Download</p>
             <LiaDownloadSolid size={20} />
           </button>
