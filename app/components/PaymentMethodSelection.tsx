@@ -30,24 +30,24 @@ export default function PaymentMethodSelection({
   const handleClose = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Close button clicked"); // Debug log
+
     onClose();
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     // Close when clicking the overlay background
     if (e.target === e.currentTarget) {
-      console.log("Overlay clicked"); // Debug log
+
       onClose();
     }
   };
 
   return (
     <div 
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-white w-[650px] rounded-4xl shadow-2xl p-20 relative">
+      <div className="bg-white w-full lg:w-[650px] rounded-4xl shadow-2xl p-6 lg:p-20 relative max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         
         {/* Close Button */}
         <button
@@ -73,7 +73,7 @@ export default function PaymentMethodSelection({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log("Instant Transfer selected"); // Debug log
+
               onSelectInstant();
             }}
             className="flex items-center justify-between border border-gray-200 rounded-2xl px-6 py-6 cursor-pointer hover:border-[#A243DC] hover:bg-purple-50 transition-all"
@@ -106,7 +106,7 @@ export default function PaymentMethodSelection({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log("Bank Transfer selected"); // Debug log
+
               onSelectBank();
             }}
             className="flex items-center justify-between border border-gray-200 rounded-2xl px-6 py-6 cursor-pointer hover:border-[#A243DC] hover:bg-purple-50 transition-all"

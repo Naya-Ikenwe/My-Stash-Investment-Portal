@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 // import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { bodyFont, headingFont } from "./fonts";
@@ -13,6 +13,12 @@ import { Toaster } from "react-hot-toast";
 export const metadata: Metadata = {
   title: "MyStash Investment Portal",
   description: "Secured investments for you!",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

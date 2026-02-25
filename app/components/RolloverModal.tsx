@@ -36,7 +36,7 @@ export default function RolloverModal({
       // ✅ CORRECT: The new plan ID is in response.data.plan.id
       const newPlanId = response.data?.plan?.id;
 
-      console.log("✅ Rollover successful - New Plan ID:", newPlanId);
+
 
       // Show success message
       alert(
@@ -59,7 +59,7 @@ export default function RolloverModal({
         // ✅ CORRECT: Access the new plan ID from error response
         const newPlanId = err.response?.data?.data?.plan?.id;
         
-        console.log("✅ Rollover completed - New Plan ID:", newPlanId);
+
         
         alert(
           `✅ Plan rolled over successfully!\n\n${
@@ -91,8 +91,8 @@ export default function RolloverModal({
   const newPrincipalWithInterest = principal + totalAccruedRoi;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[600px] rounded-2xl shadow-2xl p-8 relative">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm p-4">
+      <div className="bg-white w-full lg:w-[600px] rounded-2xl shadow-2xl p-6 lg:p-8 relative max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"

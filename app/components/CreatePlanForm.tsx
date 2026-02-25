@@ -66,14 +66,14 @@ export default function CreatePlanForm({
      */
     setValue("payoutAccountId", "DUMMY_ID");
 
-    console.log("Form data (bank bypassed):", data);
+
 
     onContinue();
   };
 
   return (
-    <main className="flex items-center -my-10">
-      <CardWrapper className="flex flex-col items-center justify-center p-10 gap-8 w-[700px] min-h-[450px] relative">
+    <main className="flex items-center -my-10 px-4">
+      <CardWrapper className="flex flex-col items-center justify-center p-6 lg:p-10 gap-8 w-full max-w-[700px] min-h-[450px] relative mx-auto">
         <button
           onClick={onBack}
           className="bg-[#E7E7E7] p-2 rounded-full absolute top-5 left-5 cursor-pointer"

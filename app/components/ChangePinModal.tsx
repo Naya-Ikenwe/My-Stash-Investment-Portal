@@ -86,7 +86,6 @@ export default function ChangePinModal({ isOpen, onClose, onSuccess }: ChangePin
       setStep("old");
       onClose();
     } catch (err: any) {
-      console.error("Failed to change PIN:", err);
       setError(err.response?.data?.message || "Failed to change PIN. Please try again.");
     } finally {
       setLoading(false);

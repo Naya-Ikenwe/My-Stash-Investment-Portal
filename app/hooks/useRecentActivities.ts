@@ -17,7 +17,6 @@ export const useRecentActivities = (limit: number = 5) => {
         setActivities(notifications);
         
       } catch (err: any) {
-        console.error("Error fetching activities:", err);
         setError(err.message || "Failed to load recent activities");
         setActivities([]); // Ensure empty array on error
       } finally {

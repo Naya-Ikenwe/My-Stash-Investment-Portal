@@ -38,13 +38,6 @@ export default function InstantTopup({
   useEffect(() => {
     if (!isOpen) return;
     
-    console.log(`🔼 ${isTopUp ? 'Top-up' : 'Plan creation'} modal opened with:`, {
-      planId: planId,
-      instantTransfer: instantTransfer,
-      expiresIn: instantTransfer?.expiresIn,
-      isTopUp: isTopUp
-    });
-    
     setTimeLeft(parseExpiresIn(instantTransfer?.expiresIn || "1h"));
 
     const timerId = setInterval(() => {
@@ -71,13 +64,13 @@ export default function InstantTopup({
   };
 
   const handleConfirmPayment = () => {
-    console.log(`🔄 User clicked 'Payment Confirmed' for ${isTopUp ? 'top-up' : 'plan creation'}`);
+
     
     if (onConfirm) {
       onConfirm();
     }
     
-    console.log(`🚀 Redirecting to PLAN DETAILS: /dashboard/plans/${planId}`);
+
     
     onBack();
     router.push(`/dashboard/plans/${planId}`);

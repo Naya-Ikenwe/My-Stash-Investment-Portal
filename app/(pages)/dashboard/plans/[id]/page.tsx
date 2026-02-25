@@ -120,11 +120,9 @@ export default function PlanDetails({
 
         // AUTO-START POLLING ONLY if plan is PENDING
         if (mappedPlan.status === "PENDING") {
-          console.log("🚨 Plan is PENDING - starting auto-polling");
           setIsPolling(true);
         } else {
-          console.log("👁️ Plan is ACTIVE/MATURED - no auto-polling");
-          setIsPolling(false);
+          setIsPolling(false)
         }
       }
     } catch (err: any) {
@@ -137,7 +135,6 @@ export default function PlanDetails({
 
   // Manual function to start polling (for top-ups)
   const startPollingForUpdates = () => {
-    console.log("🎯 Manually starting polling for updates");
     setIsPolling(true);
     setPollingCount(0);
   };
@@ -148,7 +145,6 @@ export default function PlanDetails({
 
     const intervalId = setInterval(async () => {
       try {
-        console.log(`🔄 Polling plan ${planId}... (poll: ${pollingCount + 1})`);
         const response = await getPlanById(planId);
         const planData = response;
 
@@ -158,15 +154,6 @@ export default function PlanDetails({
             planData.currentPrincipal !== plan.currentPrincipal;
 
           if (statusChanged || currentPrincipalChanged) {
-            console.log(`📈 Plan update detected:`, {
-              statusChanged,
-              currentPrincipalChanged,
-              oldStatus: plan.status,
-              newStatus: planData.status,
-              oldPrincipal: plan.currentPrincipal,
-              newPrincipal: planData.currentPrincipal,
-            });
-
             const hasRollover =
               planData.rolloverType === "PRINCIPAL_ONLY" ||
               planData.rolloverType === "PRINCIPAL_AND_INTEREST";
@@ -196,7 +183,6 @@ export default function PlanDetails({
               (plan.status === "PENDING" && planData.status === "ACTIVE") ||
               currentPrincipalChanged
             ) {
-              console.log(`✅ Update detected. Stopping polling.`);
               setIsPolling(false);
               setPollingCount(0);
             }
@@ -209,7 +195,7 @@ export default function PlanDetails({
             const maxAttempts = plan.status === "PENDING" ? 60 : 12; // 5min for PENDING, 1min for top-ups
 
             if (newCount >= maxAttempts) {
-              console.log(`🛑 Stopping polling after ${maxAttempts} attempts`);
+
               setIsPolling(false);
               return 0;
             }
@@ -224,7 +210,7 @@ export default function PlanDetails({
     }, 5000); // Poll every 5 seconds
 
     return () => {
-      console.log(`🛑 Clearing polling interval`);
+
       clearInterval(intervalId);
     };
   }, [planId, plan, pollingCount, isPolling]);
@@ -248,16 +234,11 @@ export default function PlanDetails({
           (now.getTime() - maturityDate.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        console.log(`📅 Days since maturity: ${daysSinceMaturity} for plan ${planId}`);
-
         // Auto-rollover after 7 days
         if (daysSinceMaturity >= 7) {
-          console.log(`🔄 Auto-triggering rollover for plan ${planId}`);
-          
           try {
             // Default to PRINCIPAL_AND_INTEREST for auto-rollover
             const response = await rolloverPlan(planId, "PRINCIPAL_AND_INTEREST");
-            console.log("✅ Auto-rollover completed:", response.data);
             
             // Refresh plan data
             fetchPlanData(planId, false);
@@ -375,7 +356,7 @@ export default function PlanDetails({
     );
 
   return (
-    <main className="p-6 gap-6">
+    <main className="p-4 lg:p-6 gap-6 flex flex-col">
       <Link
         href="/dashboard/plans"
         className="flex items-center w-[90px] h-[42px] gap-1 text-sm text-[#37474F] mb-4"
@@ -406,9 +387,9 @@ export default function PlanDetails({
       )}
 
       {/* LEFT & RIGHT CARDS */}
-      <div className="flex gap-20">
-        <div className="bg-[#F7F7F7] w-[557px] h-[265px] p-6 rounded-xl shadow-sm">
-          <h1 className="text-2xl font-semibold font-freizeit flex items-center gap-10">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-20">
+        <div className="bg-[#F7F7F7] w-full lg:w-[557px] h-auto lg:h-[265px] p-6 rounded-xl shadow-sm">
+          <h1 className="text-xl lg:text-2xl font-semibold font-freizeit flex flex-col lg:flex-row items-start lg:items-center gap-2 lg:gap-10">
             {plan.name}
             <span
               className={`text-xs px-3 font-manrope py-1 rounded-full ${
@@ -426,11 +407,11 @@ export default function PlanDetails({
             </span>
           </h1>
 
-          <p className="text-4xl font-bold mt-4">
+          <p className="text-2xl lg:text-4xl font-bold mt-4">
             ₦{plan.currentPrincipal.toLocaleString()}
           </p>
 
-          <div className="flex gap-4 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mt-6 flex-wrap">
             {plan.status === "PENDING" ? (
               <button
                 onClick={handleMakePayment}
@@ -502,12 +483,12 @@ export default function PlanDetails({
         </div>
 
         {/* RIGHT CARD */}
-        <div className="bg-[#F7F7F7] w-[350px] p-6 rounded-xl shadow-sm">
+        <div className="bg-[#F7F7F7] w-full lg:w-[350px] p-6 rounded-xl shadow-sm">
           <h3 className="font-semibold font-freizeit text-[#A243DC] mb-4">
             Performance Summary
           </h3>
 
-          <div className="space-y-4 text-sm">
+          <div className="space-y-2 lg:space-y-4 text-xs lg:text-sm">
             <div className="flex justify-between">
               <span className="font-euclid">Plan Created on</span>
               <span className="font-medium">{formatDate(plan.createdAt)}</span>
@@ -557,7 +538,7 @@ export default function PlanDetails({
       </div>
 
       {/* Transaction History - REPLACED with Real Component */}
-      <div className="mt-6 w-[557px]">
+      <div className="mt-6 w-full lg:w-[557px]">
         <TransactionHistory 
           planId={planId} // Pass planId to filter transactions
           isLoading={isLoading}
@@ -577,7 +558,6 @@ export default function PlanDetails({
         onClose={() => setShowLiquidatePopup(false)}
         onConfirm={() => {
           // Refresh plan data after successful liquidation
-          console.log("✅ Liquidation successful - refreshing plan data");
           setTimeout(() => {
             fetchPlanData(planId, false);
             startPollingForUpdates();
@@ -635,7 +615,6 @@ export default function PlanDetails({
           onClose={() => setShowRolloverModal(false)}
           onSuccess={(newPlanId: string) => {
             // Navigate to new plan after successful rollover
-            console.log("🔄 Navigating to new plan:", newPlanId);
             router.push(`/dashboard/plans/${newPlanId}`);
           }}
         />
@@ -650,7 +629,6 @@ export default function PlanDetails({
           onClose={() => setShowWithdrawModal(false)}
           onWithdrawSuccess={() => {
             // Refresh plan data after successful withdrawal
-            console.log("✅ Withdrawal successful - refreshing plan data");
             setTimeout(() => {
               fetchPlanData(planId, false);
               startPollingForUpdates();

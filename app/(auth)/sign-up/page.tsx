@@ -123,9 +123,9 @@ const onSubmit = async (data: SignupFormInputs) => {
 };
 
   return (
-    <AuthWrapper className="flex gap-10 -mt-10">
-      <main className="flex gap-20">
-        <CardWrapper className="px-8 py-8 flex flex-col gap-4 w-[628px]">
+    <AuthWrapper className="flex flex-col lg:flex-row gap-6 lg:gap-10 -mt-0 lg:-mt-10">
+      <main className="flex flex-col lg:flex-row gap-6 lg:gap-20 w-full">
+        <CardWrapper className="px-6 lg:px-8 py-8 lg:py-8 flex flex-col gap-4 w-full lg:w-[628px]">
           <div>
             <h3 className="text-primary font-heading text-[30px] font-medium">
               Create your profile
@@ -326,7 +326,7 @@ const onSubmit = async (data: SignupFormInputs) => {
           </article>
         </CardWrapper>
 
-        <aside className="flex flex-col gap-9 w-[453px]">
+        <aside className="flex flex-col gap-9 w-full lg:w-[453px]">
           <h2 className="text-primary text-[34px] font-heading">
             Lets get you set up in just 2 steps
           </h2>

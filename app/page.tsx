@@ -18,8 +18,7 @@ export default function Home() {
     } else {
       router.replace("/login");
     }
-    console.log("HYDRATION:", hasHydrated);
-    console.log("ACCESS TOKEN:", accessToken);
+
   }, [accessToken, hasHydrated, router]);
 
   // While checking, you might want to show nothing or a spinner to prevent flashing

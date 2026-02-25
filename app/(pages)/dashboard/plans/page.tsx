@@ -40,7 +40,6 @@ export default function PlansPage() {
         setPlans(response.data);
         setTotalPages(response.pagination.totalPages);
       } catch (error) {
-        console.error("Failed to fetch plans:", error);
         setPlans([]);
         setTotalPages(0);
       } finally {
@@ -80,13 +79,13 @@ export default function PlansPage() {
   const displayedPlans = filteredPlans;
 
   return (
-    <main className="w-full h-full rounded-[14px]">
+    <main className="w-full max-w-7xl mx-auto rounded-[14px] px-4 lg:px-6">
       <h1 className="text-[32px] font-medium text-[#A243DC]">My Plans</h1>
       <hr className="border border-[#455A6433] rounded-md mt-5" />
 
       {/* Filters */}
-      <div className="flex justify-between items-center mt-3">
-        <div className="flex h-8 mt-5 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mt-4">
+        <div className="flex h-8 mt-5 gap-4 flex-wrap">
           {/* Status */}
           <div className="relative">
             <button
@@ -159,8 +158,8 @@ export default function PlansPage() {
         </div>
 
         {/* Search + Download */}
-        <div className="flex items-center gap-4">
-          <div className="relative w-[180px]">
+        <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto justify-end">
+          <div className="relative w-full lg:w-[220px]">
             <IoIosSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="search"
@@ -170,10 +169,10 @@ export default function PlansPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-[180px] h-[42px] pl-9 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
+              className="w-full lg:w-[220px] h-11 pl-10 pr-3 rounded-md border bg-[#F7F7F7] border-gray-300 text-sm"
             />
           </div>
-          <button className="bg-[#A243DC] text-white rounded-md w-[134px] flex items-center gap-2 justify-center h-[42px]">
+          <button className="bg-[#A243DC] text-white rounded-md w-full lg:w-[160px] flex items-center gap-2 justify-center h-[44px]">
             <p>Download</p>
             <LiaDownloadSolid size={20} />
           </button>
@@ -205,10 +204,10 @@ export default function PlansPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedPlans.map((plan) => (
                 <Link href={`/dashboard/plans/${plan.id}`} key={plan.id}>
-                  <div className={`w-full h-full px-5 py-10 border rounded-xl shadow-sm relative cursor-pointer hover:shadow-md transition ${
+                  <div className={`w-full h-full px-6 py-8 lg:px-8 lg:py-10 border rounded-xl shadow-sm relative cursor-pointer hover:shadow-md transition ${
                     plan.status === "CLOSED"
                       ? "bg-gray-200 opacity-50 pointer-events-none"
                       : "bg-[#F7F7F7]"

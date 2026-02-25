@@ -31,7 +31,7 @@ export default function BankTransferModal({
   };
 
   const handleConfirmPayment = () => {
-    console.log("🔄 User confirmed bank transfer payment");
+
     onBack();
     router.push(`/dashboard/plans/${planId}`);
   };
@@ -43,8 +43,8 @@ export default function BankTransferModal({
     : "₦0";
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[450px] rounded-2xl shadow-2xl p-8 relative flex flex-col">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm p-4">
+      <div className="bg-white w-full lg:w-[450px] rounded-2xl shadow-2xl p-6 lg:p-8 relative flex flex-col max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         <button
           onClick={onBack}
           className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"

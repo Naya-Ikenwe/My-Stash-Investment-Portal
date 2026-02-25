@@ -127,7 +127,7 @@ export const useAuthStore = create<AuthState>()(
             }
             state?.setUser(parsedUser);
           } catch (e) {
-            console.error("Failed to parse user cookie:", e);
+            // Failed to parse user cookie
           }
         }
 

@@ -68,7 +68,7 @@ const DOCUMENT_CONFIG = [
   }
 ];
 
-export default function Kyc() {
+export default function Kyc({ isMobile = false }: { isMobile?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [apiError, setApiError] = useState("");

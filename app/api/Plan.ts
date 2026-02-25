@@ -333,7 +333,7 @@ export const getAllPlans = async (page = 1, limit = 8) => {
     `/plan?page=${page}&limit=${limit}&sort=createdAt:desc`,
   );
 
-  console.log("🔍 API Response:", response.data);
+
 
   const results =
     response.data.data.results?.map((plan: any) => ({
@@ -345,14 +345,6 @@ export const getAllPlans = async (page = 1, limit = 8) => {
 
   const total = response.data.data.totalCount || 0;
   const totalPages = Math.ceil(total / limit);
-
-  console.log("📊 Pagination:", {
-    page,
-    limit,
-    total,
-    totalPages,
-    resultsLength: results.length,
-  });
 
   return {
     data: results,
@@ -392,76 +384,41 @@ export interface GetBankAccountsResponse {
 
 export const getBankAccounts = async (): Promise<BankAccount[]> => {
   try {
-    console.log("🔄 [DEBUG] Making API call to /bank endpoint...");
-
     const response = await API.get<GetBankAccountsResponse>("/bank");
-
-    console.log("✅ [DEBUG] API Response received successfully!");
-    console.log("📊 [DEBUG] Response status:", response.data.status);
-    console.log("📦 [DEBUG] Response data structure:", {
-      hasMessage: !!response.data.message,
-      hasStatus: !!response.data.status,
-      hasData: !!response.data.data,
-      resultsCount: response.data.data?.results?.length || 0,
-      totalCount: response.data.data?.totalCount || 0,
-    });
 
     if (response.data.status === "success") {
       const bankAccounts = response.data.data?.results || [];
 
-      console.log(`🎯 [DEBUG] Found ${bankAccounts.length} bank account(s)`);
+
 
       if (bankAccounts.length === 0) {
-        console.log("ℹ️ [DEBUG] Results array is empty - no bank accounts");
+
         return []; // Return empty array, don't throw
       }
 
       // Log first bank account for verification
       if (bankAccounts[0]) {
-        console.log("📋 [DEBUG] First bank account details:", {
-          id: bankAccounts[0].id,
-          accountNumber: bankAccounts[0].accountNumber,
-          bankCode: bankAccounts[0].bankCode,
-          accountName: bankAccounts[0].accountName || "(empty)",
-        });
+        // Verified first account exists
       }
 
       return bankAccounts;
     } else {
-      console.warn(
-        "⚠️ [DEBUG] API returned non-success status:",
-        response.data.status,
-      );
-      console.warn("📝 [DEBUG] API message:", response.data.message);
       return []; // Return empty array, don't throw
     }
   } catch (error: any) {
     // Enhanced error logging
-    console.error("🔴 [DEBUG] FULL ERROR DETAILS:");
-    console.error("   Status Code:", error.response?.status || "No response");
-    console.error("   Status Text:", error.response?.statusText || "N/A");
-    console.error("   Error Message:", error.message);
-    console.error("   Request URL:", error.config?.url || "Unknown");
-    console.error("   Request Method:", error.config?.method || "Unknown");
+
 
     if (error.response?.data) {
-      console.error("   Response Body:", error.response.data);
-      console.error(
-        "   Response Message:",
-        error.response.data?.message || "No message",
-      );
-      console.error(
-        "   Response Status:",
-        error.response.data?.status || "No status",
-      );
+      // Error response received
     }
 
     if (error.response?.headers) {
-      console.error("   Response Headers:", error.response.headers);
+      // Error headers received
     }
 
     // CRITICAL: Return empty array instead of throwing
-    console.log("🟡 [DEBUG] Returning empty array (graceful fallback)");
+
     return [];
   }
 };
@@ -470,28 +427,15 @@ export const getBankAccounts = async (): Promise<BankAccount[]> => {
 // You can add this to your main app.tsx or layout.tsx
 export const enableAPIDebugging = () => {
   API.interceptors.request.use((config) => {
-    console.log("📤 [AXIOS REQUEST] Sending to:", config.url);
-    console.log("   Method:", config.method);
-    console.log("   Headers:", {
-      Authorization: config.headers?.Authorization ? "Present" : "Missing",
-      "Content-Type": config.headers?.["Content-Type"],
-    });
     return config;
   });
 
   API.interceptors.response.use(
     (response) => {
-      console.log("📥 [AXIOS RESPONSE] Received from:", response.config.url);
-      console.log("   Status:", response.status, response.statusText);
+
       return response;
     },
     (error) => {
-      console.error("❌ [AXIOS ERROR] From:", error.config?.url);
-      console.error(
-        "   Status:",
-        error.response?.status,
-        error.response?.statusText,
-      );
       return Promise.reject(error);
     },
   );

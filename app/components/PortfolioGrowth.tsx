@@ -109,8 +109,6 @@ export default function PortfolioGrowth({
         const response = await getPortfolioHistory(from, to, "day");
 
         if (response?.data?.portfolioValue) {
-          console.log(response.data.portfolioValue);
-
           const data = response.data.portfolioValue.map((point) => ({
             value: point.value,
             timestamp: new Date(point.timestamp).getTime(),

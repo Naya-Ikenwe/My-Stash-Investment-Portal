@@ -47,7 +47,7 @@ type PersonalForm = {
   maritalStatus: string;
 };
 
-export default function Personal() {
+export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [apiError, setApiError] = useState("");
@@ -81,7 +81,7 @@ export default function Personal() {
     const fetchLatestProfile = async () => {
       try {
         setFetching(true);
-        console.log("🔄 Fetching profile...");
+
 
         // Get current user from store
         const { user: currentAuthUser, setUser: setAuthUser } =
@@ -90,7 +90,7 @@ export default function Personal() {
         const response = await getUserProfileService();
         const latestUser = response.data;
 
-        console.log("📱 Current auth store phone:", currentAuthUser?.phone);
+
 
         const userPhone = currentAuthUser?.phone || "";
 
@@ -112,7 +112,7 @@ export default function Personal() {
           maritalStatus: latestUser.maritalStatus || "",
         };
 
-        console.log("✅ Form data ready, resetting form");
+
         reset(formData);
 
         // Update auth store with phone preserved
@@ -122,11 +122,11 @@ export default function Personal() {
           phone: userPhone,
         });
 
-        console.log("✅ Profile loaded successfully");
+
       } catch (error) {
         console.error("❌ Failed to fetch profile:", error);
       } finally {
-        console.log("✅ Setting fetching to false");
+
         setFetching(false);
       }
     };
@@ -141,7 +141,7 @@ export default function Personal() {
     setApiSuccess("");
 
     try {
-      console.log("Submitting form with phone:", data.phone);
+
 
       const payload = {
         firstName: data.firstName,
@@ -170,7 +170,6 @@ export default function Personal() {
         }
       }
     } catch (error: any) {
-      console.error("Failed to update profile:", error);
       setApiError(error.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading(false);
@@ -192,15 +191,15 @@ export default function Personal() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex gap-12 w-[80%]">
+      <form onSubmit={handleSubmit(onSubmit)} className={isMobile ? "flex flex-col gap-6 w-full" : "flex gap-12 w-[80%]"}>
         {/* Left Column */}
-        <div className="w-2/5 flex flex-col gap-4">
+        <div className={isMobile ? "w-full flex flex-col gap-4" : "w-2/5 flex flex-col gap-4"}>
           <div className="flex items-center gap-3">
             <Image
               src={"/images/profile-pic.png"}
               alt="profile-pic"
-              width={150}
-              height={150}
+              width={isMobile ? 120 : 150}
+              height={isMobile ? 120 : 150}
             />
             <p>
               {authUser?.firstName} {authUser?.lastName}
@@ -228,7 +227,7 @@ export default function Personal() {
         </div>
 
         {/* Right Column - Form Fields */}
-        <div className="w-3/5 flex flex-col gap-5">
+        <div className={isMobile ? "w-full flex flex-col gap-5" : "w-3/5 flex flex-col gap-5"}>
           {isDirty && (
             <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
               ⚠️ You have unsaved changes
@@ -236,7 +235,7 @@ export default function Personal() {
           )}
 
           {/* Gender & Title */}
-          <div className="flex gap-5">
+          <div className={isMobile ? "flex flex-col gap-4" : "flex gap-5"}>
             <Controller
               name="gender"
               control={control}
@@ -459,7 +458,7 @@ export default function Personal() {
           <Input
             type="submit"
             value={loading ? "Saving..." : "Save Changes"}
-            className={`bg-primary text-white mt-5 cursor-pointer ${loading || fetching ? "opacity-70" : ""}`}
+            className={`bg-primary text-white mt-5 cursor-pointer ${isMobile ? "w-full" : ""} ${loading || fetching ? "opacity-70" : ""}`}
             disabled={loading || fetching || !isDirty}
           />
         </div>

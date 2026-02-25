@@ -64,7 +64,6 @@ export default function SummaryLiquidate({
         const profile = await getUserProfileService();
         setHasPin(!!profile.data?.hasPin);
       } catch (err) {
-        console.error("Failed to check PIN status:", err);
         setHasPin(false);
       }
     };
@@ -83,10 +82,8 @@ export default function SummaryLiquidate({
         numericAmount,
         isFullLiquidation,
       );
-      console.log("📊 Liquidation Summary:", response.data);
       setLiquidationSummary(response.data);
     } catch (err: any) {
-      console.error("❌ Failed to load summary:", err);
       setError("Failed to calculate liquidation summary. Please try again.");
     } finally {
       setLoadingSummary(false);
@@ -107,21 +104,15 @@ export default function SummaryLiquidate({
     setError("");
 
     try {
-      console.log(`📤 Calling liquidate endpoint for plan ${planId}...`);
-
       const response = await liquidatePlan(
         planId,
         numericAmount,
         isFullLiquidation,
       );
 
-      console.log("✅ Liquidation initiated:", response);
-
       if (response.status === "AUTHORIZATION_REQUIRED") {
         const res = response as IntentRespose<LiquidateResponse>;
         const intentId = res.data.intent.id;
-
-        console.log("Intent ID (for authorization):", intentId);
 
         if (intentId) {
           setIntentId(intentId);
@@ -129,7 +120,7 @@ export default function SummaryLiquidate({
         }
       }
     } catch (err: any) {
-      console.error("❌ Liquidation failed:", err);
+
       setError(
         err.response?.data?.message ||
           err.message ||

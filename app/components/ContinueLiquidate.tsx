@@ -48,7 +48,6 @@ export default function ContinueLiquidate({
           setBankAccount(response.data);
         }
       } catch (err: any) {
-        console.error('Failed to fetch bank account:', err);
         setError("Failed to load bank account. Please try again.");
       } finally {
         setLoading(false);
@@ -133,8 +132,8 @@ export default function ContinueLiquidate({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm p-4">
+      <div className="bg-white w-full lg:w-[450px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         {/* Close Button */}
         <button
           onClick={onClose}

@@ -64,7 +64,7 @@ export default function DashboardTopLevel() {
 
   return (
     <>
-      <main className="flex justify-end gap-5 items-center w-full mb-4">
+      <main className="flex justify-end gap-3 lg:gap-5 items-center w-full mb-4">
         {/* Notifications Icon with Badge and Link */}
         <Link href="/notifications" className="relative">
           <div className="relative">
@@ -97,11 +97,12 @@ export default function DashboardTopLevel() {
             className="w-7 h-7 rounded-full bg-[#F7F7F7]"
           />
 
-          {/* Toggle only arrow */}
+          {/* Toggle only arrow - hidden on small screens */}
           <button 
             onClick={() => setOpen((prev) => !prev)}
             aria-label="Toggle profile menu"
             aria-expanded={open}
+            className="hidden lg:block"
           >
             <IoMdArrowDropdown
               size={20}
@@ -146,33 +147,33 @@ export default function DashboardTopLevel() {
 
       {/* LOGOUT CONFIRM MODAL */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-[483px] h-[390px] flex flex-col items-center justify-center gap-6 relative">
-            <p className="text-lg font-semibold mb-4">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md sm:max-w-[483px] h-auto sm:h-[390px] flex flex-col items-center justify-center gap-6 relative p-6">
+            <p className="text-base sm:text-lg font-semibold text-center">
               Do you want to log out?
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full sm:w-auto">
               <button
                 onClick={() => {
                   logout();
                   setShowLogoutModal(false);
                 }}
-                className="px-6 py-2 rounded-md bg-primary text-white"
+                className="flex-1 sm:flex-none px-6 py-2 rounded-md bg-primary text-white font-medium"
               >
                 Yes
               </button>
 
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="px-6 py-2 rounded-md border border-primary text-primary"
+                className="flex-1 sm:flex-none px-6 py-2 rounded-md border border-primary text-primary font-medium"
               >
                 No
               </button>
             </div>
 
             <IoClose
-              className="absolute right-4 top-4 cursor-pointer"
+              className="absolute right-4 top-4 cursor-pointer text-gray-400 hover:text-gray-600"
               size={24}
               onClick={() => setShowLogoutModal(false)}
             />

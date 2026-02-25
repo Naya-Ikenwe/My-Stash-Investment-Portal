@@ -35,13 +35,13 @@ export default function EmailInput({ onNext }: EmailInputProps) {
   }
 
   return (
-    <main className="flex flex-col gap-7 text-center items-center justify-center">
+    <main className="flex flex-col gap-7 text-center items-center justify-center px-4">
       <div>
-        <h2 className="font-medium text-4xl text-primary">Reset Password</h2>
-        <p>Input your email address</p>
+        <h2 className="font-medium text-3xl lg:text-4xl text-primary">Reset Password</h2>
+        <p className="text-sm lg:text-base">Input your email address</p>
       </div>
 
-      <CardWrapper className="px-24 py-16 flex flex-col gap-6 items-start w-[600px]">
+      <CardWrapper className="px-6 lg:px-24 py-8 lg:py-16 flex flex-col gap-6 items-start w-full max-w-[600px]">
         <Input
           type="email"
           className="bg-white min-h-12"

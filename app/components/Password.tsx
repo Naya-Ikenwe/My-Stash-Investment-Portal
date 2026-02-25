@@ -63,7 +63,6 @@ export default function Password({
       // Authorization successful
       onAuthorizationSuccess();
     } catch (err: any) {
-      console.error("Authorization failed:", err);
       setError(err.response?.data?.message || "Invalid PIN. Please try again.");
     } finally {
       setLoading(false);

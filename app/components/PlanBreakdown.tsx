@@ -103,7 +103,6 @@ export default function PlanBreakdown({
           setRoiRate(summary.roiRate * 100);
         }
       } catch (err: any) {
-        console.error("Failed to fetch plan summary:", err);
         setError("Failed to load plan summary. Please try again.");
       } finally {
         setIsLoadingSummary(false);
@@ -125,12 +124,6 @@ export default function PlanBreakdown({
     try {
       const currentFormData = form.getValues();
 
-      console.log("📋 Creating plan with data:", {
-        name: currentFormData.name,
-        principal: currentFormData.principal,
-        duration: currentFormData.duration,
-      });
-
       // Prepare the payload - simplified based on new endpoint
       const completePayload = {
         name: currentFormData.name,
@@ -140,28 +133,14 @@ export default function PlanBreakdown({
         rolloverType: currentFormData.rolloverType || "PRINCIPAL_ONLY",
       };
 
-      console.log("🚀 Final payload for POST /plan:", completePayload);
-
       // Call the createPlan endpoint
-      console.log("📞 Calling createPlan() API function...");
       const response = await createPlan(completePayload as any);
-
-      console.log("✅ Plan creation API response:", {
-        success: true,
-        planId: response.data.plan.id,
-        status: response.data.plan.status,
-      });
 
       // Store the payment details from the response
       setInstantTransfer(response.data.payment.instantTransfer);
       setBankTransfer(response.data.payment.bankTransfer);
       setCreatedPlanId(response.data.plan.id);
 
-      console.log("✅ Plan created successfully. Plan ID:", response.data.plan.id);
-      console.log("💰 Payment methods available:", {
-        instantTransfer: response.data.payment.instantTransfer,
-        bankTransfer: response.data.payment.bankTransfer,
-      });
 
       // Show payment method selection modal
       setShowMethodSelection(true);
@@ -202,25 +181,25 @@ export default function PlanBreakdown({
 
   return (
     <>
-      <CardWrapper className="max-w-4xl mx-auto px-20 py-8 relative flex flex-col gap-8">
+      <CardWrapper className="max-w-4xl mx-auto px-4 lg:px-20 py-6 lg:py-8 relative flex flex-col gap-8">
         <div className="absolute top-5 left-5 p-2 bg-[#E7E7E7] rounded-full cursor-pointer">
           <IoIosArrowBack size={18} onClick={onBack} />
         </div>
 
         <div className="flex flex-col items-center gap-5 text-center">
           <div>
-            <h2 className="text-2xl font-medium">Investment Breakdown</h2>
-            <p className="text-primary">
+            <h2 className="text-xl lg:text-2xl font-medium">Investment Breakdown</h2>
+            <p className="text-primary text-sm lg:text-base">
               Kindly see investments terms & details below
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <div>
-              <p className="text-3xl font-bold">
+              <p className="text-2xl lg:text-3xl font-bold">
                 ₦{planData.principal.toLocaleString()}
               </p>
-              <p>
+              <p className="text-sm lg:text-base">
                 Interest rate:{" "}
                 <span className="text-[#44C56F]">
                   {roiRate.toFixed(2)}% per anum ({(roiRate / 12).toFixed(2)}% per month)

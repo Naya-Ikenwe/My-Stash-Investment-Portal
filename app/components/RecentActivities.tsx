@@ -43,7 +43,7 @@ export default function RecentActivities({
       try {
         setIsLoadingActivities(true);
         
-        console.log("🔄 Fetching recent notifications for activities...");
+
         const notifications = await getRecentNotifications(5);
         
         // Filter to only show unread notifications or limit to 3
@@ -68,7 +68,7 @@ export default function RecentActivities({
 
   if (isActuallyLoading) {
     return (
-      <main className="w-1/5 bg-[#F7F7F7] p-4 rounded-2xl flex flex-col">
+      <main className="w-full bg-[#F7F7F7] p-4 rounded-2xl flex flex-col">
         <div className="h-6 bg-gray-300 rounded w-1/2 mb-4 animate-pulse"></div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
@@ -86,7 +86,7 @@ export default function RecentActivities({
   }
 
   return (
-    <main className="w-1/5 bg-[#F7F7F7] p-4 rounded-2xl flex flex-col">
+    <main className="w-full bg-[#F7F7F7] p-4 rounded-2xl flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <p className="font-semibold">Recent Activities</p>
         

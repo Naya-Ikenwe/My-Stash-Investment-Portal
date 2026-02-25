@@ -9,10 +9,10 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <main className="flex">
+      <main className="flex flex-col lg:flex-row min-h-screen">
         <Navbar />
-        <aside className="bg-white rounded-tl-xl px-6 py-4 w-full">
-          <div className="w-full flex items-end justify-end">
+        <aside className="bg-white lg:rounded-tl-xl px-4 lg:px-6 py-4 w-full flex-1 overflow-y-auto">
+          <div className="w-full flex items-end justify-end mb-4">
             <DashboardTopLevel />
           </div>
           {children}

@@ -48,20 +48,20 @@ export default function ConfirmPassword({ email, token }: ConfirmPasswordProps) 
 
   if (success) {
     return (
-      <main className="flex flex-col gap-7 text-center items-center justify-center">
-        <CardWrapper className="px-24 py-16 flex flex-col gap-6 items-center w-[600px]">
+      <main className="flex flex-col gap-7 text-center items-center justify-center px-4">
+        <CardWrapper className="px-6 lg:px-24 py-8 lg:py-16 flex flex-col gap-6 items-center w-full max-w-[600px]">
           <img
             src="/Check.svg"
             alt="Success"
-            className="w-45 h-45 mx-auto"
+            className="w-32 lg:w-45 h-32 lg:h-45 mx-auto"
           />
-          <h2 className="font-medium text-4xl text-primary">
+          <h2 className="font-medium text-2xl lg:text-4xl text-primary">
             Successful!
           </h2>
-          <p className="-mb-3">Password successfully updated.</p>
+          <p className="-mb-3 text-sm lg:text-base">Password successfully updated.</p>
 
           <Button
-            className="bg-purple-600 text-white w-[270px] px-10"
+            className="bg-purple-600 text-white w-full lg:w-[270px] px-10"
             onClick={() => (window.location.href = "/login")}
           >
             Sign In
@@ -72,13 +72,13 @@ export default function ConfirmPassword({ email, token }: ConfirmPasswordProps) 
   }
 
   return (
-    <main className="flex flex-col gap-7 text-center items-center justify-center">
+    <main className="flex flex-col gap-7 text-center items-center justify-center px-4">
       <div>
-        <h2 className="font-medium text-4xl text-primary">Reset Password</h2>
-        <p>Set your new password</p>
+        <h2 className="font-medium text-3xl lg:text-4xl text-primary">Reset Password</h2>
+        <p className="text-sm lg:text-base">Set your new password</p>
       </div>
 
-      <CardWrapper className="px-24 py-16 flex flex-col gap-6 items-start w-[600px]">
+      <CardWrapper className="px-6 lg:px-24 py-8 lg:py-16 flex flex-col gap-6 items-start w-full max-w-[600px]">
         <Input
           type="password"
           className="bg-white min-h-12"

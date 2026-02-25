@@ -37,8 +37,8 @@ export default function PortfolioCards({
       try {
         setComparisonLoading(true);
         const fromDate = getFromDate();
-        console.log("📅 Fetching comparison from (1 month ago):", fromDate);
-        console.log("👤 User ID:", userId);
+
+
         
         // Fetch portfolio value comparison
         try {
@@ -48,7 +48,7 @@ export default function PortfolioCards({
             userId,
             'PORTFOLIO_VALUE'
           );
-          console.log("✅ Portfolio comparison response:", portfolioRes);
+
           setPortfolioComparison(portfolioRes.data);
         } catch (err) {
           console.error("Portfolio comparison failed:", err);
@@ -63,10 +63,10 @@ export default function PortfolioCards({
             userId,
             'ACCRUED_ROI'
           );
-          console.log("✅ Returns comparison response:", returnsRes);
+
           setReturnsComparison(returnsRes.data);
         } catch (err) {
-          console.log("Returns comparison not available:", err);
+
           setReturnsComparison(null);
         }
         
@@ -129,7 +129,7 @@ export default function PortfolioCards({
 
   if (isLoading || comparisonLoading) {
     return (
-      <main className="flex gap-4">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -142,38 +142,38 @@ export default function PortfolioCards({
 
   if (error) {
     return (
-      <main className="flex gap-4">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card, index) => (
           <div
             key={index}
-            className="w-full px-2 py-5 rounded-2xl bg-[#FAF1FF] border border-[#A243DC] flex flex-col gap-1"
+            className="w-full px-4 py-5 rounded-2xl bg-[#FAF1FF] border border-[#A243DC] flex flex-col gap-1"
           >
-            <p className="text-[#A243DC]">{card.name}</p>
+            <p className="text-[#A243DC] text-sm">{card.name}</p>
             <p className="text-gray-400 text-sm">Failed to load</p>
           </div>
         ))}
 
         <Link
           href={"/create-plan"}
-          className="bg-primary text-white flex flex-col gap-3 items-center justify-center w-full rounded-2xl"
+          className="bg-primary text-white flex flex-col gap-3 items-center justify-center w-full rounded-2xl py-5"
         >
           <FaPlus size={24} />
-          <p>Create New Plan</p>
+          <p className="text-sm">Create New Plan</p>
         </Link>
       </main>
     );
   }
 
   return (
-    <main className="flex gap-4">
+    <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card, index) => (
         <div
           key={index}
-          className="w-full px-2 py-5 rounded-2xl bg-[#FAF1FF] border border-[#A243DC] flex flex-col gap-1"
+          className="w-full px-4 py-5 rounded-2xl bg-[#FAF1FF] border border-[#A243DC] flex flex-col gap-1"
         >
-          <p className="text-[#A243DC]">{card.name}</p>
+          <p className="text-[#A243DC] text-sm">{card.name}</p>
 
-          <h2 className="text-[#263238] text-2xl font-medium">
+          <h2 className="text-[#263238] text-xl lg:text-2xl font-medium truncate">
             {card.isCurrency
               ? `₦${Number(card.value).toLocaleString()}`
               : Number(card.value).toLocaleString()}
@@ -186,10 +186,10 @@ export default function PortfolioCards({
 
       <Link
         href={"/create-plan"}
-        className="bg-primary text-white flex flex-col gap-3 items-center justify-center w-full rounded-2xl"
+        className="bg-primary text-white flex flex-col gap-3 items-center justify-center w-full rounded-2xl py-5"
       >
-        <FaPlus size={24} />
-        <p>Create New Plan</p>
+        <FaPlus size={20} />
+        <p className="text-sm">Create New Plan</p>
       </Link>
     </main>
   );

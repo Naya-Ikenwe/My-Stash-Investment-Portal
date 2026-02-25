@@ -41,7 +41,6 @@ export default function Dashboard() {
         }
         setDashboardData(dashboardResponse.data);
       } catch (err: any) {
-        console.error("Error fetching dashboard:", err);
         setError(err.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
@@ -53,14 +52,14 @@ export default function Dashboard() {
 
   return (
     <main>
-      <h2 className="text-3xl font-heading">
+      <h2 className="text-3xl lg:text-4xl font-heading">
         Hello <span className="text-primary">{user?.data?.firstName},</span>
       </h2>
 
       <hr className="my-4 border border-[#455A6433]" />
 
-      <section className="flex gap-4">
-        <div className="w-4/5 flex flex-col gap-4">
+      <section className="flex flex-col lg:flex-row gap-4">
+        <div className="w-full lg:w-4/5 flex flex-col gap-4">
           <PortfolioCards 
             dashboardData={dashboardData} 
             userId={user?.data?.id} // 👈 Only this line added
@@ -68,15 +67,15 @@ export default function Dashboard() {
             error={error}
           />
 
-          <div className="flex gap-4">
-            <div className="w-3/5">
+          <div className="flex flex-col xl:flex-row gap-4">
+            <div className="w-full xl:w-3/5">
               <PortfolioGrowth 
                 dashboardData={dashboardData} 
                 isLoading={loading}
               />
             </div>
 
-            <div className="w-2/5">
+            <div className="w-full xl:w-2/5">
               <TransactionHistory 
                 dashboardData={dashboardData} 
                 isLoading={loading}
@@ -85,10 +84,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <RecentActivities 
-          dashboardData={dashboardData} 
-          isLoading={loading}
-        />
+        <div className="w-full lg:w-1/5">
+          <RecentActivities 
+            dashboardData={dashboardData} 
+            isLoading={loading}
+          />
+        </div>
       </section>
     </main>
   );

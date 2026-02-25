@@ -33,13 +33,13 @@ export default function WithdrawModal({
     setError(null);
 
     try {
-      console.log(`📤 Calling withdraw endpoint for plan ${planId}...`);
+
 
       const response = await withdrawPlan(planId);
 
       // Check what the actual response structure is
-      console.log("✅ Withdrawal successful - full response:", response);
-      console.log("✅ Withdrawal data:", response.data); // This might be undefined if response is already the data
+
+
 
       // Show success message and close
       alert(
@@ -61,7 +61,7 @@ export default function WithdrawModal({
         );
       } else {
         // If status is 200 but we're in catch block, it's a parsing issue - still success
-        console.log("⚠️ Withdrawal succeeded but response parsing failed");
+
         onClose();
         if (onWithdrawSuccess) {
           onWithdrawSuccess();
@@ -75,8 +75,8 @@ export default function WithdrawModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm">
-      <div className="bg-white w-[500px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm p-4">
+      <div className="bg-white w-full lg:w-[500px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         {/* Close Button */}
         <button
           onClick={onClose}

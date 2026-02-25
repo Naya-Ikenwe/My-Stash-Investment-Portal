@@ -63,7 +63,7 @@ type FormData = {
   newPin?: string;
 };
 
-export default function Authorization() {
+export default function Authorization({ isMobile = false }: { isMobile?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [apiError, setApiError] = useState("");
@@ -144,7 +144,7 @@ export default function Authorization() {
             // Answer field remains EMPTY as requested
           }
         } catch (securityError) {
-          console.log("No security question saved yet");
+
         }
 
         // 4. Fetch bank accounts
@@ -250,72 +250,78 @@ export default function Authorization() {
         <>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="w-3/5 flex flex-col items-center"
+            className={isMobile ? "w-full flex flex-col items-start" : "w-3/5 flex flex-col items-center"}
           >
-            <div className="grid grid-cols-2 gap-5 w-full">
+            <div className={isMobile ? "grid grid-cols-1 gap-4 w-full" : "grid grid-cols-2 gap-5 w-full"}>
               {/* BVN - Editable if not already set */}
-              <Controller
-                name="bvn"
-                control={control}
-                render={({ field }) => (
-                  <div>
-                    <Input
-                      {...field}
-                      placeholder="Bank Verification Number (BVN)"
-                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                      readOnly={hasExistingBvn}
-                      maxLength={11}
-                    />
-                    {hasExistingBvn ? (
-                      <p className="text-xs text-gray-500 mt-1">
-                        BVN already saved
-                      </p>
-                    ) : !bvnValue ? (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter your 11-digit BVN
-                      </p>
-                    ) : bvnValue.length !== 11 ? (
-                      <p className="text-xs text-red-500 mt-1">
-                        BVN must be 11 digits
-                      </p>
-                    ) : (
-                      <p className="text-xs text-green-500 mt-1">
-                        Valid BVN length
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
+              <div className="w-full">
+                <Controller
+                  name="bvn"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="w-full">
+                      <Input
+                        {...field}
+                        placeholder="Bank Verification Number (BVN)"
+                        className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 w-full"
+                        readOnly={hasExistingBvn}
+                        maxLength={11}
+                      />
+                      {hasExistingBvn ? (
+                        <p className="text-xs text-gray-500 mt-1">
+                          BVN already saved
+                        </p>
+                      ) : !bvnValue ? (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Enter your 11-digit BVN
+                        </p>
+                      ) : bvnValue.length !== 11 ? (
+                        <p className="text-xs text-red-500 mt-1">
+                          BVN must be 11 digits
+                        </p>
+                      ) : (
+                        <p className="text-xs text-green-500 mt-1">
+                          Valid BVN length
+                        </p>
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
 
               {/* Source of Income */}
-              <Controller
-                name="sourceOfIncome"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Source of Income"
-                    className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                  />
-                )}
-              />
+              <div className="w-full">
+                <Controller
+                  name="sourceOfIncome"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="Source of Income"
+                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 w-full"
+                    />
+                  )}
+                />
+              </div>
 
               {/* NIN Number */}
-              <Controller
-                name="nin"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="NIN Number"
-                    className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                    maxLength={11}
-                  />
-                )}
-              />
+              <div className="w-full">
+                <Controller
+                  name="nin"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="NIN Number"
+                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 w-full"
+                      maxLength={11}
+                    />
+                  )}
+                />
+              </div>
 
               {/* Security Question */}
-              <div>
+              <div className="w-full">
                 {savedSecurityQuestion && savedSecurityQuestion.question ? (
                   <div className="mb-2">
                     <p className="text-sm font-medium">
@@ -359,33 +365,35 @@ export default function Authorization() {
               </div>
 
               {/* Security Answer */}
-              <Controller
-                name="securityAnswer"
-                control={control}
-                render={({ field }) => (
-                  <div>
-                    <Input
-                      {...field}
-                      placeholder={
-                        savedSecurityQuestion
-                          ? "Enter new answer"
-                          : "Security Answer"
-                      }
-                      className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                    {savedSecurityQuestion && !securityAnswerValue && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter a new answer to update your security question
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
+              <div className="w-full">
+                <Controller
+                  name="securityAnswer"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="w-full">
+                      <Input
+                        {...field}
+                        placeholder={
+                          savedSecurityQuestion
+                            ? "Enter new answer"
+                            : "Security Answer"
+                        }
+                        className="bg-white shadow-none py-2 border-[#2323231A] h-12 mt-2 w-full"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                      {savedSecurityQuestion && !securityAnswerValue && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Enter a new answer to update your security question
+                        </p>
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
 
               {/* PIN Section - Using Modals */}
-              <div className="col-span-2 space-y-4">
+              <div className={isMobile ? "w-full space-y-4" : "col-span-2 space-y-4"}>
                 <div className="flex gap-4">
                   <button
                     type="button"

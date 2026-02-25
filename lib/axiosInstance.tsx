@@ -73,7 +73,7 @@ API.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log("🔄 Attempting to refresh token...");
+
         
         // Call refresh endpoint
         const refreshResponse = await axios.post(
@@ -93,7 +93,7 @@ API.interceptors.response.use(
           throw new Error("No access token in refresh response");
         }
 
-        console.log("✅ Token refreshed successfully");
+
 
         // CRITICAL: Update BOTH Zustand AND Cookies
         useAuthStore.getState().setAccessToken(newAccessToken);
@@ -108,7 +108,6 @@ API.interceptors.response.use(
         // Retry the original request
         return API(originalRequest);
       } catch (refreshError) {
-        console.error("❌ Refresh token failed:", refreshError);
         
         // Process queued requests with error
         processQueue(refreshError, null);

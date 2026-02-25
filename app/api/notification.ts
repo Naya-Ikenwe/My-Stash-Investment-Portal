@@ -38,16 +38,15 @@ export interface NotificationSummaryResponse {
 // 1. Get recent notifications
 export const getRecentNotifications = async (limit: number = 5): Promise<Notification[]> => {
   try {
-    console.log(`📨 Fetching ${limit} notifications...`);
+
     const response = await API.get<NotificationsResponse>("/notification", {
       params: { page: 1, limit }
     });
     
-    console.log(`✅ Got ${response.data.data.results.length} notifications`);
+
     return response.data.data.results;
     
   } catch (error: any) {
-    console.error("❌ Failed to fetch notifications:", error.response?.data || error.message);
     return [];
   }
 };
@@ -55,14 +54,13 @@ export const getRecentNotifications = async (limit: number = 5): Promise<Notific
 // 2. Get notification summary
 export const getNotificationSummary = async (): Promise<NotificationSummary> => {
   try {
-    console.log("📊 Fetching notification summary...");
+
     const response = await API.get<NotificationSummaryResponse>("/notification/summary");
     
-    console.log("📊 Summary:", response.data.data);
+
     return response.data.data;
     
   } catch (error: any) {
-    console.error("❌ Failed to fetch summary:", error.response?.data || error.message);
     return { total: 0, read: 0, unread: 0 };
   }
 };
@@ -70,11 +68,11 @@ export const getNotificationSummary = async (): Promise<NotificationSummary> => 
 // 3. Mark single notification as read
 export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
   try {
-    console.log(`👁️ Marking notification ${notificationId} as read...`);
+
     
     await API.post(`/notification/${notificationId}/read`);
     
-    console.log(`✅ Notification ${notificationId} marked as read`);
+
     return true;
     
   } catch (error: any) {
@@ -86,11 +84,11 @@ export const markNotificationAsRead = async (notificationId: string): Promise<bo
 // 4. Mark all notifications as read
 export const markAllNotificationsAsRead = async (): Promise<boolean> => {
   try {
-    console.log("👁️ Marking ALL notifications as read...");
+
     
     await API.post("/notification/read-all");
     
-    console.log("✅ All notifications marked as read");
+
     return true;
     
   } catch (error: any) {
@@ -109,7 +107,7 @@ export const getAllNotifications = async (
     const params: any = { page, limit };
     if (isRead !== undefined) params.isRead = isRead;
     
-    console.log(`📄 Fetching page ${page}, limit ${limit}...`);
+
     const response = await API.get<NotificationsResponse>("/notification", { params });
     
     return {
@@ -118,7 +116,7 @@ export const getAllNotifications = async (
     };
     
   } catch (error: any) {
-    console.error("❌ Failed to fetch all notifications:", error.response?.data || error.message);
+
     return { notifications: [], totalCount: 0 };
   }
 };

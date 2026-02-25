@@ -46,11 +46,11 @@ export default function TopUpModal({
     setError(null);
 
     try {
-      console.log(`📤 Calling top-up endpoint for plan ${planId} with amount ${numericAmount}`);
+
       
       const response = await topUpPlan(planId, numericAmount);
       
-      console.log("✅ Top-up API response:", response);
+
       
       setInstantTransfer(response.data.payment.instantTransfer);
       setBankTransfer(response.data.payment.bankTransfer);
@@ -92,8 +92,8 @@ export default function TopUpModal({
   return (
     <>
       {/* Main Top-up Modal */}
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
-        <div className="bg-white w-[450px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col">
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+        <div className="bg-white w-full lg:w-[450px] rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
           {/* Close Button */}
           <button
             onClick={onClose}

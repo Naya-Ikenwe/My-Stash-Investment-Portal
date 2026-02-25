@@ -84,8 +84,8 @@ export default function SetPinModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-100 backdrop-blur-sm">
-      <div className="bg-white w-[400px] rounded-2xl shadow-2xl relative p-8">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-100 backdrop-blur-sm p-4">
+      <div className="bg-white w-full lg:w-[400px] rounded-2xl shadow-2xl relative p-6 lg:p-8 max-h-screen lg:max-h-auto overflow-y-auto lg:overflow-y-visible">
         {/* Close Button */}
         <button
           onClick={handleClose}

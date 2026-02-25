@@ -22,7 +22,7 @@ type NextOfKinFormData = {
   relationship: string;
 };
 
-export default function NextofKin() {
+export default function NextofKin({ isMobile = false }: { isMobile?: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasSavedData, setHasSavedData] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
@@ -50,11 +50,11 @@ export default function NextofKin() {
         setIsLoading(true);
         setErrorMessage("");
         
-        console.log("🔄 Checking for saved next of kin...");
+
         const savedData = await getNextOfKin();
         
         if (savedData) {
-          console.log("✅ Found saved next of kin, pre-filling form:", savedData);
+
           setHasSavedData(true);
           
           // Pre-fill form with saved data
@@ -66,7 +66,7 @@ export default function NextofKin() {
             relationship: savedData.relationship || ""
           });
         } else {
-          console.log("ℹ️ No saved next of kin found - showing empty form");
+
           setHasSavedData(false);
         }
       } catch (error: any) {
@@ -86,11 +86,11 @@ export default function NextofKin() {
       setSaveStatus("saving");
       setErrorMessage("");
       
-      console.log("💾 Saving next of kin data:", data);
+
       
       const savedData = await saveNextOfKin(data);
       
-      console.log("✅ Next of kin saved successfully:", savedData);
+
       setHasSavedData(true);
       setSaveStatus("success");
       
@@ -146,10 +146,10 @@ export default function NextofKin() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-7 w-[60%]">
+      <form onSubmit={handleSubmit(onSubmit)} className={isMobile ? "flex flex-col gap-7 w-full" : "flex flex-col gap-7 w-[60%]"}>
         {/* Full Name - FIXED ALIGNMENT */}
-        <div className="flex items-center gap-5">
-          <label className="text-nowrap w-3/8 text-primary font-medium text-lg">
+        <div className={isMobile ? "flex flex-col gap-3" : "flex items-center gap-5"}>
+          <label className={isMobile ? "w-full text-primary font-medium text-lg" : "text-nowrap w-3/8 text-primary font-medium text-lg"}>
             Full Name
           </label>
           <div className="flex gap-5 w-full">
@@ -191,8 +191,8 @@ export default function NextofKin() {
         </div>
 
         {/* Email Address - FIXED ALIGNMENT */}
-        <div className="flex items-center gap-5">
-          <label className="text-nowrap w-3/8 text-primary font-medium text-lg">
+        <div className={isMobile ? "flex flex-col gap-3" : "flex items-center gap-5"}>
+          <label className={isMobile ? "w-full text-primary font-medium text-lg" : "text-nowrap w-3/8 text-primary font-medium text-lg"}>
             Email Address
           </label>
           <div className="w-full">
@@ -224,8 +224,8 @@ export default function NextofKin() {
         </div>
 
         {/* Phone Number - FIXED ALIGNMENT */}
-        <div className="flex items-center gap-5">
-          <label className="text-nowrap w-3/8 text-primary font-medium text-lg">
+        <div className={isMobile ? "flex flex-col gap-3" : "flex items-center gap-5"}>
+          <label className={isMobile ? "w-full text-primary font-medium text-lg" : "text-nowrap w-3/8 text-primary font-medium text-lg"}>
             Phone Number
           </label>
           <div className="w-full">
@@ -256,8 +256,8 @@ export default function NextofKin() {
         </div>
 
         {/* Relationship - FIXED ALIGNMENT */}
-        <div className="flex items-center gap-5">
-          <label className="text-nowrap w-3/8 text-primary font-medium text-lg">
+        <div className={isMobile ? "flex flex-col gap-3" : "flex items-center gap-5"}>
+          <label className={isMobile ? "w-full text-primary font-medium text-lg" : "text-nowrap w-3/8 text-primary font-medium text-lg"}>
             Relationship
           </label>
           <div className="w-full">
@@ -299,12 +299,12 @@ export default function NextofKin() {
         </div>
 
         {/* Save Button */}
-        <div className="flex items-end justify-center w-full mt-4">
+        <div className="flex items-center justify-center w-full mt-4">
           <Input
             type="submit"
             value={saveStatus === "saving" ? "Saving..." : "Save Changes"}
             disabled={saveStatus === "saving" || !isDirty}
-            className={`bg-primary text-white mt-7 w-5/8 cursor-pointer transition-opacity ${
+            className={`bg-primary text-white mt-4 ${isMobile ? "w-full" : "w-5/8"} cursor-pointer transition-opacity ${
               saveStatus === "saving" || !isDirty ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-dark"
             }`}
           />

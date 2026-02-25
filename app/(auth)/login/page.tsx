@@ -82,13 +82,13 @@ export default function LoginPage() {
   return (
     <AuthWrapper>
       <main className="flex items-center justify-center">
-        <div className="flex flex-col gap-5 items-center">
-          <span className="text-center">
-            <h2 className="header-one font-heading">Back to business</h2>
-            <p className="text-[20px] mt-2">Let's get you signed in</p>
+        <div className="flex flex-col gap-5 items-center w-full max-w-2xl">
+          <span className="text-center px-4">
+            <h2 className="header-one font-heading text-2xl lg:text-4xl">Back to business</h2>
+            <p className="text-lg lg:text-[20px] mt-2">Let's get you signed in</p>
           </span>
 
-          <CardWrapper className="px-28 py-10">
+          <CardWrapper className="px-6 lg:px-8 py-8 lg:py-10 w-full max-w-md">
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
               <div>
                 <input
@@ -113,13 +113,13 @@ export default function LoginPage() {
               </div>
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
 
-              <Link href="/forget-password" className="text-primary font-medium">Forgot Password</Link>
+              <Link href="/forget-password" className="text-primary font-medium text-sm">Forgot Password</Link>
 
-              <div className="flex items-center mt-5 justify-between">
-                <p>
-                  New User? <Link href="/sign-up" className="text-primary">Create Account</Link>
+              <div className="flex flex-col lg:flex-row items-center mt-5 justify-between gap-3 lg:gap-0">
+                <p className="text-sm">
+                  New User? <Link href="/sign-up" className="text-primary font-medium">Create Account</Link>
                 </p>
-                <button type="submit" className="bg-primary font-medium text-white px-4 py-2 rounded disabled:opacity-50" disabled={loading}>
+                <button type="submit" className="bg-primary font-medium text-white px-6 py-2 rounded disabled:opacity-50 w-full lg:w-auto" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In"}
                 </button>
               </div>

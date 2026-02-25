@@ -202,7 +202,7 @@ export const setUserPinService = async (payload: {
 // Get bank accounts
 export const getUserBankAccountsService = async () => {
   const res = await API.get("/bank");
-  console.log("bank", res.data);
+
   return res.data as {
     status: string;
     message: string;
@@ -217,7 +217,7 @@ export const changePinService = async (payload: {
   newPin: string;
 }) => {
   const res = await API.post("/security/pin/change", payload);
-  console.log("change pin", res)
+
   return res.data;
 };
 
@@ -315,10 +315,10 @@ export interface NextOfKinResponse {
 // GET saved next of kin details
 export const getNextOfKin = async (): Promise<NextOfKinData | null> => {
   try {
-    console.log("🔄 Fetching next of kin details...");
+
     const response = await API.get<NextOfKinResponse>("/user/next-of-kin");
     
-    console.log("✅ Next of kin response:", response.data);
+
     
     if (response.data.status === "success") {
       return response.data.data;
@@ -328,13 +328,13 @@ export const getNextOfKin = async (): Promise<NextOfKinData | null> => {
   } catch (error: any) {
     // Handle 404 specifically (no next of kin saved yet)
     if (error.response?.status === 404) {
-      console.log("ℹ️ No next of kin found - user hasn't saved any yet");
+
       return null;
     }
     
     // Handle 401 (token issues)
     if (error.response?.status === 401) {
-      console.error("🔐 Unauthorized - token may be invalid/expired");
+      // Unauthorized - token may be invalid/expired
       throw new Error("Session expired. Please log in again.");
     }
     
@@ -352,11 +352,11 @@ export const saveNextOfKin = async (data: {
   relationship: string;
 }): Promise<NextOfKinData> => {
   try {
-    console.log("💾 Saving next of kin details:", data);
+
     
     const response = await API.put<NextOfKinResponse>("/user/next-of-kin", data);
     
-    console.log("✅ Next of kin saved successfully:", response.data);
+
     
     if (response.data.status === "success") {
       return response.data.data;

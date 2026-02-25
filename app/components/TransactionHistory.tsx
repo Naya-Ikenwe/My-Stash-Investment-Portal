@@ -77,7 +77,6 @@ export default function TransactionHistory({
       // Add planId to filter if provided
       if (planId) {
         queryParams.planId = planId;
-        console.log(`🔍 Fetching transactions for plan: ${planId}`);
       }
       
       // Use the service function from user.ts
@@ -93,7 +92,6 @@ export default function TransactionHistory({
       }
       
     } catch (err: any) {
-      console.error('Error fetching transactions:', err);
       setError(err.response?.data?.message || 'Failed to fetch transactions');
       setTransactions([]);
       setTotalCount(0);
