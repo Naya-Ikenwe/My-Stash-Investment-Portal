@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, AlertCircle } from "lucide-react";
 import { rolloverPlan } from "../api/Plan";
+import toast from "react-hot-toast";
 
 interface RolloverModalProps {
   isOpen: boolean;
@@ -36,17 +37,14 @@ export default function RolloverModal({
       // ✅ CORRECT: The new plan ID is in response.data.plan.id
       const newPlanId = response.data?.plan?.id;
 
-
-
-      // Show success message
-      alert(
+      // Rollover completed successfully
+      toast.success(
         `✅ Plan rolled over successfully!\n\n${
           selectedOption === "PRINCIPAL_AND_INTEREST"
             ? `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been reinvested.`
             : `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been withdrawn.`
         }`
       );
-
       onClose();
 
       // Pass new plan ID to callback for navigation
@@ -59,9 +57,7 @@ export default function RolloverModal({
         // ✅ CORRECT: Access the new plan ID from error response
         const newPlanId = err.response?.data?.data?.plan?.id;
         
-
-        
-        alert(
+        toast.success(
           `✅ Plan rolled over successfully!\n\n${
             selectedOption === "PRINCIPAL_AND_INTEREST"
               ? `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been reinvested.`
@@ -72,15 +68,13 @@ export default function RolloverModal({
         if (onSuccess && newPlanId) {
           onSuccess(newPlanId);
         }
-        return;
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to rollover plan. Please try again."
+        );
       }
-
-      console.error("❌ Rollover failed:", err);
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to rollover plan. Please try again."
-      );
     } finally {
       setIsSubmitting(false);
     }

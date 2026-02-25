@@ -4,6 +4,7 @@ import React from "react";
 import { X, Copy, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BankTransferDetails } from "../api/Plan";
+import toast from "react-hot-toast";
 
 interface BankTransferModalProps {
   isOpen: boolean;
@@ -23,10 +24,9 @@ export default function BankTransferModal({
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard!");
+      toast.success("Copied to clipboard!");
     } catch (err) {
-      console.error("Failed to copy:", err);
-      alert("Failed to copy");
+      toast.error("Failed to copy");
     }
   };
 

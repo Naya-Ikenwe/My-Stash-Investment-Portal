@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Copy, AlertCircle, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { InstantTransferDetails } from "../api/Plan";
+import toast from "react-hot-toast";
 
 interface InstantTopupProps {
   isOpen: boolean;
@@ -56,10 +57,9 @@ export default function InstantTopup({
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard!");
+      toast.success("Copied to clipboard!");
     } catch (err) {
-      console.error("Failed to copy:", err);
-      alert("Failed to copy");
+      toast.error("Failed to copy");
     }
   };
 

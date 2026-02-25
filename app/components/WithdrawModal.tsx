@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, AlertCircle } from "lucide-react";
 import { withdrawPlan } from "@/app/api/Plan";
+import toast from "react-hot-toast";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -37,21 +38,15 @@ export default function WithdrawModal({
 
       const response = await withdrawPlan(planId);
 
-      // Check what the actual response structure is
-
-
-
-      // Show success message and close
-      alert(
+      // Withdrawal completed successfully
+      toast.success(
         "Plan closed successfully. All remaining funds have been withdrawn.",
       );
-
       onClose();
       if (onWithdrawSuccess) {
         onWithdrawSuccess();
       }
     } catch (err: any) {
-      console.error("❌ Withdrawal failed:", err);
       // Only show error if it's actually an error
       if (err.response?.status !== 200) {
         setError(

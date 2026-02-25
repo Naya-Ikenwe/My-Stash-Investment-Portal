@@ -13,6 +13,7 @@ import {
 import TransactionFilters from "@/app/components/TransactionFilters";
 import TransactionStats from "@/app/components/TransactionStats";
 import TransactionTable from "@/app/components/TransactionTable";
+import toast from "react-hot-toast";
 
 type Transaction = {
   id: string;
@@ -169,15 +170,12 @@ export default function TransactionHistoryPage() {
 
       const response = await requestStatementReport(payload);
 
-      // Show success message
-      alert("Statement request sent! Check your email for the PDF.");
-
+      toast.success("Statement request sent! Check your email for the PDF.");
       // Reset and close
       setStatementRange({ fromDate: "", toDate: "" });
       setShowDatePicker(false);
     } catch (error: any) {
-      console.error("Statement request failed:", error);
-      alert(
+      toast.error(
         error.response?.data?.message ||
           "Failed to request statement. Please try again.",
       );

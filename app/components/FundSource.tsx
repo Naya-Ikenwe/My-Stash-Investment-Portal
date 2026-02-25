@@ -6,6 +6,7 @@ import HoverWrapper from "./HoverWrapper";
 import { BiSolidBank, BiTransferAlt } from "react-icons/bi";
 import InstantTopup from "./InstantTopup";
 import BankTopup from "./BankTopup";
+import toast from "react-hot-toast";
 
 type FundSourceProps = {
   onClose: () => void;
@@ -42,8 +43,7 @@ export default function FundSource({
           setPaymentDetails(details);
           setSelectedMethod(id);
         } catch (error) {
-          console.error("Failed to get payment details:", error);
-          alert("Could not get payment details. Please try again.");
+          toast.error("Could not get payment details. Please try again.");
         }
       } else {
         // Use mock data if no callback provided

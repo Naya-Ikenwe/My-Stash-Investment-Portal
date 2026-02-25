@@ -123,7 +123,7 @@ const onSubmit = async (data: SignupFormInputs) => {
 };
 
   return (
-    <AuthWrapper className="flex flex-col lg:flex-row gap-6 lg:gap-10 -mt-0 lg:-mt-10">
+    <AuthWrapper className="flex flex-col lg:flex-row gap-6 lg:gap-10 mt-0 lg:-mt-10">
       <main className="flex flex-col lg:flex-row gap-6 lg:gap-20 w-full">
         <CardWrapper className="px-6 lg:px-8 py-8 lg:py-8 flex flex-col gap-4 w-full lg:w-[628px]">
           <div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { X, Copy, Mail } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function BankTopup({
   isOpen,
@@ -21,10 +22,9 @@ export default function BankTopup({
   const handleCopy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert("Copied to clipboard!");
+      toast.success("Copied to clipboard!");
     } catch (err) {
-      console.error("Failed to copy:", err);
-      alert("Failed to copy");
+      toast.error("Failed to copy");
     }
   };
 
