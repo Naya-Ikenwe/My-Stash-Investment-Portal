@@ -89,24 +89,24 @@ export default function DashboardTopLevel() {
 
         {/* Profile Dropdown */}
         <div className="relative flex items-center gap-2" ref={dropdownRef}>
-          <Image
-            src="/profile.svg"
-            alt="profile"
-            width={28}
-            height={28}
-            className="w-7 h-7 rounded-full bg-[#F7F7F7]"
-          />
-
-          {/* Toggle only arrow - hidden on small screens */}
-          <button 
+          <button
             onClick={() => setOpen((prev) => !prev)}
             aria-label="Toggle profile menu"
             aria-expanded={open}
-            className="hidden lg:block"
+            className="flex items-center gap-2 cursor-pointer"
           >
+            <Image
+              src="/profile.svg"
+              alt="profile"
+              width={28}
+              height={28}
+              className="w-7 h-7 rounded-full bg-[#F7F7F7]"
+            />
+
+            {/* Arrow - visible on md and up */}
             <IoMdArrowDropdown
               size={20}
-              className={`cursor-pointer text-[#A243DC] transition-transform ${
+              className={`cursor-pointer text-[#A243DC] transition-transform hidden md:block ${
                 open ? "rotate-180" : ""
               }`}
             />

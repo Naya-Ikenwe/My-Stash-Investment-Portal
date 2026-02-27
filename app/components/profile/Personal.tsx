@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   getUserProfileService,
   updateUserProfileService,
+  updateProfileService,
 } from "@/app/api/Users";
+import FileDropzone from "./FileInput";
+import toast from "react-hot-toast";
 import { useAuthStore } from "@/app/store/authStore";
 import { countries, type TCountryCode } from "countries-list";
 
@@ -50,6 +53,9 @@ type PersonalForm = {
 export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [apiError, setApiError] = useState("");
   const [apiSuccess, setApiSuccess] = useState("");
   const { user: authUser, setUser } = useAuthStore();
@@ -122,6 +128,11 @@ export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
           phone: userPhone,
         });
 
+        // If user has a display photo URL, set preview
+        if (latestUser.displayPhotoUrl) {
+          setPreviewUrl(latestUser.displayPhotoUrl);
+        }
+
 
       } catch (error) {
         console.error("❌ Failed to fetch profile:", error);
@@ -135,42 +146,75 @@ export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // EMPTY array - runs once
 
+  // Create a preview URL for selected file and revoke when changed
+  useEffect(() => {
+    let url: string | null = null;
+    if (selectedFile) {
+      url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+    }
+
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [selectedFile]);
+
   const onSubmit = async (data: PersonalForm) => {
     setLoading(true);
     setApiError("");
     setApiSuccess("");
 
-    try {
+      try {
+      // Build payload. Use FormData if there's a file selected.
+      let response: any;
 
+      if (selectedFile) {
+        const payload = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone, // Phone from form
+          title: data.title,
+          middleName: data.middleName,
+          gender: data.gender.toUpperCase(),
+          maritalStatus: data.maritalStatus,
+          address: data.residentialAddress,
+          country: data.country,
+          dateOfBirth: undefined,
+          displayPhoto: selectedFile,
+        } as any;
 
-      const payload = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone, // Phone from form
-        title: data.title,
-        middleName: data.middleName,
-        gender: data.gender.toUpperCase(),
-        maritalStatus: data.maritalStatus,
-        address: data.residentialAddress,
-        country: data.country,
-      };
+        response = await updateProfileService(payload);
+      } else {
+        const payload = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone, // Phone from form
+          title: data.title,
+          middleName: data.middleName,
+          gender: data.gender.toUpperCase(),
+          maritalStatus: data.maritalStatus,
+          address: data.residentialAddress,
+          country: data.country,
+        };
 
-      const response = await updateUserProfileService(payload);
+        response = await updateUserProfileService(payload);
+      }
 
       setApiSuccess("Profile updated successfully!");
 
       // Update auth store with new data INCLUDING PHONE
-      if (response.data) {
-        // Just pass the API response - auth store will preserve phone
+      if (response?.data) {
         setUser(response.data);
-
-        // If phone was in the form, ensure it's saved
-        if (data.phone) {
-          setUser({ phone: data.phone }); // Partial update
-        }
       }
+
+      // If response contains displayPhotoUrl, update preview
+      if (response?.data?.displayPhotoUrl) {
+        setPreviewUrl(response.data.displayPhotoUrl);
+      }
+      toast.success("Profile updated successfully");
     } catch (error: any) {
       setApiError(error.response?.data?.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -195,12 +239,54 @@ export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
         {/* Left Column */}
         <div className={isMobile ? "w-full flex flex-col gap-4" : "w-2/5 flex flex-col gap-4"}>
           <div className="flex items-center gap-3">
-            <Image
-              src={"/images/profile-pic.png"}
-              alt="profile-pic"
-              width={isMobile ? 120 : 150}
-              height={isMobile ? 120 : 150}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+              className="w-28 h-28 relative rounded-full overflow-hidden bg-[#F7F7F7] cursor-pointer"
+              aria-label="Change profile photo"
+            >
+              {previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={previewUrl} alt="profile" className="w-full h-full object-cover" />
+              ) : (
+                <Image
+                  src={'/images/profile-pic.png'}
+                  alt="profile-pic"
+                  width={isMobile ? 120 : 150}
+                  height={isMobile ? 120 : 150}
+                />
+              )}
+
+              <div className="absolute right-0 bottom-0 bg-white/80 rounded-full p-1 m-2">
+                <p className="text-xs text-[#455A64]">Edit</p>
+              </div>
+            </div>
+
+            {/* Hidden file input triggered when clicking the image */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.jpeg,.jpg,.png"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                // basic validation: size <= 5MB and image mime type
+                const maxSize = 5 * 1024 * 1024;
+                if (file.size > maxSize) {
+                  toast.error("File is too large. Max size 5MB.");
+                  return;
+                }
+                if (!file.type.startsWith("image/")) {
+                  toast.error("Invalid file type. Please select an image.");
+                  return;
+                }
+                setSelectedFile(file);
+              }}
             />
+
             <p>
               {authUser?.firstName} {authUser?.lastName}
             </p>
@@ -459,7 +545,7 @@ export default function Personal({ isMobile = false }: { isMobile?: boolean }) {
             type="submit"
             value={loading ? "Saving..." : "Save Changes"}
             className={`bg-primary text-white mt-5 cursor-pointer ${isMobile ? "w-full" : ""} ${loading || fetching ? "opacity-70" : ""}`}
-            disabled={loading || fetching || !isDirty}
+            disabled={loading || fetching || (!isDirty && !selectedFile)}
           />
         </div>
       </form>

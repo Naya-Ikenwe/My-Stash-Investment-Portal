@@ -83,6 +83,47 @@ export const updateUserProfileService = async (payload: any) => {
   return res.data;
 };
 
+// Update user profile with optional profile picture (multipart/form-data)
+export const updateProfileService = async (payload: {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  title?: string;
+  middleName?: string;
+  gender?: string;
+  maritalStatus?: string;
+  address?: string;
+  country?: string;
+  dateOfBirth?: string;
+  displayPhoto?: File | Blob | null;
+}) => {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+
+    if (key === "displayPhoto") {
+      const file = value as File | Blob;
+      // If a File/Blob is provided, append with a filename when possible
+      if (file instanceof File) {
+        formData.append("displayPhoto", file, file.name);
+      } else {
+        formData.append("displayPhoto", file);
+      }
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+
+  const res = await API.patch("/user/profile", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return res.data;
+};
+
 // Logout (optional - if your backend has a logout endpoint)
 export const logoutService = async () => {
   const res = await API.post("/user/logout");
