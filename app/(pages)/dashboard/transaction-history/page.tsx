@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { IoArrowBack, IoFilter, IoDownload, IoSearch } from "react-icons/io5";
+import { IoArrowBack, IoFilter, IoDownload, IoSearch, IoClose } from "react-icons/io5";
 import { PiEmptyBold } from "react-icons/pi";
 import {
   getTransactionsService,
@@ -198,51 +198,61 @@ export default function TransactionHistoryPage() {
   const currentPage = filters.page;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center text-gray-600 hover:text-primary"
-            >
-              <IoArrowBack className="mr-2" />
-              Back to Dashboard
-            </Link>
-            <h1 className="text-2xl font-bold">Transaction History</h1>
-          </div>
+<div className="mb-6 sm:mb-8">
+  {/* Mobile-friendly header that maintains layout */}
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+    <div className="flex items-center gap-2 sm:gap-4">
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center text-gray-600 hover:text-primary text-sm sm:text-base"
+      >
+        <IoArrowBack className="mr-1 sm:mr-2" />
+        Back to Dashboard
+      </Link>
+      <h1 className="text-lg sm:text-2xl font-bold truncate">Transaction History</h1>
+    </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-                showFilters
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-700"
-              }`}
-            >
-              <IoFilter />
-              Filters
-            </button>
+    {/* Buttons stay in a row, just smaller on mobile */}
+    <div className="flex items-center gap-2 sm:gap-3">
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${
+          showFilters
+            ? "bg-primary text-white"
+            : "bg-gray-100 text-gray-700"
+        }`}
+      >
+        <IoFilter className="text-sm sm:text-base" />
+        Filters
+      </button>
 
-            <button
-              onClick={() => setShowDatePicker(true)}
-              disabled={statementLoading}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <IoDownload />
-              {statementLoading ? "Processing..." : "Download Statement"}
-            </button>
-          </div>
-        </div>
-      </div>
+      <button
+        onClick={() => setShowDatePicker(true)}
+        disabled={statementLoading}
+        className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <IoDownload className="text-sm sm:text-base" />
+        Download Statement
+      </button>
+    </div>
+  </div>
+</div>
 
-      {/* Date Range Picker for Statement */}
+      {/* Date Range Picker for Statement - Make responsive */}
       {showDatePicker && (
         <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
-          <h3 className="font-semibold mb-4">Select Statement Period</h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">Select Statement Period</h3>
+            <button
+              onClick={() => setShowDatePicker(false)}
+              className="text-gray-400 hover:text-gray-600 sm:hidden"
+            >
+              <IoClose size={24} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 From Date
@@ -256,7 +266,7 @@ export default function TransactionHistoryPage() {
                     fromDate: e.target.value,
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
             <div>
@@ -272,14 +282,14 @@ export default function TransactionHistoryPage() {
                     toDate: e.target.value,
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
             <button
               onClick={() => setShowDatePicker(false)}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
             >
               Cancel
             </button>
@@ -290,7 +300,7 @@ export default function TransactionHistoryPage() {
                 !statementRange.toDate ||
                 statementLoading
               }
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               Request Statement
             </button>
@@ -298,9 +308,18 @@ export default function TransactionHistoryPage() {
         </div>
       )}
 
-      {/* Filters Panel */}
+      {/* Filters Panel - Make scrollable on mobile */}
       {showFilters && (
-        <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
+        <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 max-h-[80vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
+          <div className="flex justify-between items-center mb-4 sm:hidden">
+            <h3 className="font-semibold">Filters</h3>
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <IoClose size={24} />
+            </button>
+          </div>
           <TransactionFilters
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -312,25 +331,26 @@ export default function TransactionHistoryPage() {
       {/* Main Content */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Table Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h3 className="font-semibold">All Transactions</h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               Showing {transactions.length} of {totalCount} transactions
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Mobile Search - Full width on mobile */}
+          <div className="w-full sm:w-auto">
             <div className="relative">
               <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by reference..."
+                placeholder="Search reference..."
                 value={filters.reference}
                 onChange={(e) =>
                   handleFilterChange({ ...filters, reference: e.target.value })
                 }
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
               />
             </div>
           </div>
@@ -338,8 +358,8 @@ export default function TransactionHistoryPage() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="p-8 space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
+          <div className="p-4 sm:p-8 space-y-4">
+            {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4 p-4 border-b">
                 <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
                 <div className="flex-1 space-y-2">
@@ -353,15 +373,15 @@ export default function TransactionHistoryPage() {
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="p-12 text-center">
-            <div className="text-red-500 text-4xl mb-4">❌</div>
-            <h3 className="text-lg font-medium text-gray-700 mb-2">
+          <div className="p-8 sm:p-12 text-center">
+            <div className="text-red-500 text-3xl sm:text-4xl mb-4">❌</div>
+            <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-2">
               Error Loading Transactions
             </h3>
-            <p className="text-gray-500 mb-4">{error}</p>
+            <p className="text-sm sm:text-base text-gray-500 mb-4">{error}</p>
             <button
               onClick={fetchTransactions}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm"
             >
               Try Again
             </button>
@@ -370,14 +390,14 @@ export default function TransactionHistoryPage() {
 
         {/* Empty State */}
         {!isLoading && !error && transactions.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="text-gray-300 text-4xl mb-4">
+          <div className="p-8 sm:p-12 text-center">
+            <div className="text-gray-300 text-3xl sm:text-4xl mb-4">
               <PiEmptyBold className="inline-block" />
             </div>
-            <h3 className="text-lg font-medium text-gray-700 mb-2">
+            <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-2">
               No Transactions Found
             </h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-sm sm:text-base text-gray-500 mb-4">
               {Object.values(filters).filter(
                 (v) => v && v !== "" && v !== 1 && v !== 20,
               ).length > 0
@@ -389,7 +409,7 @@ export default function TransactionHistoryPage() {
             ).length > 0 && (
               <button
                 onClick={handleClearFilters}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark text-sm"
               >
                 Clear All Filters
               </button>
@@ -402,55 +422,66 @@ export default function TransactionHistoryPage() {
           <>
             <TransactionTable transactions={transactions} />
 
-            {/* Pagination */}
+            {/* Pagination - Make responsive */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+              <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1 text-center sm:text-left">
                   Page {currentPage} of {totalPages}
                 </div>
-                <div className="flex items-center gap-2">
+                
+                {/* Mobile Pagination - Simplified */}
+                <div className="flex items-center justify-center gap-2 order-1 sm:order-2">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm"
                   >
-                    Previous
+                    Prev
                   </button>
 
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) pageNum = i + 1;
-                    else if (currentPage <= 3) pageNum = i + 1;
-                    else if (currentPage >= totalPages - 2)
-                      pageNum = totalPages - 4 + i;
-                    else pageNum = currentPage - 2 + i;
+                  {/* Desktop Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-2">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) pageNum = i + 1;
+                      else if (currentPage <= 3) pageNum = i + 1;
+                      else if (currentPage >= totalPages - 2)
+                        pageNum = totalPages - 4 + i;
+                      else pageNum = currentPage - 2 + i;
 
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-1 rounded ${
-                          currentPage === pageNum
-                            ? "bg-primary text-white"
-                            : "border border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 rounded text-sm ${
+                            currentPage === pageNum
+                              ? "bg-primary text-white"
+                              : "border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Mobile Page Indicator */}
+                  <span className="sm:hidden text-sm">
+                    {currentPage} / {totalPages}
+                  </span>
 
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-sm"
                   >
                     Next
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Show:</span>
+                {/* Per Page Select - Stack below on mobile */}
+                <div className="flex items-center justify-center sm:justify-end gap-2 order-3">
+                  <span className="text-xs sm:text-sm text-gray-600">Show:</span>
                   <select
                     value={filters.limit}
                     onChange={(e) =>
@@ -467,7 +498,7 @@ export default function TransactionHistoryPage() {
                     <option value="50">50</option>
                     <option value="100">100</option>
                   </select>
-                  <span className="text-sm text-gray-600">per page</span>
+                  <span className="hidden sm:inline text-xs sm:text-sm text-gray-600">per page</span>
                 </div>
               </div>
             )}
