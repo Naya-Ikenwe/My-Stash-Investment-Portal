@@ -72,7 +72,7 @@ export default function CreatePlanForm({
   };
 
   return (
-    <main className="flex items-center -my-10 px-4">
+    <main className="flex items-start lg:items-center px-4 h-screen overflow-y-auto pt-10 md:pt-20 lg:pt-0">
       <CardWrapper className="flex flex-col items-center justify-center p-6 lg:p-10 gap-8 w-full max-w-[700px] min-h-[450px] relative mx-auto">
         <button
           onClick={onBack}
@@ -81,7 +81,7 @@ export default function CreatePlanForm({
           <IoIosArrowBack />
         </button>
 
-        <p className="text-2xl font-medium">Hi, create your portfolio</p>
+        <p className="text-2xl font-medium mt-8 sm:mt-0">Hi, create your portfolio</p>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -253,7 +253,7 @@ export default function CreatePlanForm({
         </form>
       </CardWrapper>
 
-      <div>
+      <div className="hidden lg:block">
         <Image
           src={"/plan-form.svg"}
           alt="illustration"

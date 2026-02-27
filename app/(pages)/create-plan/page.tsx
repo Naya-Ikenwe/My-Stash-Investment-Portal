@@ -26,7 +26,7 @@ export default function CreatePlanPage() {
   });
 
   return (
-    <AuthWrapper>
+    <>
       {activeTab === "welcome" && (
         <CreatePlanWelcome onContinue={() => setActiveTab("form")} />
       )}
@@ -42,6 +42,6 @@ export default function CreatePlanPage() {
       {activeTab === "breakdown" && (
         <PlanBreakdown onBack={() => setActiveTab("form")} form={form} />
       )}
-    </AuthWrapper>
+    </>
   );
 }
