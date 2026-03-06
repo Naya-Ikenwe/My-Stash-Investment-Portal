@@ -237,8 +237,7 @@ export default function PlanDetails({
         // Auto-rollover after 7 days
         if (daysSinceMaturity >= 7) {
           try {
-            // Default to PRINCIPAL_AND_INTEREST for auto-rollover
-            const response = await rolloverPlan(planId, "PRINCIPAL_AND_INTEREST");
+            const response = await rolloverPlan(planId, "PRINCIPAL_ONLY");
             
             // Refresh plan data
             fetchPlanData(planId, false);

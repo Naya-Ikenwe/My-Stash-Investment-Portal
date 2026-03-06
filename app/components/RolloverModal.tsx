@@ -22,8 +22,7 @@ export default function RolloverModal({
   onClose,
   onSuccess,
 }: RolloverModalProps) {
-  const [selectedOption, setSelectedOption] =
-    useState<"PRINCIPAL_ONLY" | "PRINCIPAL_AND_INTEREST">("PRINCIPAL_ONLY");
+  const selectedOption = "PRINCIPAL_ONLY" as const;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,11 +38,7 @@ export default function RolloverModal({
 
       // Rollover completed successfully
       toast.success(
-        `✅ Plan rolled over successfully!\n\n${
-          selectedOption === "PRINCIPAL_AND_INTEREST"
-            ? `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been reinvested.`
-            : `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been withdrawn.`
-        }`
+        `✅ Plan rolled over successfully!\n\nYour interest of ₦${totalAccruedRoi.toLocaleString()} has been withdrawn.`
       );
       onClose();
 
@@ -58,11 +53,7 @@ export default function RolloverModal({
         const newPlanId = err.response?.data?.data?.plan?.id;
         
         toast.success(
-          `✅ Plan rolled over successfully!\n\n${
-            selectedOption === "PRINCIPAL_AND_INTEREST"
-              ? `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been reinvested.`
-              : `Your interest of ₦${totalAccruedRoi.toLocaleString()} has been withdrawn.`
-          }`
+          `✅ Plan rolled over successfully!\n\nYour interest of ₦${totalAccruedRoi.toLocaleString()} has been withdrawn.`
         );
         onClose();
         if (onSuccess && newPlanId) {
@@ -81,8 +72,6 @@ export default function RolloverModal({
   };
 
   if (!isOpen) return null;
-
-  const newPrincipalWithInterest = principal + totalAccruedRoi;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-60 backdrop-blur-sm p-4">
@@ -111,78 +100,10 @@ export default function RolloverModal({
         )}
 
         <div className="space-y-4 mb-8">
-          {/* Option 1: Principal + Interest */}
-          <div
-            onClick={() => setSelectedOption("PRINCIPAL_AND_INTEREST")}
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-              selectedOption === "PRINCIPAL_AND_INTEREST"
-                ? "border-[#A243DC] bg-purple-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
+          <div className="border-2 rounded-lg p-6 border-[#A243DC] bg-purple-50">
             <div className="flex items-start gap-4">
-              <div
-                className={`w-5 h-5 rounded-full border-2 mt-1 flex items-center justify-center ${
-                  selectedOption === "PRINCIPAL_AND_INTEREST"
-                    ? "border-[#A243DC] bg-[#A243DC]"
-                    : "border-gray-300"
-                }`}
-              >
-                {selectedOption === "PRINCIPAL_AND_INTEREST" && (
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-2">
-                  Reinvest Everything
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Reinvest both your principal and earned interest into a new plan
-                </p>
-                <div className="bg-white rounded p-3 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Principal:</span>
-                    <span className="font-semibold text-gray-900">
-                      ₦{principal.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Interest Earned:</span>
-                    <span className="font-semibold text-[#44C56F]">
-                      +₦{totalAccruedRoi.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between">
-                    <span className="font-bold text-gray-900">Total to Invest:</span>
-                    <span className="font-bold text-[#A243DC]">
-                      ₦{newPrincipalWithInterest.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Option 2: Principal Only */}
-          <div
-            onClick={() => setSelectedOption("PRINCIPAL_ONLY")}
-            className={`border-2 rounded-lg p-6 cursor-pointer transition-all ${
-              selectedOption === "PRINCIPAL_ONLY"
-                ? "border-[#A243DC] bg-purple-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className={`w-5 h-5 rounded-full border-2 mt-1 flex items-center justify-center ${
-                  selectedOption === "PRINCIPAL_ONLY"
-                    ? "border-[#A243DC] bg-[#A243DC]"
-                    : "border-gray-300"
-                }`}
-              >
-                {selectedOption === "PRINCIPAL_ONLY" && (
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                )}
+              <div className="w-5 h-5 rounded-full border-2 mt-1 flex items-center justify-center border-[#A243DC] bg-[#A243DC]">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 mb-2">

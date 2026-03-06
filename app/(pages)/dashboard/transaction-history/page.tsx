@@ -4,7 +4,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { IoArrowBack, IoFilter, IoDownload, IoSearch, IoClose } from "react-icons/io5";
+import {
+  IoArrowBack,
+  IoFilter,
+  IoDownload,
+  IoSearch,
+  IoClose,
+} from "react-icons/io5";
 import { PiEmptyBold } from "react-icons/pi";
 import {
   getTransactionsService,
@@ -200,46 +206,47 @@ export default function TransactionHistoryPage() {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Header */}
-<div className="mb-6 sm:mb-8">
-  {/* Mobile-friendly header that maintains layout */}
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
-    <div className="flex items-center gap-2 sm:gap-4">
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center text-gray-600 hover:text-primary text-sm sm:text-base"
-      >
-        <IoArrowBack className="mr-1 sm:mr-2" />
-        Back to Dashboard
-      </Link>
-      <h1 className="text-lg sm:text-2xl font-bold truncate">Transaction History</h1>
-    </div>
+      <div className="mb-6 sm:mb-8">
+        {/* Mobile-friendly header that maintains layout */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center text-gray-600 hover:text-primary text-sm sm:text-base"
+            >
+              <IoArrowBack className="mr-1 sm:mr-2" />
+              Back to Dashboard
+            </Link>
+            <h1 className="text-lg sm:text-2xl font-bold truncate">
+              Transaction History
+            </h1>
+          </div>
 
-    {/* Buttons stay in a row, just smaller on mobile */}
-    <div className="flex items-center gap-2 sm:gap-3">
-      <button
-        onClick={() => setShowFilters(!showFilters)}
-        className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${
-          showFilters
-            ? "bg-primary text-white"
-            : "bg-gray-100 text-gray-700"
-        }`}
-      >
-        <IoFilter className="text-sm sm:text-base" />
-        Filters
-      </button>
+          {/* Buttons stay in a row, just smaller on mobile */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${
+                showFilters
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              <IoFilter className="text-sm sm:text-base" />
+              Filters
+            </button>
 
-      <button
-        onClick={() => setShowDatePicker(true)}
-        disabled={statementLoading}
-        className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <IoDownload className="text-sm sm:text-base" />
-        Download Statement
-      </button>
-    </div>
-  </div>
-</div>
-
+            <button
+              onClick={() => setShowDatePicker(true)}
+              disabled={statementLoading}
+              className="px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IoDownload className="text-sm sm:text-base" />
+              Download Statement
+            </button>
+          </div>
+        </div>
+      </div>
       {/* Date Range Picker for Statement - Make responsive */}
       {showDatePicker && (
         <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4">
@@ -428,7 +435,7 @@ export default function TransactionHistoryPage() {
                 <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1 text-center sm:text-left">
                   Page {currentPage} of {totalPages}
                 </div>
-                
+
                 {/* Mobile Pagination - Simplified */}
                 <div className="flex items-center justify-center gap-2 order-1 sm:order-2">
                   <button
@@ -481,7 +488,9 @@ export default function TransactionHistoryPage() {
 
                 {/* Per Page Select - Stack below on mobile */}
                 <div className="flex items-center justify-center sm:justify-end gap-2 order-3">
-                  <span className="text-xs sm:text-sm text-gray-600">Show:</span>
+                  <span className="text-xs sm:text-sm text-gray-600">
+                    Show:
+                  </span>
                   <select
                     value={filters.limit}
                     onChange={(e) =>
@@ -498,7 +507,9 @@ export default function TransactionHistoryPage() {
                     <option value="50">50</option>
                     <option value="100">100</option>
                   </select>
-                  <span className="hidden sm:inline text-xs sm:text-sm text-gray-600">per page</span>
+                  <span className="hidden sm:inline text-xs sm:text-sm text-gray-600">
+                    per page
+                  </span>
                 </div>
               </div>
             )}

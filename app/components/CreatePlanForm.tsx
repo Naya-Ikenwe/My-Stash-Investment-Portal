@@ -32,6 +32,10 @@ export default function CreatePlanForm({
   const rolloverValue = watch("rollover");
   const [displayAmount, setDisplayAmount] = useState("");
 
+  useEffect(() => {
+    setValue("rolloverType", "PRINCIPAL_ONLY");
+  }, [rolloverValue, setValue]);
+
   // Watch all required fields
   const name = watch("name");
   const principal = watch("principal");
@@ -200,41 +204,7 @@ export default function CreatePlanForm({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Reinvestment Type
                 </label>
-                <Controller
-                  name="rolloverType"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          checked={field.value === "PRINCIPAL_ONLY"}
-                          onChange={() =>
-                            field.onChange("PRINCIPAL_ONLY")
-                          }
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Principal Only</span>
-                      </label>
-
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          checked={
-                            field.value === "PRINCIPAL_AND_INTEREST"
-                          }
-                          onChange={() =>
-                            field.onChange("PRINCIPAL_AND_INTEREST")
-                          }
-                          className="mr-2"
-                        />
-                        <span className="text-sm">
-                          Principal & Interest
-                        </span>
-                      </label>
-                    </div>
-                  )}
-                />
+                <p className="text-sm text-gray-700">Principal Only</p>
               </div>
             )}
           </div>
