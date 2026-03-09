@@ -21,7 +21,7 @@ export default function TopUpModal({
   planId,
   onTopUpSuccess,
 }: TopUpModalProps) {
-  const [amount, setAmount] = useState("120,000");
+  const [amount, setAmount] = useState("500,000");
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showInstantTransfer, setShowInstantTransfer] = useState(false);
   const [showBankTransfer, setShowBankTransfer] = useState(false);
@@ -39,6 +39,11 @@ export default function TopUpModal({
     const numericAmount = parseInt(amount.replace(/,/g, ''));
     if (isNaN(numericAmount) || numericAmount <= 0) {
       setError("Please enter a valid amount");
+      return;
+    }
+
+    if (numericAmount < 500000) {
+      setError("Minimum top-up amount is ₦500,000");
       return;
     }
 
@@ -151,6 +156,7 @@ export default function TopUpModal({
                 placeholder="0"
               />
               <hr className="border border-[#455A6433] w-full mt-5" />
+              <p className="text-gray-500 text-sm mt-2">Minimum top-up amount is ₦500,000</p>
             </div>
 
             {/* Footer Actions */}

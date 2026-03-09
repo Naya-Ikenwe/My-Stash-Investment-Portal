@@ -45,7 +45,7 @@ export default function CreatePlanForm({
   const isFormValid = 
     !!name?.trim() && 
     !!principal && 
-    principal >= 1000000 && 
+    principal >= 500000 && 
     !!duration;
 
   // Update display amount when principal changes
@@ -134,7 +134,7 @@ export default function CreatePlanForm({
                 />
               )}
             />
-            <p className="text-gray-500 text-sm mt-1">Minimum investment amount is ₦1,000,000</p>
+            <p className="text-gray-500 text-sm mt-1">Minimum investment amount is ₦500,000</p>
           </div>
 
           {/* Duration */}
