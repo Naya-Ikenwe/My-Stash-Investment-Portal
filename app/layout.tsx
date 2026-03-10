@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   title: "MyStash Investment Portal",
   description: "Secured investments for you!",
   icons: {
-    icon: "/images/mystash-logo.svg",
-    shortcut: "/images/mystash-logo.svg",
-    apple: "/images/mystash-logo.svg",
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
