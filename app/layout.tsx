@@ -13,6 +13,11 @@ import { Toaster } from "react-hot-toast";
 export const metadata: Metadata = {
   title: "MyStash Investment Portal",
   description: "Secured investments for you!",
+  icons: {
+    icon: "/images/mystash-logo.svg",
+    shortcut: "/images/mystash-logo.svg",
+    apple: "/images/mystash-logo.svg",
+  },
 };
 
 export const viewport: Viewport = {
