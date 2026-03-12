@@ -307,6 +307,12 @@ export default function PlanDetails({
     setShowBankTransferPayment(true);
   };
 
+  const handleClosePaymentFlow = () => {
+    setShowPaymentMethodSelection(false);
+    setShowInstantTransferPayment(false);
+    setShowBankTransferPayment(false);
+  };
+
   const handleBackFromPayment = () => {
     setShowInstantTransferPayment(false);
     setShowBankTransferPayment(false);
@@ -575,7 +581,7 @@ export default function PlanDetails({
           bankTransfer={paymentBankTransfer}
           onSelectInstant={handleSelectInstantTransfer}
           onSelectBank={handleSelectBankTransfer}
-          onClose={handleBackFromPayment}
+          onClose={handleClosePaymentFlow}
         />
       )}
 
