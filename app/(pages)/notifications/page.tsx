@@ -412,18 +412,18 @@ export default function NotificationsPage() {
                                   ₦{Number(notification.metadata.amount).toLocaleString()}
                                 </span>
                               )}
-                              {notification.metadata.planId && (
+                              {/* {notification.metadata.planId && (
                                 <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded ml-2">
                                   Plan ID: {notification.metadata.planId.slice(0, 8)}...
                                 </span>
-                              )}
+                              )} */}
                             </div>
                           )}
                           
                           <div className="mt-2 flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                            {/* <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
                               {notification.type}
-                            </span>
+                            </span> */}
                             {!notification.isRead && (
                               <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
                                 New

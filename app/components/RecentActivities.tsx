@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Notification,
+  NotificationType,
   getRecentNotifications,
   markNotificationAsRead,
 } from "@/app/api/notification";
@@ -91,7 +92,9 @@ export default function RecentActivities({
       }
     }
 
-    router.push(getNotificationDestination(activity));
+    const destination = getNotificationDestination(activity);
+    if (destination)
+      router.push(destination);
   };
 
   if (isActuallyLoading) {
@@ -174,9 +177,9 @@ export default function RecentActivities({
                 {activity.metadata?.amount && (
                   <div className="mt-1">
                     <span className={`text-xs font-medium ${
-                      activity.type === 'withdrawal' ? 'text-red-600' : 'text-green-600'
+                      activity.type === NotificationType.PLAN_WITHDRAWAL_COMPLETED ? 'text-red-600' : 'text-green-600'
                     }`}>
-                      {activity.type === 'withdrawal' ? '-' : '+'}₦
+                      {activity.type === NotificationType.PLAN_WITHDRAWAL_COMPLETED ? '-' : '+'}₦
                       {Number(activity.metadata.amount).toLocaleString()}
                     </span>
                   </div>

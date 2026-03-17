@@ -1,6 +1,8 @@
-import type { Notification } from "@/app/api/notification";
-
-type NotificationMetadata = Notification["metadata"];
+import {
+  NotificationType,
+  type Notification,
+  type NotificationMetadata,
+} from "@/app/api/notification";
 
 const getStringValue = (metadata: NotificationMetadata, keys: string[]) => {
   for (const key of keys) {
@@ -16,17 +18,11 @@ const getStringValue = (metadata: NotificationMetadata, keys: string[]) => {
 const getPlanId = (metadata: NotificationMetadata) =>
   getStringValue(metadata, ["planId", "plan_id", "entityId", "entity_id"]);
 
+const getRolloverPlanId = (metadata: NotificationMetadata) =>
+  getStringValue(metadata, ["newPlanId", "planId", "plan_id", "entityId", "entity_id"]);
+
 const getDirectRoute = (metadata: NotificationMetadata) =>
   getStringValue(metadata, ["route", "href", "url", "link"]);
-
-const buildTextIndex = (notification: Notification) =>
-  [notification.type, notification.title, notification.message]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-const hasAnyKeyword = (value: string, keywords: string[]) =>
-  keywords.some((keyword) => value.includes(keyword));
 
 export const getNotificationDestination = (notification: Notification) => {
   const directRoute = getDirectRoute(notification.metadata);
@@ -35,79 +31,45 @@ export const getNotificationDestination = (notification: Notification) => {
   }
 
   const planId = getPlanId(notification.metadata);
-  const textIndex = buildTextIndex(notification);
+  const rolloverPlanId = getRolloverPlanId(notification.metadata);
 
-  if (planId) {
-    if (
-      hasAnyKeyword(textIndex, [
-        "transaction",
-        "withdraw",
-        "withdrawal",
-        "top up",
-        "topup",
-        "transfer",
-        "payout",
-        "roi",
-        "refund",
-        "liquidat",
-      ])
-    ) {
-      return `/dashboard/transaction-history?planId=${encodeURIComponent(planId)}`;
-    }
+  switch (notification.type) {
+    case NotificationType.PLAN_CREATED:
+    case NotificationType.PLAN_ACTIVATED:
+    case NotificationType.PLAN_MATURED:
+    case NotificationType.PLAN_CLOSED:
+      if (planId) {
+        return `/dashboard/plans/${encodeURIComponent(planId)}`;
+      }
+      return "/dashboard/plans";
 
-    return `/dashboard/plans/${encodeURIComponent(planId)}`;
+    case NotificationType.ROI_PAID:
+    case NotificationType.PLAN_LIQUIDATED:
+    case NotificationType.PLAN_TOP_UP_COMPLETED:
+    case NotificationType.PLAN_WITHDRAWAL_COMPLETED:
+      if (planId) {
+        return `/dashboard/transaction-history?planId=${encodeURIComponent(planId)}`;
+      }
+      return "/dashboard/transaction-history";
+
+    case NotificationType.PLAN_ROLLOVER_COMPLETED:
+      if (rolloverPlanId) {
+        return `/dashboard/plans/${encodeURIComponent(rolloverPlanId)}`;
+      }
+      return "/dashboard/plans";
+
+    case NotificationType.TRANSACTION_REPORT_READY:
+      return "/dashboard/transaction-history";
+
+    case NotificationType.USER_PASSWORD_RESET:
+    case NotificationType.ADMIN_PASSWORD_RESET:
+    case NotificationType.USER_PASSWORD_CHANGED:
+    case NotificationType.ADMIN_PASSWORD_CHANGED:
+    case NotificationType.USER_CREATED:
+    case NotificationType.ADMIN_CREATED:
+      return "/dashboard/profile";
+
+    default:
+      return "/notifications";
   }
-
-  if (
-    hasAnyKeyword(textIndex, [
-      "plan",
-      "rollover",
-      "maturity",
-      "matured",
-      "investment",
-      "principal",
-    ])
-  ) {
-    return "/dashboard/plans";
-  }
-
-  if (
-    hasAnyKeyword(textIndex, [
-      "transaction",
-      "withdraw",
-      "withdrawal",
-      "top up",
-      "topup",
-      "transfer",
-      "payout",
-      "roi",
-      "refund",
-      "statement",
-      "payment",
-      "liquidat",
-    ])
-  ) {
-    return "/dashboard/transaction-history";
-  }
-
-  if (hasAnyKeyword(textIndex, ["embassy", "letter request"])) {
-    return "/dashboard/embassy";
-  }
-
-  if (
-    hasAnyKeyword(textIndex, [
-      "profile",
-      "kyc",
-      "identity",
-      "authorization",
-      "next of kin",
-      "password",
-      "account",
-      "personal details",
-    ])
-  ) {
-    return "/dashboard/profile";
-  }
-
-  return "/notifications";
 };
