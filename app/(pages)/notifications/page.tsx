@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Notification, 
   getAllNotifications,
@@ -11,8 +12,10 @@ import {
 } from "@/app/api/notification";
 import Link from "next/link";
 import { IoArrowBack, IoCheckmarkDone, IoEye } from "react-icons/io5";
+import { getNotificationDestination } from "@/lib/notificationNavigation";
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +25,29 @@ export default function NotificationsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [markingIds, setMarkingIds] = useState<Set<string>>(new Set());
+
+  const syncNotificationReadState = useCallback((notificationId: string) => {
+    let didUpdateUnread = false;
+
+    setNotifications((prev) =>
+      prev.map((notification) => {
+        if (notification.id !== notificationId || notification.isRead) {
+          return notification;
+        }
+
+        didUpdateUnread = true;
+        return { ...notification, isRead: true };
+      }),
+    );
+
+    if (didUpdateUnread) {
+      setSummary((prev) => ({
+        ...prev,
+        unread: Math.max(0, prev.unread - 1),
+        read: prev.read + 1,
+      }));
+    }
+  }, []);
 
   // Fetch data function
   const fetchData = useCallback(async (pageNum: number = 1, reset: boolean = true) => {
@@ -79,19 +105,7 @@ export default function NotificationsPage() {
       const success = await markNotificationAsRead(notificationId);
       
       if (success) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(n => 
-            n.id === notificationId ? { ...n, isRead: true } : n
-          )
-        );
-        
-        // Update summary
-        setSummary(prev => ({
-          ...prev,
-          unread: Math.max(0, prev.unread - 1),
-          read: prev.read + 1
-        }));
+        syncNotificationReadState(notificationId);
       }
       
     } catch (error) {
@@ -103,6 +117,31 @@ export default function NotificationsPage() {
         return newSet;
       });
     }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (markingIds.has(notification.id)) return;
+
+    if (!notification.isRead) {
+      setMarkingIds((prev) => new Set(prev).add(notification.id));
+
+      try {
+        const success = await markNotificationAsRead(notification.id);
+        if (success) {
+          syncNotificationReadState(notification.id);
+        }
+      } catch (error) {
+        console.error("Error marking as read:", error);
+      } finally {
+        setMarkingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(notification.id);
+          return next;
+        });
+      }
+    }
+
+    router.push(getNotificationDestination(notification));
   };
 
   // Mark all as read
@@ -307,9 +346,18 @@ export default function NotificationsPage() {
                   {notifs.map(notification => (
                     <div 
                       key={notification.id} 
-                      className={`px-6 py-4 hover:bg-gray-50 transition-colors ${
+                      className={`px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${
                         !notification.isRead ? 'bg-blue-50' : ''
                       }`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNotificationClick(notification)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          void handleNotificationClick(notification);
+                        }
+                      }}
                     >
                       <div className="flex items-start gap-4">
                         {/* Status indicator */}
@@ -337,7 +385,10 @@ export default function NotificationsPage() {
                               {/* Mark as read button for unread notifications */}
                               {!notification.isRead && (
                                 <button
-                                  onClick={() => handleMarkAsRead(notification.id)}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    void handleMarkAsRead(notification.id);
+                                  }}
                                   disabled={markingIds.has(notification.id)}
                                   className="text-xs text-primary hover:text-primary-dark flex items-center gap-1 disabled:opacity-50"
                                   title="Mark as read"

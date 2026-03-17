@@ -3,17 +3,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Notification, getRecentNotifications } from "@/app/api/notification";
+import { useRouter } from "next/navigation";
+import {
+  Notification,
+  getRecentNotifications,
+  markNotificationAsRead,
+} from "@/app/api/notification";
+import { getNotificationDestination } from "@/lib/notificationNavigation";
 
 type RecentActivitiesProps = {
-  dashboardData?: any;
+  dashboardData?: unknown;
   isLoading?: boolean;
 };
 
 export default function RecentActivities({ 
-  dashboardData,
   isLoading = false 
 }: RecentActivitiesProps) {
+  const router = useRouter();
   const [activities, setActivities] = useState<Notification[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(true);
 
@@ -50,7 +56,7 @@ export default function RecentActivities({
         const recentActivities = notifications.slice(0, 3);
         setActivities(recentActivities);
         
-      } catch (err: any) {
+      } catch (err) {
         console.error("❌ Error fetching activities:", err);
         setActivities([]);
       } finally {
@@ -65,6 +71,28 @@ export default function RecentActivities({
 
   // Combined loading state
   const isActuallyLoading = isLoading || isLoadingActivities;
+
+  const handleActivityClick = async (activity: Notification) => {
+    if (!activity.isRead) {
+      try {
+        const success = await markNotificationAsRead(activity.id);
+
+        if (success) {
+          setActivities((prev) =>
+            prev.map((notification) =>
+              notification.id === activity.id
+                ? { ...notification, isRead: true }
+                : notification,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to mark activity as read:", error);
+      }
+    }
+
+    router.push(getNotificationDestination(activity));
+  };
 
   if (isActuallyLoading) {
     return (
@@ -109,9 +137,18 @@ export default function RecentActivities({
           activities.map((activity) => (
             <div 
               key={activity.id} 
-              className={`flex items-start gap-3 p-2 rounded-lg ${
+              className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer ${
                 !activity.isRead ? 'bg-white' : ''
               }`}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleActivityClick(activity)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  void handleActivityClick(activity);
+                }
+              }}
             >
               {/* SIMPLE PURPLE DOT */}
               <div className="shrink-0">
