@@ -84,8 +84,8 @@ export default function LoginPage() {
       <main className="flex items-center justify-center">
         <div className="flex flex-col gap-5 items-center w-full max-w-2xl">
           <span className="text-center px-4">
-            <h2 className="header-one font-heading text-2xl lg:text-4xl">Back to business</h2>
-            <p className="text-lg lg:text-[20px] mt-2">Let's get you signed in</p>
+            <h2 className="header-one font-heading text-2xl lg:text-4xl">Earn up to 22% Interest</h2>
+            <p className="text-lg lg:text-[20px] mt-2">Let's get you started</p>
           </span>
 
           <CardWrapper className="px-6 lg:px-8 py-8 lg:py-10 w-full max-w-md">
